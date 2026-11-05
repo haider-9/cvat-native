@@ -1,0 +1,139 @@
+Start testing: Nov 05 11:10 PKT
+----------------------------------------------------------
+1/25 Testing: Core.VersionMacroIsAvailable
+1/25 Test: Core.VersionMacroIsAvailable
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Core.VersionMacroIsAvailable" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"Core.VersionMacroIsAvailable" start time: Nov 05 11:10 PKT
+Output:
+----------------------------------------------------------
+Running main() from /usr/src/debug/gtest/googletest-1.18.0/googletest/src/gtest_main.cc
+Note: Google Test filter = Core.VersionMacroIsAvailable
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Core
+[ RUN      ] Core.VersionMacroIsAvailable
+[       OK ] Core.VersionMacroIsAvailable (0 ms)
+[----------] 1 test from Core (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"Core.VersionMacroIsAvailable" end time: Nov 05 11:10 PKT
+"Core.VersionMacroIsAvailable" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/25 Testing: Result.HoldsValue
+2/25 Test: Result.HoldsValue
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Result.HoldsValue" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"Result.HoldsValue" start time: Nov 05 11:10 PKT
+Output:
+----------------------------------------------------------
+Running main() from /usr/src/debug/gtest/googletest-1.18.0/googletest/src/gtest_main.cc
+Note: Google Test filter = Result.HoldsValue
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Result
+[ RUN      ] Result.HoldsValue
+[       OK ] Result.HoldsValue (0 ms)
+[----------] 1 test from Result (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"Result.HoldsValue" end time: Nov 05 11:10 PKT
+"Result.HoldsValue" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/25 Testing: Result.HoldsError
+3/25 Test: Result.HoldsError
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Result.HoldsError" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"Result.HoldsError" start time: Nov 05 11:10 PKT
+Output:
+----------------------------------------------------------
+Running main() from /usr/src/debug/gtest/googletest-1.18.0/googletest/src/gtest_main.cc
+Note: Google Test filter = Result.HoldsError
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Result
+[ RUN      ] Result.HoldsError
+[       OK ] Result.HoldsError (0 ms)
+[----------] 1 test from Result (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"Result.HoldsError" end time: Nov 05 11:10 PKT
+"Result.HoldsError" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/25 Testing: Result.RetryableClassification
+4/25 Test: Result.RetryableClassification
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Result.RetryableClassification" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"Result.RetryableClassification" start time: Nov 05 11:10 PKT
+Output:
+----------------------------------------------------------
+Running main() from /usr/src/debug/gtest/googletest-1.18.0/googletest/src/gtest_main.cc
+Note: Google Test filter = Result.RetryableClassification
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Result
+[ RUN      ] Result.RetryableClassification
+[       OK ] Result.RetryableClassification (0 ms)
+[----------] 1 test from Result (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"Result.RetryableClassification" end time: Nov 05 11:10 PKT
+"Result.RetryableClassification" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/25 Testing: ApiClient.ResolveKeepsBasePath
+5/25 Test: ApiClient.ResolveKeepsBasePath
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=ApiClient.ResolveKeepsBasePath" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"ApiClient.ResolveKeepsBasePath" start time: Nov 05 11:10 PKT
+Output:
+----------------------------------------------------------
+Running main() from /usr/src/debug/gtest/googletest-1.18.0/googletest/src/gtest_main.cc
+Note: Google Test filter = ApiClient.ResolveKeepsBasePath
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ApiClient
+[ RUN      ] ApiClient.ResolveKeepsBasePath
+qt.core.qobject.connect: QObject::connect(QObject, Unknown): invalid nullptr parameter
+qt.core.qobject.connect: QObject::connect(QObject, Unknown): invalid nullptr parameter
+[       OK ] ApiClient.ResolveKeepsBasePath (5 ms)
+[----------] 1 test from ApiClient (5 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (5 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"ApiClient.ResolveKeepsBasePath" end time: Nov 05 11:10 PKT
+"ApiClient.ResolveKeepsBasePath" time elapsed: 00:00:00
+----------------------------------------------------------
+

@@ -1,0 +1,26 @@
+Core.VersionMacroIsAvailable 21 0.00178654
+Result.HoldsValue 21 0.000852033
+Result.HoldsError 21 0.000999201
+Result.RetryableClassification 21 0.00102474
+Annotation.ParsesLabeledData 21 0.00124101
+Annotation.SerializationRoundTrip 21 0.000992941
+Annotation.TrackInterpolates 21 0.000903484
+Annotation.ShapeTypes 21 0.00100759
+Geometry.BoundingRect 21 0.00109911
+Geometry.RectangleUsesOppositeCorners 21 0.00129205
+Geometry.PointInPolygon 21 0.00135218
+Geometry.DistanceToSegment 21 0.00108398
+Geometry.HitTestRectangleAndPolygon 21 0.000983234
+Geometry.TranslateAndScale 21 0.000971085
+Geometry.RotatedRectangle 21 0.00115967
+LocalStore.InMemoryRoundTrip 20 0.00181308
+LocalStore.SnapshotAndPendingEdits 20 0.00165299
+FrameCache.MemoryLruEviction 21 0.00121317
+FrameCache.DiskRoundTripAndJobRemoval 21 0.00133324
+FrameCache.SeparatesQualityNamespaces 21 0.0014378
+ApiClient.ResolveKeepsBasePath 19 0.0010037
+ApiClient.GetParsesJsonAndAuthorization 19 0.00134202
+ApiClient.HttpErrorBecomesUnauthorized 19 0.00110395
+ApiClient.ErrorFromResponseMarksAuth 19 0.000958211
+RecoveryStore.WrapsSnapshots 19 0.00153872
+---

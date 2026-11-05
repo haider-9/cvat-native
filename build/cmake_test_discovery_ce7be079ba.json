@@ -1,0 +1,179 @@
+{
+  "tests": 25,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "Core",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "VersionMacroIsAvailable",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_main.cpp",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "name": "Result",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "HoldsValue",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_result.cpp",
+          "line": 7
+        },
+        {
+          "name": "HoldsError",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_result.cpp",
+          "line": 15
+        },
+        {
+          "name": "RetryableClassification",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_result.cpp",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "name": "ApiClient",
+      "tests": 4,
+      "testsuite": [
+        {
+          "name": "ResolveKeepsBasePath",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
+          "line": 115
+        },
+        {
+          "name": "GetParsesJsonAndAuthorization",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
+          "line": 125
+        },
+        {
+          "name": "HttpErrorBecomesUnauthorized",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
+          "line": 149
+        },
+        {
+          "name": "ErrorFromResponseMarksAuth",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
+          "line": 166
+        }
+      ]
+    },
+    {
+      "name": "Annotation",
+      "tests": 4,
+      "testsuite": [
+        {
+          "name": "ParsesLabeledData",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
+          "line": 47
+        },
+        {
+          "name": "SerializationRoundTrip",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
+          "line": 61
+        },
+        {
+          "name": "TrackInterpolates",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
+          "line": 75
+        },
+        {
+          "name": "ShapeTypes",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "name": "Geometry",
+      "tests": 7,
+      "testsuite": [
+        {
+          "name": "BoundingRect",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_geometry.cpp",
+          "line": 8
+        },
+        {
+          "name": "RectangleUsesOppositeCorners",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_geometry.cpp",
+          "line": 17
+        },
+        {
+          "name": "PointInPolygon",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_geometry.cpp",
+          "line": 26
+        },
+        {
+          "name": "DistanceToSegment",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_geometry.cpp",
+          "line": 34
+        },
+        {
+          "name": "HitTestRectangleAndPolygon",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_geometry.cpp",
+          "line": 40
+        },
+        {
+          "name": "TranslateAndScale",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_geometry.cpp",
+          "line": 56
+        },
+        {
+          "name": "RotatedRectangle",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_geometry.cpp",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "name": "LocalStore",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "InMemoryRoundTrip",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_local_store.cpp",
+          "line": 19
+        },
+        {
+          "name": "SnapshotAndPendingEdits",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_local_store.cpp",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "name": "RecoveryStore",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "WrapsSnapshots",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_local_store.cpp",
+          "line": 64
+        }
+      ]
+    },
+    {
+      "name": "FrameCache",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "MemoryLruEviction",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_frame_cache.cpp",
+          "line": 19
+        },
+        {
+          "name": "DiskRoundTripAndJobRemoval",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_frame_cache.cpp",
+          "line": 43
+        },
+        {
+          "name": "SeparatesQualityNamespaces",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_frame_cache.cpp",
+          "line": 62
+        }
+      ]
+    }
+  ]
+}

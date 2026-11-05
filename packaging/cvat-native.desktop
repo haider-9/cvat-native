@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=CVAT Native
+GenericName=Annotation Tool
+Comment=Native Qt6 client for a CVAT annotation server
+Exec=cvat-native
+Icon=applications-graphics
+Terminal=false
+Categories=Graphics;Science;Education;
+Keywords=CVAT;annotation;labeling;computer vision;
+StartupNotify=true

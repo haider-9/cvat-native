@@ -1,0 +1,5 @@
+if(EXISTS "/home/haider/Projects/cvat-native/build/cvat_core_tests_e3b0c442_tests.cmake")
+  include("/home/haider/Projects/cvat-native/build/cvat_core_tests_e3b0c442_tests.cmake")
+else()
+  add_test(cvat_core_tests_NOT_BUILT cvat_core_tests_NOT_BUILT)
+endif()

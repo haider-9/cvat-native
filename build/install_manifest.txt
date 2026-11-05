@@ -1,0 +1,2 @@
+/home/haider/.local/bin/cvat-native
+/home/haider/.local/share/applications/cvat-native.desktop

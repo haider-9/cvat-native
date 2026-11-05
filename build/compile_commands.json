@@ -1,0 +1,248 @@
+[
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/cvat_core_autogen/mocs_compilation.cpp.o -c /home/haider/Projects/cvat-native/build/cvat_core_autogen/mocs_compilation.cpp",
+  "file": "/home/haider/Projects/cvat-native/build/cvat_core_autogen/mocs_compilation.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/cvat_core_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/core/Logging.cpp.o -c /home/haider/Projects/cvat-native/src/core/Logging.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/core/Logging.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/core/Logging.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/core/Settings.cpp.o -c /home/haider/Projects/cvat-native/src/core/Settings.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/core/Settings.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/core/Settings.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/core/Credentials.cpp.o -c /home/haider/Projects/cvat-native/src/core/Credentials.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/core/Credentials.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/core/Credentials.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/ApiClient.cpp.o -c /home/haider/Projects/cvat-native/src/api/ApiClient.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/ApiClient.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/ApiClient.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/Models.cpp.o -c /home/haider/Projects/cvat-native/src/api/Models.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/Models.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/Models.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/AuthApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/AuthApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/AuthApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/AuthApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/UsersApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/UsersApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/UsersApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/UsersApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/ProjectsApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/ProjectsApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/ProjectsApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/ProjectsApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/OrganizationsApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/OrganizationsApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/OrganizationsApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/OrganizationsApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/TasksApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/TasksApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/TasksApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/TasksApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/JobsApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/JobsApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/JobsApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/JobsApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/AnnotationsApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/AnnotationsApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/AnnotationsApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/AnnotationsApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/LabelsApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/LabelsApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/LabelsApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/LabelsApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/api/MediaApi.cpp.o -c /home/haider/Projects/cvat-native/src/api/MediaApi.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/api/MediaApi.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/api/MediaApi.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/model/Annotation.cpp.o -c /home/haider/Projects/cvat-native/src/model/Annotation.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/model/Annotation.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/model/Annotation.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/storage/LocalStore.cpp.o -c /home/haider/Projects/cvat-native/src/storage/LocalStore.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/storage/LocalStore.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/storage/LocalStore.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/storage/RecoveryStore.cpp.o -c /home/haider/Projects/cvat-native/src/storage/RecoveryStore.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/storage/RecoveryStore.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/storage/RecoveryStore.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/media/FrameCache.cpp.o -c /home/haider/Projects/cvat-native/src/media/FrameCache.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/media/FrameCache.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/media/FrameCache.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/media/MediaService.cpp.o -c /home/haider/Projects/cvat-native/src/media/MediaService.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/media/MediaService.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/media/MediaService.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/annotation/Geometry.cpp.o -c /home/haider/Projects/cvat-native/src/annotation/Geometry.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/annotation/Geometry.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/annotation/Geometry.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core.dir/src/annotation/AnnotationModel.cpp.o -c /home/haider/Projects/cvat-native/src/annotation/AnnotationModel.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/annotation/AnnotationModel.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core.dir/src/annotation/AnnotationModel.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/cvat_ui_autogen/mocs_compilation.cpp.o -c /home/haider/Projects/cvat-native/build/cvat_ui_autogen/mocs_compilation.cpp",
+  "file": "/home/haider/Projects/cvat-native/build/cvat_ui_autogen/mocs_compilation.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/cvat_ui_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/MainWindow.cpp.o -c /home/haider/Projects/cvat-native/src/ui/MainWindow.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/MainWindow.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/MainWindow.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/LoginDialog.cpp.o -c /home/haider/Projects/cvat-native/src/ui/LoginDialog.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/LoginDialog.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/LoginDialog.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/DashboardPage.cpp.o -c /home/haider/Projects/cvat-native/src/ui/DashboardPage.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/DashboardPage.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/DashboardPage.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/JobWorkspace.cpp.o -c /home/haider/Projects/cvat-native/src/ui/JobWorkspace.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/JobWorkspace.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/JobWorkspace.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/AnnotationCanvas.cpp.o -c /home/haider/Projects/cvat-native/src/ui/AnnotationCanvas.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/AnnotationCanvas.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/AnnotationCanvas.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/AnnotationItems.cpp.o -c /home/haider/Projects/cvat-native/src/ui/AnnotationItems.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/AnnotationItems.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/AnnotationItems.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/LabelPanel.cpp.o -c /home/haider/Projects/cvat-native/src/ui/LabelPanel.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/LabelPanel.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/LabelPanel.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat_ui_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIC -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_ui.dir/src/ui/SettingsDialog.cpp.o -c /home/haider/Projects/cvat-native/src/ui/SettingsDialog.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/ui/SettingsDialog.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_ui.dir/src/ui/SettingsDialog.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat-native_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIE -mno-direct-extern-access -o CMakeFiles/cvat-native.dir/cvat-native_autogen/mocs_compilation.cpp.o -c /home/haider/Projects/cvat-native/build/cvat-native_autogen/mocs_compilation.cpp",
+  "file": "/home/haider/Projects/cvat-native/build/cvat-native_autogen/mocs_compilation.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat-native.dir/cvat-native_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/haider/Projects/cvat-native/build/cvat-native_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -isystem /usr/include/qt6/QtWidgets -O2 -g -DNDEBUG -std=c++20 -fPIE -mno-direct-extern-access -o CMakeFiles/cvat-native.dir/src/app/main.cpp.o -c /home/haider/Projects/cvat-native/src/app/main.cpp",
+  "file": "/home/haider/Projects/cvat-native/src/app/main.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat-native.dir/src/app/main.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/cvat_core_tests_autogen/mocs_compilation.cpp.o -c /home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/mocs_compilation.cpp",
+  "file": "/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/mocs_compilation.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/cvat_core_tests_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/tests/test_main.cpp.o -c /home/haider/Projects/cvat-native/tests/test_main.cpp",
+  "file": "/home/haider/Projects/cvat-native/tests/test_main.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/tests/test_main.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/tests/test_result.cpp.o -c /home/haider/Projects/cvat-native/tests/test_result.cpp",
+  "file": "/home/haider/Projects/cvat-native/tests/test_result.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/tests/test_result.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/tests/test_api_client.cpp.o -c /home/haider/Projects/cvat-native/tests/test_api_client.cpp",
+  "file": "/home/haider/Projects/cvat-native/tests/test_api_client.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/tests/test_api_client.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/tests/test_annotation.cpp.o -c /home/haider/Projects/cvat-native/tests/test_annotation.cpp",
+  "file": "/home/haider/Projects/cvat-native/tests/test_annotation.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/tests/test_annotation.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/tests/test_geometry.cpp.o -c /home/haider/Projects/cvat-native/tests/test_geometry.cpp",
+  "file": "/home/haider/Projects/cvat-native/tests/test_geometry.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/tests/test_geometry.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/tests/test_local_store.cpp.o -c /home/haider/Projects/cvat-native/tests/test_local_store.cpp",
+  "file": "/home/haider/Projects/cvat-native/tests/test_local_store.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/tests/test_local_store.cpp.o"
+},
+{
+  "directory": "/home/haider/Projects/cvat-native/build",
+  "command": "/usr/bin/c++ -DCVATNATIVE_VERSION=\\\"0.1.0\\\" -DGTEST_LINKED_AS_SHARED_LIBRARY=1 -DQT_CONCURRENT_LIB -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII -DQT_NO_DEBUG -DQT_SQL_LIB -I/home/haider/Projects/cvat-native/build/cvat_core_tests_autogen/include -I/home/haider/Projects/cvat-native/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtNetwork -isystem /usr/include/qt6/QtSql -isystem /usr/include/qt6/QtConcurrent -O2 -g -DNDEBUG -std=c++20 -fPIE -Wall -Wextra -Wpedantic -mno-direct-extern-access -o CMakeFiles/cvat_core_tests.dir/tests/test_frame_cache.cpp.o -c /home/haider/Projects/cvat-native/tests/test_frame_cache.cpp",
+  "file": "/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp",
+  "output": "/home/haider/Projects/cvat-native/build/CMakeFiles/cvat_core_tests.dir/tests/test_frame_cache.cpp.o"
+}
+]
