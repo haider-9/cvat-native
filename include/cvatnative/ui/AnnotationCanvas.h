@@ -13,12 +13,28 @@ class QGraphicsPathItem;
 class QGraphicsPixmapItem;
 class QGraphicsRectItem;
 class QGraphicsScene;
+class QGraphicsSimpleTextItem;
 
 namespace cvat {
 
 class AnnotationItem;
 
 enum class CanvasTool { Select, Rectangle, Polygon, Polyline, Points };
+
+struct CopiedTemplate {
+    bool valid = false;
+    int labelId = 0;
+    QString labelName;
+    QColor color;
+    QString shapeType{QStringLiteral("rectangle")};
+    double width = 0.0;
+    double height = 0.0;
+    QVector<double> relativePoints;
+    QVector<AttributeValue> attributes;
+    bool occluded = false;
+    double rotation = 0.0;
+    int zOrder = 0;
+};
 
 // High-performance canvas: the frame is a QPixmap, annotations are lightweight
 // custom items in image-pixel coordinates. No per-frame widget construction and
@@ -35,6 +51,10 @@ public:
     void setActiveLabel(int labelId);
     [[nodiscard]] int activeLabel() const { return activeLabel_; }
 
+    void startTemplatePlacement(const CopiedTemplate& tmpl);
+    void cancelTemplatePlacement();
+    [[nodiscard]] bool isPlacingTemplate() const;
+
     void refreshItems();
     void fitToView();
     void zoomIn();
@@ -46,6 +66,8 @@ signals:
     void statusMessage(const QString& message);
     void zoomChanged(double factor);
     void shapeCreated(const QString& key);
+    void toolChanged(CanvasTool tool);
+    void templatePlaced(const QString& key);
 
 protected:
     void mousePressEvent(QMouseEvent* event) override;
@@ -54,9 +76,10 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
 
 private:
-    enum class Interaction { None, Move, Resize, CreateRectangle, Pan };
+    enum class Interaction { None, Move, Resize, CreateRectangle, Pan, PlaceTemplate };
 
     void updateSelectionVisuals();
     void clearPendingCreation();
@@ -64,6 +87,10 @@ private:
     void updatePolygonPreview(const QPointF& cursor);
     void createRectangle(const QPointF& start, const QPointF& end);
     void updateRectanglePreview(const QPointF& start, const QPointF& end);
+    void updateTemplatePreview(const QPointF& center);
+    void clearTemplatePreview();
+    void clearTemplatePlacement();
+    void placeTemplateAt(const QPointF& pos);
     void beginMoveOrResize(AnnotationItem* item, const QPointF& scenePosition,
                            bool additive);
     void applyMove(const QPointF& scenePosition);
@@ -77,7 +104,14 @@ private:
     QGraphicsPixmapItem* background_ = nullptr;
     QList<AnnotationItem*> items_;
     QGraphicsRectItem* rectanglePreview_ = nullptr;
+    QGraphicsRectItem* rectangleBadgeBg_ = nullptr;
+    QGraphicsSimpleTextItem* rectangleBadgeText_ = nullptr;
     QGraphicsPathItem* polygonPreview_ = nullptr;
+    CopiedTemplate templateData_;
+    QGraphicsRectItem* templateRectPreview_ = nullptr;
+    QGraphicsPathItem* templatePathPreview_ = nullptr;
+    QGraphicsRectItem* templateBadgeBg_ = nullptr;
+    QGraphicsSimpleTextItem* templateBadgeText_ = nullptr;
     QImage frame_;
     CanvasTool tool_ = CanvasTool::Select;
     Interaction interaction_ = Interaction::None;
@@ -93,6 +127,8 @@ private:
     QVector<QPointF> pendingPoints_;
     bool firstImage_ = true;
     bool adjusting_ = false;
+    bool spacePanning_ = false;
+    Interaction interactionBeforePan_ = Interaction::None;
 };
 
 } // namespace cvat

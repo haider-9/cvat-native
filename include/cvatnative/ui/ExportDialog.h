@@ -1,8 +1,11 @@
 #pragma once
 
 #include "cvatnative/api/Models.h"
+#include "cvatnative/core/Result.h"
 
 #include <QDialog>
+
+#include <functional>
 
 class QComboBox;
 class QLabel;
@@ -23,8 +26,11 @@ public:
                  const Job& job, QWidget* parent = nullptr);
 
 private:
+    using Finish = std::function<void(Result<QByteArray>)>;
+
     void loadFormats();
     void exportNow();
+    void pollDataset(const QString& requestId, int attempt, Finish finish);
     void updateMode();
 
     AnnotationsApi* annotations_;

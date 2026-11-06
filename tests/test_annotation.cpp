@@ -1,8 +1,10 @@
 #include "cvatnative/model/Annotation.h"
+#include "cvatnative/annotation/AnnotationModel.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPointF>
 
 #include <gtest/gtest.h>
 
@@ -99,4 +101,64 @@ TEST(Annotation, ShapeTypes)
     EXPECT_EQ(shapeTypeOrDefault(QStringLiteral("bogus")), QStringLiteral("rectangle"));
     EXPECT_TRUE(shapeTypeIsClosed(QStringLiteral("polygon")));
     EXPECT_FALSE(shapeTypeIsClosed(QStringLiteral("polyline")));
+}
+
+TEST(AnnotationModel, AddingAndUpdatingShapesIncrementsRevisionAndDirty)
+{
+    AnnotationModel model;
+    EXPECT_FALSE(model.isDirty());
+    const quint64 initialRevision = model.revision();
+
+    Shape shape;
+    shape.labelId = 1;
+    shape.type = QStringLiteral("rectangle");
+    shape.points = {10, 20, 100, 200};
+    shape.frame = 0;
+    model.addShape(shape);
+
+    EXPECT_TRUE(model.isDirty());
+    EXPECT_GT(model.revision(), initialRevision);
+
+    const auto visible = model.visibleShapes();
+    ASSERT_EQ(visible.size(), 1);
+    const QString key = visible[0].key;
+
+    const quint64 revAfterAdd = model.revision();
+    Shape modified = visible[0].shape;
+    modified.points = {15, 25, 105, 205};
+    EXPECT_TRUE(model.updateVisibleShape(key, modified));
+
+    EXPECT_TRUE(model.isDirty());
+    EXPECT_GT(model.revision(), revAfterAdd);
+}
+
+TEST(Annotation, CopiedTemplateDimensionAndPlacement)
+{
+    Shape shape;
+    shape.labelId = 3;
+    shape.type = QStringLiteral("rectangle");
+    shape.points = {100, 200, 300, 400};
+    shape.frame = 1;
+
+    const double x1 = std::min(shape.points[0], shape.points[2]);
+    const double x2 = std::max(shape.points[0], shape.points[2]);
+    const double y1 = std::min(shape.points[1], shape.points[3]);
+    const double y2 = std::max(shape.points[1], shape.points[3]);
+    const double w = x2 - x1;
+    const double h = y2 - y1;
+    EXPECT_DOUBLE_EQ(w, 200.0);
+    EXPECT_DOUBLE_EQ(h, 200.0);
+
+    const QPointF placePos(500.0, 500.0);
+    Shape placed;
+    placed.labelId = shape.labelId;
+    placed.type = shape.type;
+    placed.points = QVector<double>{placePos.x() - w / 2.0, placePos.y() - h / 2.0,
+                                    placePos.x() + w / 2.0, placePos.y() + h / 2.0};
+    EXPECT_DOUBLE_EQ(placed.points[0], 400.0);
+    EXPECT_DOUBLE_EQ(placed.points[1], 400.0);
+    EXPECT_DOUBLE_EQ(placed.points[2], 600.0);
+    EXPECT_DOUBLE_EQ(placed.points[3], 600.0);
+    EXPECT_DOUBLE_EQ(placed.points[2] - placed.points[0], 200.0);
+    EXPECT_DOUBLE_EQ(placed.points[3] - placed.points[1], 200.0);
 }

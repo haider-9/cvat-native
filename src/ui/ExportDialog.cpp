@@ -14,8 +14,10 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QPointer>
 #include <QRadioButton>
 #include <QStandardPaths>
+#include <QStyle>
 #include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -35,9 +37,19 @@ ExportDialog::ExportDialog(AnnotationsApi* annotations, MediaApi* media, ServerA
 
     annotationsRadio_ = new QRadioButton(QStringLiteral("Annotations only"), this);
     datasetRadio_ = new QRadioButton(QStringLiteral("Annotations + images (dataset)"), this);
+    annotationsRadio_->setToolTip(QStringLiteral("Export annotation data only"));
+    datasetRadio_->setToolTip(QStringLiteral("Export annotations together with images"));
     annotationsRadio_->setChecked(true);
     auto* modeRow = new QHBoxLayout;
+    auto* annotationsIcon = new QLabel(this);
+    annotationsIcon->setPixmap(style()->standardIcon(QStyle::SP_FileIcon).pixmap(16, 16));
+    annotationsIcon->setAccessibleName(QStringLiteral("Annotation file"));
+    auto* datasetIcon = new QLabel(this);
+    datasetIcon->setPixmap(style()->standardIcon(QStyle::SP_DirIcon).pixmap(16, 16));
+    datasetIcon->setAccessibleName(QStringLiteral("Dataset archive"));
+    modeRow->addWidget(annotationsIcon);
     modeRow->addWidget(annotationsRadio_);
+    modeRow->addWidget(datasetIcon);
     modeRow->addWidget(datasetRadio_);
     modeRow->addStretch();
     form->addRow(QStringLiteral("Export"), modeRow);
@@ -46,7 +58,9 @@ ExportDialog::ExportDialog(AnnotationsApi* annotations, MediaApi* media, ServerA
     form->addRow(QStringLiteral("Format"), formatCombo_);
 
     pathEdit_ = new QLineEdit(this);
-    auto* browse = new QPushButton(QStringLiteral("…"), this);
+    auto* browse = new QPushButton(this);
+    browse->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
+    browse->setToolTip(QStringLiteral("Choose export file"));
     auto* pathRow = new QHBoxLayout;
     pathRow->addWidget(pathEdit_, 1);
     pathRow->addWidget(browse);
@@ -59,6 +73,7 @@ ExportDialog::ExportDialog(AnnotationsApi* annotations, MediaApi* media, ServerA
 
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, this);
     exportButton_ = buttons->addButton(QStringLiteral("Export"), QDialogButtonBox::ActionRole);
+    exportButton_->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
     layout->addWidget(buttons);
 
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -151,24 +166,31 @@ void ExportDialog::exportNow()
     exportButton_->setEnabled(false);
     statusLabel_->setText(QStringLiteral("Exporting…"));
 
-    auto finish = [this, path](Result<QByteArray> result) {
-        exportButton_->setEnabled(true);
+    const QPointer<ExportDialog> dialog(this);
+    Finish finish = [dialog, path](Result<QByteArray> result) {
+        if (!dialog) {
+            return;
+        }
+        dialog->exportButton_->setEnabled(true);
         if (!result) {
-            statusLabel_->setText(QStringLiteral("Export failed: ") + result.error().toString());
+            dialog->statusLabel_->setText(QStringLiteral("Export failed: ") +
+                                          result.error().toString());
             return;
         }
         QFile file(path);
         if (!file.open(QIODevice::WriteOnly)) {
-            statusLabel_->setText(QStringLiteral("Cannot write: ") + path);
+            dialog->statusLabel_->setText(QStringLiteral("Cannot write: ") + path);
             return;
         }
         if (file.write(*result) != result->size() || !file.flush()) {
-            statusLabel_->setText(QStringLiteral("Could not write the complete export."));
+            dialog->statusLabel_->setText(
+                QStringLiteral("Could not write the complete export."));
             return;
         }
         file.close();
-        statusLabel_->setText(QStringLiteral("Saved %1 (%2 bytes)").arg(path).arg(result->size()));
-        QMessageBox::information(this, QStringLiteral("Export"),
+        dialog->statusLabel_->setText(
+            QStringLiteral("Saved %1 (%2 bytes)").arg(path).arg(result->size()));
+        QMessageBox::information(dialog, QStringLiteral("Export"),
                                  QStringLiteral("Export saved to:\n") + path);
     };
 
@@ -179,37 +201,56 @@ void ExportDialog::exportNow()
 
     statusLabel_->setText(QStringLiteral("Starting dataset export…"));
     media_->startJobDatasetExport(job_.id, format, true,
-                                  [this, finish](Result<QString> requestId) {
+                                  [dialog, finish](Result<QString> requestId) {
+        if (!dialog) {
+            return;
+        }
         if (!requestId) {
             finish(requestId.error());
             return;
         }
+        dialog->pollDataset(*requestId, 0, finish);
+    });
+}
 
-        auto poll = std::make_shared<std::function<void()>>();
-        *poll = [this, finish, requestId = *requestId, poll]() {
-            server_->request(requestId, [this, finish, poll](Result<RequestState> result) {
-                if (!result) {
-                    finish(result.error());
-                    return;
-                }
-                if (result->failed()) {
-                    finish(ApiError(ErrorKind::Server,
-                                    result->message.isEmpty()
-                                        ? QStringLiteral("CVAT dataset export failed")
-                                        : result->message));
-                    return;
-                }
-                if (!result->finished()) {
-                    statusLabel_->setText(QStringLiteral("Exporting… %1%")
+void ExportDialog::pollDataset(const QString& requestId, int attempt, Finish finish)
+{
+    constexpr int maxAttempts = 900;
+    if (attempt >= maxAttempts) {
+        finish(ApiError(ErrorKind::Timeout,
+                        QStringLiteral("Dataset export timed out after 900 attempts")));
+        return;
+    }
+
+    const QPointer<ExportDialog> dialog(this);
+    server_->request(requestId, [dialog, requestId, attempt, finish](
+                                      Result<RequestState> result) {
+        if (!dialog) {
+            return;
+        }
+        if (!result) {
+            finish(result.error());
+            return;
+        }
+        if (result->failed()) {
+            finish(ApiError(ErrorKind::Server,
+                            result->message.isEmpty()
+                                ? QStringLiteral("CVAT dataset export failed")
+                                : result->message));
+            return;
+        }
+        if (!result->finished()) {
+            dialog->statusLabel_->setText(QStringLiteral("Exporting… %1%")
                                               .arg(static_cast<int>(result->progress)));
-                    QTimer::singleShot(1000, this, [poll]() { (*poll)(); });
-                    return;
+            QTimer::singleShot(1000, dialog, [dialog, requestId, attempt, finish]() {
+                if (dialog) {
+                    dialog->pollDataset(requestId, attempt + 1, finish);
                 }
-                statusLabel_->setText(QStringLiteral("Downloading exported dataset…"));
-                media_->downloadResultUrl(result->resultUrl, finish);
             });
-        };
-        (*poll)();
+            return;
+        }
+        dialog->statusLabel_->setText(QStringLiteral("Downloading exported dataset…"));
+        dialog->media_->downloadResultUrl(result->resultUrl, finish);
     });
 }
 

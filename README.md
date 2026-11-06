@@ -10,8 +10,10 @@ The native UI is intentionally non-administrative: projects, tasks, and jobs
 are fetched and browsed read-only; users open existing jobs, select existing
 CVAT label classes, draw rectangle annotations, edit or delete selected
 annotations, and save changes through CVAT's annotation API. Project/task/job/
-label creation, mutation, deletion, dataset export, and task upload controls
-are not part of the application build.
+label creation, mutation, deletion, and task upload controls are not part of the
+application build. An export dialog source file contains annotation and dataset
+export flows, but it is excluded from the CMake target and has no UI entry point;
+dataset export is therefore not reachable in the application.
 
 ## Current status
 
@@ -20,7 +22,7 @@ Arch Linux workstation. The source tree contains API modules for
 authentication, users, projects, tasks, jobs, annotations, labels, media and
 server information, plus the first native annotation canvas and settings UI.
 
-The current test suite contains 25 CTest-discovered cases covering result
+The current test suite contains 28 CTest-discovered cases covering result
 handling, API request behavior, annotation serialization, geometry, local
 storage and frame caching. Network-facing tests require the local test server
 to finish before their result can be assessed; see `BUILD.md`.

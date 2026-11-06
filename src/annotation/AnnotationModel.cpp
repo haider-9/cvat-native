@@ -4,6 +4,8 @@
 
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QHash>
+#include <QUndoCommand>
 
 #include <algorithm>
 #include <utility>
@@ -11,8 +13,6 @@
 namespace cvat {
 
 namespace {
-
-constexpr int kUndoLimit = 80;
 
 void assignLocalIds(Shape& shape, int& nextId)
 {
@@ -119,9 +119,96 @@ bool differs(const Shape& a, const Shape& b) { return !(a == b); }
 bool differs(const Track& a, const Track& b) { return !(a == b); }
 bool differs(const Tag& a, const Tag& b) { return !(a == b); }
 
+template <typename T, typename KeyForItem, typename AssignDelta>
+void appendDeltas(const QVector<T>& before, const QVector<T>& after,
+                  KeyForItem keyForItem, AssignDelta assignDelta,
+                  QVector<ShapeDelta>& deltas)
+{
+    QHash<QString, int> beforeIndexes;
+    QHash<QString, int> afterIndexes;
+    QSet<QString> keys;
+    for (int i = 0; i < before.size(); ++i) {
+        const QString key = keyForItem(before[i]);
+        beforeIndexes.insert(key, i);
+        keys.insert(key);
+    }
+    for (int i = 0; i < after.size(); ++i) {
+        const QString key = keyForItem(after[i]);
+        afterIndexes.insert(key, i);
+        keys.insert(key);
+    }
+    for (const QString& key : keys) {
+        const int beforeIndex = beforeIndexes.value(key, -1);
+        const int afterIndex = afterIndexes.value(key, -1);
+        std::optional<T> beforeValue;
+        std::optional<T> afterValue;
+        if (beforeIndex >= 0) beforeValue = before[beforeIndex];
+        if (afterIndex >= 0) afterValue = after[afterIndex];
+        if (beforeValue == afterValue) {
+            continue;
+        }
+        ShapeDelta delta;
+        delta.key = key;
+        delta.beforeIndex = beforeIndex;
+        delta.afterIndex = afterIndex;
+        assignDelta(delta, beforeValue, afterValue);
+        deltas.push_back(std::move(delta));
+    }
+}
+
+QVector<ShapeDelta> makeDeltas(const LabeledData& before, const LabeledData& after)
+{
+    QVector<ShapeDelta> deltas;
+    appendDeltas(before.shapes, after.shapes,
+                 [](const Shape& shape) {
+        return QStringLiteral("s:%1").arg(shape.id.value_or(0));
+    }, [](ShapeDelta& delta, const std::optional<Shape>& oldValue,
+         const std::optional<Shape>& newValue) {
+        delta.before = oldValue;
+        delta.after = newValue;
+    }, deltas);
+    appendDeltas(before.tracks, after.tracks,
+                 [](const Track& track) {
+        return QStringLiteral("t:%1").arg(track.id.value_or(0));
+    }, [](ShapeDelta& delta, const std::optional<Track>& oldValue,
+         const std::optional<Track>& newValue) {
+        delta.beforeTrack = oldValue;
+        delta.afterTrack = newValue;
+    }, deltas);
+    appendDeltas(before.tags, after.tags,
+                 [](const Tag& tag) {
+        return QStringLiteral("g:%1").arg(tag.id.value_or(0));
+    }, [](ShapeDelta& delta, const std::optional<Tag>& oldValue,
+         const std::optional<Tag>& newValue) {
+        delta.beforeTag = oldValue;
+        delta.afterTag = newValue;
+    }, deltas);
+    return deltas;
+}
+
 } // namespace
 
-AnnotationModel::AnnotationModel(QObject* parent) : QObject(parent) {}
+class ShapeChangeCommand : public QUndoCommand {
+public:
+    ShapeChangeCommand(AnnotationModel* model, QVector<ShapeDelta> deltas)
+        : model_(model), deltas_(std::move(deltas))
+    {
+    }
+
+    void undo() override { model_->applyDeltas(deltas_, true); }
+    void redo() override { model_->applyDeltas(deltas_, false); }
+
+private:
+    AnnotationModel* model_;
+    QVector<ShapeDelta> deltas_;
+};
+
+AnnotationModel::AnnotationModel(QObject* parent) : QObject(parent)
+{
+    undoStack_.setUndoLimit(80);
+    connect(&undoStack_, &QUndoStack::indexChanged, this,
+            [this]() { emit undoStackChanged(); });
+}
 
 void AnnotationModel::setLabels(const QVector<Label>& labels)
 {
@@ -152,8 +239,8 @@ void AnnotationModel::load(const LabeledData& data, int frame)
         assignLocalIds(tag, nextLocalId_);
     }
     synced_ = data_;
-    undo_.clear();
-    redo_.clear();
+    ++revision_;
+    undoStack_.clear();
     selection_.clear();
     currentFrame_ = std::max(0, frame);
     setDirty(false);
@@ -167,8 +254,8 @@ void AnnotationModel::reset()
 {
     data_ = {};
     synced_ = {};
-    undo_.clear();
-    redo_.clear();
+    ++revision_;
+    undoStack_.clear();
     selection_.clear();
     nextLocalId_ = -1;
     currentFrame_ = 0;
@@ -194,18 +281,82 @@ void AnnotationModel::setCurrentFrame(int frame)
 
 void AnnotationModel::beginMutation()
 {
-    undo_.push_back(data_);
-    if (undo_.size() > kUndoLimit) {
-        undo_.removeFirst();
-    }
-    redo_.clear();
+    mutationBefore_ = data_;
 }
 
 void AnnotationModel::endMutation()
 {
+    const QVector<ShapeDelta> deltas = makeDeltas(mutationBefore_, data_);
+    mutationBefore_ = {};
+    if (deltas.isEmpty()) {
+        return;
+    }
+    ++revision_;
+    undoStack_.push(new ShapeChangeCommand(this, deltas));
     setDirty(true);
     emit changed();
-    emit undoStackChanged();
+}
+
+void AnnotationModel::applyDeltas(const QVector<ShapeDelta>& deltas, bool reverse)
+{
+    QVector<ShapeDelta> ordered = deltas;
+    std::sort(ordered.begin(), ordered.end(), [reverse](const ShapeDelta& a,
+                                                         const ShapeDelta& b) {
+        const int aIndex = reverse ? a.beforeIndex : a.afterIndex;
+        const int bIndex = reverse ? b.beforeIndex : b.afterIndex;
+        return aIndex < bIndex;
+    });
+
+    bool changedValue = false;
+    auto apply = [&changedValue](auto& items, const QString& key, const auto& desired,
+                                 int index, auto keyForItem) {
+        auto it = std::find_if(items.begin(), items.end(), [&](const auto& item) {
+            return keyForItem(item) == key;
+        });
+        if (it != items.end() && desired.has_value() && *it == *desired) {
+            return;
+        }
+        if (it != items.end()) {
+            items.erase(it);
+            changedValue = true;
+        }
+        if (desired.has_value()) {
+            const int insertionIndex = std::clamp(index, 0, static_cast<int>(items.size()));
+            items.insert(insertionIndex, *desired);
+            changedValue = true;
+        }
+    };
+
+    for (const auto& delta : ordered) {
+        if (delta.key.startsWith(QStringLiteral("s:"))) {
+            apply(data_.shapes, delta.key, reverse ? delta.before : delta.after,
+                  reverse ? delta.beforeIndex : delta.afterIndex,
+                  [](const Shape& shape) {
+                return QStringLiteral("s:%1").arg(shape.id.value_or(0));
+            });
+        } else if (delta.key.startsWith(QStringLiteral("t:"))) {
+            apply(data_.tracks, delta.key,
+                  reverse ? delta.beforeTrack : delta.afterTrack,
+                  reverse ? delta.beforeIndex : delta.afterIndex,
+                  [](const Track& track) {
+                return QStringLiteral("t:%1").arg(track.id.value_or(0));
+            });
+        } else if (delta.key.startsWith(QStringLiteral("g:"))) {
+            apply(data_.tags, delta.key, reverse ? delta.beforeTag : delta.afterTag,
+                  reverse ? delta.beforeIndex : delta.afterIndex,
+                  [](const Tag& tag) {
+                return QStringLiteral("g:%1").arg(tag.id.value_or(0));
+            });
+        }
+    }
+    if (!changedValue) {
+        return;
+    }
+    ++revision_;
+    selection_.clear();
+    setDirty(true);
+    emit changed();
+    emit selectionChanged();
 }
 
 void AnnotationModel::setDirty(bool dirty)
@@ -327,11 +478,12 @@ bool AnnotationModel::updateVisibleShape(const QString& key, const Shape& shape)
     const int id = key.mid(2).toInt();
 
     if (kind == QLatin1Char('s')) {
+        beginMutation();
         Shape* target = shapeById(id);
         if (!target) {
+            mutationBefore_ = {};
             return false;
         }
-        beginMutation();
         const std::optional<int> persistedId = target->id;
         *target = shape;
         target->id = persistedId;
@@ -340,11 +492,12 @@ bool AnnotationModel::updateVisibleShape(const QString& key, const Shape& shape)
         return true;
     }
     if (kind == QLatin1Char('t')) {
+        beginMutation();
         Track* track = trackById(id);
         if (!track) {
+            mutationBefore_ = {};
             return false;
         }
-        beginMutation();
         TrackedShape replacement;
         replacement.type = shape.type;
         replacement.points = shape.points;
@@ -417,7 +570,6 @@ bool AnnotationModel::removeObjects(const QSet<QString>& keys)
         }
     }
     if (!removed) {
-        undo_.removeLast();
         return false;
     }
     for (const auto& key : keys) {
@@ -454,7 +606,6 @@ bool AnnotationModel::setObjectLabel(const QString& key, int labelId)
         }
     }
     if (!changedValue) {
-        undo_.removeLast();
         return false;
     }
     endMutation();
@@ -494,7 +645,6 @@ bool AnnotationModel::setObjectAttributes(const QString& key,
         }
     }
     if (!changedValue) {
-        undo_.removeLast();
         return false;
     }
     endMutation();
@@ -527,7 +677,6 @@ bool AnnotationModel::setObjectOccluded(const QString& key, bool occluded)
         }
     }
     if (!changedValue) {
-        undo_.removeLast();
         return false;
     }
     endMutation();
@@ -677,31 +826,19 @@ bool AnnotationModel::PatchSet::hasRemove() const
 
 bool AnnotationModel::undo()
 {
-    if (undo_.isEmpty()) {
+    if (!undoStack_.canUndo()) {
         return false;
     }
-    redo_.push_back(data_);
-    data_ = undo_.takeLast();
-    selection_.clear();
-    setDirty(true);
-    emit changed();
-    emit selectionChanged();
-    emit undoStackChanged();
+    undoStack_.undo();
     return true;
 }
 
 bool AnnotationModel::redo()
 {
-    if (redo_.isEmpty()) {
+    if (!undoStack_.canRedo()) {
         return false;
     }
-    undo_.push_back(data_);
-    data_ = redo_.takeLast();
-    selection_.clear();
-    setDirty(true);
-    emit changed();
-    emit selectionChanged();
-    emit undoStackChanged();
+    undoStack_.redo();
     return true;
 }
 

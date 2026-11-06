@@ -50,6 +50,7 @@ void MediaService::decodeAsync(const QByteArray& bytes, const FrameCache::Key& k
         const QImage image = watcher->result();
         watcher->deleteLater();
         if (image.isNull()) {
+            cache_->removeDisk(key);
             finishWaiters(id, ApiError(ErrorKind::Parse,
                                        QStringLiteral("The server returned an undecodable frame")));
             return;

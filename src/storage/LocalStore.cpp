@@ -433,6 +433,22 @@ bool LocalStore::pruneSnapshots(int olderThanDays, int keepPerJob)
     return true;
 }
 
+bool LocalStore::prunePendingEdits(int olderThanDays)
+{
+    if (!isOpen()) {
+        return false;
+    }
+    const QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(-olderThanDays);
+    QSqlQuery query(db_);
+    query.prepare(QStringLiteral("DELETE FROM pending_edits WHERE created_at < ?"));
+    query.addBindValue(cutoff.toString(Qt::ISODateWithMs));
+    if (!query.exec()) {
+        error_ = query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
 bool LocalStore::transaction()
 {
     if (!isOpen()) {

@@ -7,6 +7,7 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
+#include <QGraphicsSimpleTextItem>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainterPath>
@@ -74,17 +75,211 @@ void AnnotationCanvas::setFrameImage(const QImage& image)
 void AnnotationCanvas::setTool(CanvasTool tool)
 {
     clearPendingCreation();
+    clearTemplatePlacement();
     tool_ = tool;
     switch (tool_) {
-    case CanvasTool::Select: setCursor(Qt::ArrowCursor); break;
-    case CanvasTool::Rectangle: setCursor(Qt::CrossCursor); break;
-    default: setCursor(Qt::CrossCursor); break;
+    case CanvasTool::Select:
+        setCursor(Qt::ArrowCursor);
+        break;
+    case CanvasTool::Rectangle:
+        setCursor(Qt::CrossCursor);
+        emit statusMessage(QStringLiteral("Click to place first corner of rectangle (Esc to cancel)"));
+        break;
+    default:
+        setCursor(Qt::CrossCursor);
+        break;
     }
 }
 
 void AnnotationCanvas::setActiveLabel(int labelId)
 {
     activeLabel_ = labelId;
+}
+
+bool AnnotationCanvas::isPlacingTemplate() const
+{
+    return interaction_ == Interaction::PlaceTemplate;
+}
+
+void AnnotationCanvas::startTemplatePlacement(const CopiedTemplate& tmpl)
+{
+    clearPendingCreation();
+    clearTemplatePlacement();
+    templateData_ = tmpl;
+    activeLabel_ = tmpl.labelId;
+    interaction_ = Interaction::PlaceTemplate;
+    setCursor(Qt::CrossCursor);
+
+    const QPoint mousePos = mapFromGlobal(QCursor::pos());
+    const QPointF scenePos = (viewport()->rect().contains(mousePos))
+        ? mapToScene(mousePos)
+        : mapToScene(viewport()->rect().center());
+    updateTemplatePreview(scenePos);
+}
+
+void AnnotationCanvas::cancelTemplatePlacement()
+{
+    clearTemplatePlacement();
+    interaction_ = Interaction::None;
+    setCursor(tool_ == CanvasTool::Select ? Qt::ArrowCursor : Qt::CrossCursor);
+    emit statusMessage(QStringLiteral("Placement cancelled"));
+}
+
+void AnnotationCanvas::clearTemplatePlacement()
+{
+    clearTemplatePreview();
+    templateData_ = {};
+    if (interaction_ == Interaction::PlaceTemplate) {
+        interaction_ = Interaction::None;
+    }
+}
+
+void AnnotationCanvas::clearTemplatePreview()
+{
+    if (templateRectPreview_) {
+        scene_->removeItem(templateRectPreview_);
+        delete templateRectPreview_;
+        templateRectPreview_ = nullptr;
+    }
+    if (templatePathPreview_) {
+        scene_->removeItem(templatePathPreview_);
+        delete templatePathPreview_;
+        templatePathPreview_ = nullptr;
+    }
+    if (templateBadgeBg_) {
+        scene_->removeItem(templateBadgeBg_);
+        delete templateBadgeBg_;
+        templateBadgeBg_ = nullptr;
+    }
+    if (templateBadgeText_) {
+        scene_->removeItem(templateBadgeText_);
+        delete templateBadgeText_;
+        templateBadgeText_ = nullptr;
+    }
+}
+
+void AnnotationCanvas::updateTemplatePreview(const QPointF& center)
+{
+    if (interaction_ != Interaction::PlaceTemplate || !templateData_.valid) {
+        return;
+    }
+    const double w = templateData_.width;
+    const double h = templateData_.height;
+    const double left = center.x() - w / 2.0;
+    const double top = center.y() - h / 2.0;
+    const QRectF rect(left, top, w, h);
+
+    if (templateData_.shapeType == QStringLiteral("rectangle") ||
+        templateData_.shapeType == QStringLiteral("ellipse")) {
+        if (!templateRectPreview_) {
+            QPen pen(templateData_.color, 2, Qt::DashLine);
+            pen.setCosmetic(true);
+            templateRectPreview_ = scene_->addRect(
+                rect, pen,
+                QColor(templateData_.color.red(), templateData_.color.green(),
+                       templateData_.color.blue(), 55));
+            templateRectPreview_->setZValue(20000);
+        } else {
+            templateRectPreview_->setRect(rect);
+        }
+    } else {
+        QPainterPath path;
+        if (!templateData_.relativePoints.isEmpty()) {
+            path.moveTo(center.x() + templateData_.relativePoints[0],
+                        center.y() + templateData_.relativePoints[1]);
+            for (int i = 2; i + 1 < templateData_.relativePoints.size(); i += 2) {
+                path.lineTo(center.x() + templateData_.relativePoints[i],
+                            center.y() + templateData_.relativePoints[i + 1]);
+            }
+            path.closeSubpath();
+        }
+        if (!templatePathPreview_) {
+            QPen pen(templateData_.color, 2, Qt::DashLine);
+            pen.setCosmetic(true);
+            templatePathPreview_ = scene_->addPath(
+                path, pen,
+                QColor(templateData_.color.red(), templateData_.color.green(),
+                       templateData_.color.blue(), 55));
+            templatePathPreview_->setZValue(20000);
+        } else {
+            templatePathPreview_->setPath(path);
+        }
+    }
+
+    const QString badgeStr = QStringLiteral("%1 · %2 × %3 px")
+        .arg(templateData_.labelName)
+        .arg(static_cast<int>(std::round(w)))
+        .arg(static_cast<int>(std::round(h)));
+
+    if (!templateBadgeText_) {
+        templateBadgeText_ = scene_->addSimpleText(badgeStr);
+        templateBadgeText_->setZValue(20002);
+        QFont f = templateBadgeText_->font();
+        f.setPixelSize(11);
+        f.setBold(true);
+        templateBadgeText_->setFont(f);
+        templateBadgeText_->setBrush(Qt::white);
+    } else {
+        templateBadgeText_->setText(badgeStr);
+    }
+
+    if (!templateBadgeBg_) {
+        templateBadgeBg_ = scene_->addRect(QRectF());
+        templateBadgeBg_->setZValue(20001);
+        templateBadgeBg_->setBrush(QColor(15, 23, 42, 225));
+        templateBadgeBg_->setPen(QPen(templateData_.color, 1));
+    }
+
+    const QRectF tRect = templateBadgeText_->boundingRect();
+    const double badgeW = tRect.width() + 12;
+    const double badgeH = tRect.height() + 4;
+    const double badgeX = center.x() - badgeW / 2.0;
+    const double badgeY = top + h + 6;
+    templateBadgeBg_->setRect(badgeX, badgeY, badgeW, badgeH);
+    templateBadgeText_->setPos(badgeX + 6, badgeY + 2);
+}
+
+void AnnotationCanvas::placeTemplateAt(const QPointF& pos)
+{
+    if (!model_ || !templateData_.valid) {
+        clearTemplatePlacement();
+        return;
+    }
+    cvat::Shape shape;
+    shape.labelId = templateData_.labelId;
+    shape.type = templateData_.shapeType;
+    shape.frame = model_->currentFrame();
+    shape.attributes = templateData_.attributes;
+    shape.occluded = templateData_.occluded;
+    shape.rotation = templateData_.rotation;
+    shape.zOrder = model_->nextZOrder();
+
+    if (shape.type == QStringLiteral("rectangle") || shape.type == QStringLiteral("ellipse") ||
+        shape.type == QStringLiteral("mask")) {
+        const double left = pos.x() - templateData_.width / 2.0;
+        const double top = pos.y() - templateData_.height / 2.0;
+        const double right = left + templateData_.width;
+        const double bottom = top + templateData_.height;
+        shape.points = {left, top, right, bottom};
+    } else {
+        shape.points.clear();
+        for (int i = 0; i + 1 < templateData_.relativePoints.size(); i += 2) {
+            shape.points.push_back(pos.x() + templateData_.relativePoints[i]);
+            shape.points.push_back(pos.y() + templateData_.relativePoints[i + 1]);
+        }
+    }
+
+    const QString placedName = templateData_.labelName;
+    const int placedW = static_cast<int>(std::round(templateData_.width));
+    const int placedH = static_cast<int>(std::round(templateData_.height));
+
+    clearTemplatePlacement();
+    model_->addShape(shape);
+
+    setTool(CanvasTool::Select);
+    emit toolChanged(CanvasTool::Select);
+    emit statusMessage(QStringLiteral("Placed %1 [%2 × %3 px]").arg(placedName).arg(placedW).arg(placedH));
+    emit shapeCreated(model_->selection().isEmpty() ? QString() : *model_->selection().begin());
 }
 
 void AnnotationCanvas::refreshItems()
@@ -149,16 +344,55 @@ cvat::Shape AnnotationCanvas::shapeAtScenePoint(const QPointF& point) const
 
 void AnnotationCanvas::updateRectanglePreview(const QPointF& start, const QPointF& end)
 {
+    const QRectF rect = QRectF(start, end).normalized();
+    QColor color(255, 196, 0);
+    if (model_) {
+        if (const Label* lbl = model_->label(activeLabel_)) {
+            color = QColor(lbl->color);
+        }
+    }
     if (!rectanglePreview_) {
-        QPen pen(QColor(255, 196, 0));
+        QPen pen(color, 2, Qt::DashLine);
         pen.setCosmetic(true);
-        pen.setStyle(Qt::DashLine);
-        rectanglePreview_ = scene_->addRect(QRectF(start, end), pen,
-                                            QColor(255, 196, 0, 30));
+        rectanglePreview_ = scene_->addRect(rect, pen,
+                                            QColor(color.red(), color.green(), color.blue(), 35));
         rectanglePreview_->setZValue(10000);
     } else {
-        rectanglePreview_->setRect(QRectF(start, end).normalized());
+        rectanglePreview_->setRect(rect);
     }
+
+    const QString dimText = QStringLiteral("%1 × %2 px")
+        .arg(static_cast<int>(std::round(rect.width())))
+        .arg(static_cast<int>(std::round(rect.height())));
+
+    if (!rectangleBadgeText_) {
+        rectangleBadgeText_ = scene_->addSimpleText(dimText);
+        rectangleBadgeText_->setZValue(10002);
+        QFont f = rectangleBadgeText_->font();
+        f.setPixelSize(11);
+        f.setBold(true);
+        rectangleBadgeText_->setFont(f);
+        rectangleBadgeText_->setBrush(Qt::white);
+    } else {
+        rectangleBadgeText_->setText(dimText);
+    }
+
+    if (!rectangleBadgeBg_) {
+        rectangleBadgeBg_ = scene_->addRect(QRectF());
+        rectangleBadgeBg_->setZValue(10001);
+        rectangleBadgeBg_->setBrush(QColor(15, 23, 42, 220));
+        rectangleBadgeBg_->setPen(QPen(color, 1));
+    }
+
+    const QRectF tRect = rectangleBadgeText_->boundingRect();
+    const double badgeW = tRect.width() + 10;
+    const double badgeH = tRect.height() + 4;
+    const double badgeX = rect.center().x() - badgeW / 2.0;
+    const double badgeY = rect.bottom() + 4;
+    rectangleBadgeBg_->setRect(badgeX, badgeY, badgeW, badgeH);
+    rectangleBadgeText_->setPos(badgeX + 5, badgeY + 2);
+
+    emit statusMessage(QStringLiteral("Rectangle: %1 — click opposite corner to finish (Esc to cancel)").arg(dimText));
 }
 
 void AnnotationCanvas::createRectangle(const QPointF& start, const QPointF& end)
@@ -177,7 +411,11 @@ void AnnotationCanvas::createRectangle(const QPointF& start, const QPointF& end)
     shape.type = QStringLiteral("rectangle");
     shape.points = {rect.left(), rect.top(), rect.right(), rect.bottom()};
     shape.frame = model_->currentFrame();
+    shape.zOrder = model_->nextZOrder();
     model_->addShape(shape);
+    emit statusMessage(QStringLiteral("Created rectangle: %1 × %2 px")
+        .arg(static_cast<int>(std::round(rect.width())))
+        .arg(static_cast<int>(std::round(rect.height()))));
     emit shapeCreated(model_->selection().isEmpty() ? QString() : *model_->selection().begin());
 }
 
@@ -210,6 +448,16 @@ void AnnotationCanvas::clearPendingCreation()
         scene_->removeItem(rectanglePreview_);
         delete rectanglePreview_;
         rectanglePreview_ = nullptr;
+    }
+    if (rectangleBadgeBg_) {
+        scene_->removeItem(rectangleBadgeBg_);
+        delete rectangleBadgeBg_;
+        rectangleBadgeBg_ = nullptr;
+    }
+    if (rectangleBadgeText_) {
+        scene_->removeItem(rectangleBadgeText_);
+        delete rectangleBadgeText_;
+        rectangleBadgeText_ = nullptr;
     }
     if (polygonPreview_) {
         scene_->removeItem(polygonPreview_);
@@ -320,7 +568,8 @@ void AnnotationCanvas::applyResize(const QPointF& scenePosition)
 
 void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::MiddleButton) {
+    if (event->button() == Qt::MiddleButton || (spacePanning_ && event->button() == Qt::LeftButton)) {
+        interactionBeforePan_ = interaction_;
         interaction_ = Interaction::Pan;
         panLast_ = event->position();
         setCursor(Qt::ClosedHandCursor);
@@ -330,6 +579,19 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
     const QPointF scenePosition = mapToScene(event->position().toPoint());
 
     if (event->button() == Qt::RightButton) {
+        if (interaction_ == Interaction::PlaceTemplate) {
+            cancelTemplatePlacement();
+            return;
+        }
+        if (interaction_ == Interaction::CreateRectangle) {
+            clearPendingCreation();
+            interaction_ = Interaction::None;
+            setTool(CanvasTool::Select);
+            emit toolChanged(CanvasTool::Select);
+            setCursor(Qt::ArrowCursor);
+            emit statusMessage(QStringLiteral("Rectangle creation cancelled"));
+            return;
+        }
         if (!pendingPoints_.isEmpty()) {
             finishPolygon();
         }
@@ -341,12 +603,23 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
         return;
     }
 
+    if (interaction_ == Interaction::PlaceTemplate) {
+        placeTemplateAt(scenePosition);
+        return;
+    }
+
     if (tool_ == CanvasTool::Select) {
         AnnotationItem* item = annotationAt(scenePosition);
         if (item) {
             beginMoveOrResize(item, scenePosition, event->modifiers() & Qt::ControlModifier);
-        } else if (!(event->modifiers() & Qt::ControlModifier)) {
-            model_->clearSelection();
+        } else {
+            if (!(event->modifiers() & Qt::ControlModifier)) {
+                model_->clearSelection();
+            }
+            interactionBeforePan_ = Interaction::None; // background-click pan: no prior interaction to restore
+            interaction_ = Interaction::Pan;
+            panLast_ = event->position();
+            setCursor(Qt::ClosedHandCursor);
         }
         return;
     }
@@ -362,11 +635,14 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
             interaction_ = Interaction::None;
             clearPendingCreation();
             createRectangle(start, scenePosition);
+            setTool(CanvasTool::Select);
+            emit toolChanged(CanvasTool::Select);
             return;
         }
         interaction_ = Interaction::CreateRectangle;
         creationStart_ = scenePosition;
         updateRectanglePreview(scenePosition, scenePosition);
+        emit statusMessage(QStringLiteral("Click opposite corner to complete rectangle (Esc to cancel)"));
         return;
     }
 
@@ -376,6 +652,7 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
         shape.type = QStringLiteral("points");
         shape.points = {scenePosition.x(), scenePosition.y()};
         shape.frame = model_->currentFrame();
+        shape.zOrder = model_->nextZOrder();
         model_->addShape(shape);
         return;
     }
@@ -408,6 +685,9 @@ void AnnotationCanvas::mouseMoveEvent(QMouseEvent* event)
     case Interaction::CreateRectangle:
         updateRectanglePreview(creationStart_, scenePosition);
         return;
+    case Interaction::PlaceTemplate:
+        updateTemplatePreview(scenePosition);
+        return;
     case Interaction::None:
         break;
     }
@@ -421,8 +701,15 @@ void AnnotationCanvas::mouseMoveEvent(QMouseEvent* event)
     if (tool_ == CanvasTool::Select) {
         AnnotationItem* item = annotationAt(scenePosition);
         if (!item) {
-            setCursor(Qt::ArrowCursor);
+            setCursor(spacePanning_ ? Qt::OpenHandCursor : Qt::ArrowCursor);
+            if (model_ && !model_->selection().isEmpty()) {
+                model_->clearSelection();
+            }
             return;
+        }
+        // Select on hover — no click needed.
+        if (model_ && !model_->selection().contains(item->key())) {
+            model_->selectOnly(item->key());
         }
         const int handle = item->handleAt(item->mapFromScene(scenePosition),
                                           10.0 / std::max(0.05, zoom()));
@@ -436,9 +723,24 @@ void AnnotationCanvas::mouseMoveEvent(QMouseEvent* event)
 
 void AnnotationCanvas::mouseReleaseEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::MiddleButton && interaction_ == Interaction::Pan) {
-        interaction_ = Interaction::None;
-        setCursor(tool_ == CanvasTool::Select ? Qt::ArrowCursor : Qt::CrossCursor);
+    if (interaction_ == Interaction::Pan) {
+        if (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton) {
+            // Restore the interaction that was active before panning started
+            interaction_ = interactionBeforePan_;
+            interactionBeforePan_ = Interaction::None;
+            if (interaction_ == Interaction::PlaceTemplate || interaction_ == Interaction::CreateRectangle) {
+                setCursor(Qt::CrossCursor);
+            } else {
+                setCursor(spacePanning_ ? Qt::OpenHandCursor
+                                        : (tool_ == CanvasTool::Select ? Qt::ArrowCursor : Qt::CrossCursor));
+            }
+            return;
+        }
+    }
+
+    if (interaction_ == Interaction::CreateRectangle) {
+        // Dragging is removed: mouse release NEVER creates a rectangle.
+        // It strictly requires a second click.
         return;
     }
 
@@ -449,7 +751,7 @@ void AnnotationCanvas::mouseReleaseEvent(QMouseEvent* event)
         interaction_ = Interaction::None;
         dragItem_ = nullptr;
         dragHandle_ = -1;
-        setCursor(Qt::ArrowCursor);
+        setCursor(tool_ == CanvasTool::Select ? Qt::ArrowCursor : Qt::CrossCursor);
         if (item && changed) {
             const QString key = item->key();
             model_->updateVisibleShape(key, dragShape_);
@@ -496,10 +798,23 @@ void AnnotationCanvas::zoomAt(const QPoint& viewportPosition, double factor)
 
 void AnnotationCanvas::keyPressEvent(QKeyEvent* event)
 {
+    if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+        spacePanning_ = true;
+        setCursor(Qt::OpenHandCursor);
+        event->accept();
+        return;
+    }
     if (event->key() == Qt::Key_Escape) {
+        if (interaction_ == Interaction::PlaceTemplate) {
+            cancelTemplatePlacement();
+            return;
+        }
         clearPendingCreation();
         interaction_ = Interaction::None;
+        setTool(CanvasTool::Select);
+        emit toolChanged(CanvasTool::Select);
         setCursor(Qt::ArrowCursor);
+        emit statusMessage(QStringLiteral("Ready"));
         return;
     }
     if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
@@ -509,6 +824,26 @@ void AnnotationCanvas::keyPressEvent(QKeyEvent* event)
         }
     }
     QGraphicsView::keyPressEvent(event);
+}
+
+void AnnotationCanvas::keyReleaseEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+        spacePanning_ = false;
+        if (interaction_ == Interaction::Pan) {
+            // Restore the interaction active before Spacebar pan
+            interaction_ = interactionBeforePan_;
+            interactionBeforePan_ = Interaction::None;
+        }
+        if (interaction_ == Interaction::PlaceTemplate || interaction_ == Interaction::CreateRectangle) {
+            setCursor(Qt::CrossCursor);
+        } else {
+            setCursor(tool_ == CanvasTool::Select ? Qt::ArrowCursor : Qt::CrossCursor);
+        }
+        event->accept();
+        return;
+    }
+    QGraphicsView::keyReleaseEvent(event);
 }
 
 void AnnotationCanvas::fitToView()

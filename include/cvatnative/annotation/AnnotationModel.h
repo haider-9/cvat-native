@@ -6,11 +6,26 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <QUndoStack>
 #include <QVector>
 
 #include <optional>
 
 namespace cvat {
+
+struct ShapeDelta {
+    QString key;
+    std::optional<Shape> before;
+    std::optional<Shape> after;
+    std::optional<Track> beforeTrack;
+    std::optional<Track> afterTrack;
+    std::optional<Tag> beforeTag;
+    std::optional<Tag> afterTag;
+    int beforeIndex = -1;
+    int afterIndex = -1;
+};
+
+class ShapeChangeCommand;
 
 // Editable annotation document for one job. The model owns the CVAT
 // LabeledData, selection, undo/redo and the diff against the last synchronized
@@ -47,6 +62,7 @@ public:
 
     [[nodiscard]] const LabeledData& data() const { return data_; }
     [[nodiscard]] const LabeledData& syncedData() const { return synced_; }
+    [[nodiscard]] quint64 revision() const { return revision_; }
 
     [[nodiscard]] int currentFrame() const { return currentFrame_; }
     void setCurrentFrame(int frame);
@@ -70,8 +86,8 @@ public:
     [[nodiscard]] PatchSet buildPatch() const;
     [[nodiscard]] bool hasChanges() const;
 
-    [[nodiscard]] bool canUndo() const { return !undo_.isEmpty(); }
-    [[nodiscard]] bool canRedo() const { return !redo_.isEmpty(); }
+    [[nodiscard]] bool canUndo() const { return undoStack_.canUndo(); }
+    [[nodiscard]] bool canRedo() const { return undoStack_.canRedo(); }
     bool undo();
     bool redo();
 
@@ -94,8 +110,11 @@ signals:
     void undoStackChanged();
 
 private:
+    friend class ShapeChangeCommand;
+
     void beginMutation();
     void endMutation();
+    void applyDeltas(const QVector<ShapeDelta>& deltas, bool reverse);
     void setDirty(bool dirty);
     Shape* shapeById(int id);
     const Shape* shapeById(int id) const;
@@ -107,11 +126,12 @@ private:
     LabeledData data_;
     LabeledData synced_;
     QVector<Label> labels_;
-    QVector<LabeledData> undo_;
-    QVector<LabeledData> redo_;
+    QUndoStack undoStack_;
+    LabeledData mutationBefore_;
     QSet<QString> selection_;
     int currentFrame_ = 0;
     int nextLocalId_ = -1;
+    quint64 revision_ = 0;
     bool dirty_ = false;
 };
 

@@ -107,6 +107,7 @@ void MainWindow::setupServices()
         qCWarning(logApp) << "local cache unavailable:" << storeError;
     } else {
         store_->pruneSnapshots(30, 3);
+        store_->prunePendingEdits(30);
     }
     recovery_ = std::make_unique<RecoveryStore>(store_.get());
 

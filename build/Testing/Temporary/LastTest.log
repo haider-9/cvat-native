@@ -1,10 +1,10 @@
-Start testing: Nov 05 13:02 PKT
+Start testing: Nov 07 20:22 PKT
 ----------------------------------------------------------
-1/25 Testing: Core.VersionMacroIsAvailable
-1/25 Test: Core.VersionMacroIsAvailable
+1/30 Testing: Core.VersionMacroIsAvailable
+1/30 Test: Core.VersionMacroIsAvailable
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Core.VersionMacroIsAvailable" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Core.VersionMacroIsAvailable" start time: Nov 05 13:02 PKT
+"Core.VersionMacroIsAvailable" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Core.VersionMacroIsAvailable
@@ -19,18 +19,18 @@ Note: Google Test filter = Core.VersionMacroIsAvailable
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.04 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Core.VersionMacroIsAvailable" end time: Nov 05 13:02 PKT
+"Core.VersionMacroIsAvailable" end time: Nov 07 20:22 PKT
 "Core.VersionMacroIsAvailable" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-2/25 Testing: Result.HoldsValue
-2/25 Test: Result.HoldsValue
+2/30 Testing: Result.HoldsValue
+2/30 Test: Result.HoldsValue
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Result.HoldsValue" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Result.HoldsValue" start time: Nov 05 13:02 PKT
+"Result.HoldsValue" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Result.HoldsValue
@@ -45,18 +45,18 @@ Note: Google Test filter = Result.HoldsValue
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Result.HoldsValue" end time: Nov 05 13:02 PKT
+"Result.HoldsValue" end time: Nov 07 20:22 PKT
 "Result.HoldsValue" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-3/25 Testing: Result.HoldsError
-3/25 Test: Result.HoldsError
+3/30 Testing: Result.HoldsError
+3/30 Test: Result.HoldsError
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Result.HoldsError" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Result.HoldsError" start time: Nov 05 13:02 PKT
+"Result.HoldsError" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Result.HoldsError
@@ -71,18 +71,18 @@ Note: Google Test filter = Result.HoldsError
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Result.HoldsError" end time: Nov 05 13:02 PKT
+"Result.HoldsError" end time: Nov 07 20:22 PKT
 "Result.HoldsError" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-4/25 Testing: Result.RetryableClassification
-4/25 Test: Result.RetryableClassification
+4/30 Testing: Result.RetryableClassification
+4/30 Test: Result.RetryableClassification
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Result.RetryableClassification" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Result.RetryableClassification" start time: Nov 05 13:02 PKT
+"Result.RetryableClassification" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Result.RetryableClassification
@@ -97,18 +97,18 @@ Note: Google Test filter = Result.RetryableClassification
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Result.RetryableClassification" end time: Nov 05 13:02 PKT
+"Result.RetryableClassification" end time: Nov 07 20:22 PKT
 "Result.RetryableClassification" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-5/25 Testing: ApiClient.ResolveKeepsBasePath
-5/25 Test: ApiClient.ResolveKeepsBasePath
+5/30 Testing: ApiClient.ResolveKeepsBasePath
+5/30 Test: ApiClient.ResolveKeepsBasePath
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=ApiClient.ResolveKeepsBasePath" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"ApiClient.ResolveKeepsBasePath" start time: Nov 05 13:02 PKT
+"ApiClient.ResolveKeepsBasePath" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiClient.ResolveKeepsBasePath
@@ -123,18 +123,18 @@ Note: Google Test filter = ApiClient.ResolveKeepsBasePath
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiClient.ResolveKeepsBasePath" end time: Nov 05 13:02 PKT
+"ApiClient.ResolveKeepsBasePath" end time: Nov 07 20:22 PKT
 "ApiClient.ResolveKeepsBasePath" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-6/25 Testing: ApiClient.GetParsesJsonAndAuthorization
-6/25 Test: ApiClient.GetParsesJsonAndAuthorization
+6/30 Testing: ApiClient.GetParsesJsonAndAuthorization
+6/30 Test: ApiClient.GetParsesJsonAndAuthorization
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=ApiClient.GetParsesJsonAndAuthorization" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"ApiClient.GetParsesJsonAndAuthorization" start time: Nov 05 13:02 PKT
+"ApiClient.GetParsesJsonAndAuthorization" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiClient.GetParsesJsonAndAuthorization
@@ -142,25 +142,25 @@ Note: Google Test filter = ApiClient.GetParsesJsonAndAuthorization
 [----------] Global test environment set-up.
 [----------] 1 test from ApiClient
 [ RUN      ] ApiClient.GetParsesJsonAndAuthorization
-[       OK ] ApiClient.GetParsesJsonAndAuthorization (3 ms)
-[----------] 1 test from ApiClient (3 ms total)
+[       OK ] ApiClient.GetParsesJsonAndAuthorization (5 ms)
+[----------] 1 test from ApiClient (5 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (3 ms total)
+[==========] 1 test from 1 test suite ran. (5 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.03 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiClient.GetParsesJsonAndAuthorization" end time: Nov 05 13:02 PKT
+"ApiClient.GetParsesJsonAndAuthorization" end time: Nov 07 20:22 PKT
 "ApiClient.GetParsesJsonAndAuthorization" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-7/25 Testing: ApiClient.HttpErrorBecomesUnauthorized
-7/25 Test: ApiClient.HttpErrorBecomesUnauthorized
+7/30 Testing: ApiClient.HttpErrorBecomesUnauthorized
+7/30 Test: ApiClient.HttpErrorBecomesUnauthorized
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=ApiClient.HttpErrorBecomesUnauthorized" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"ApiClient.HttpErrorBecomesUnauthorized" start time: Nov 05 13:02 PKT
+"ApiClient.HttpErrorBecomesUnauthorized" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiClient.HttpErrorBecomesUnauthorized
@@ -168,25 +168,25 @@ Note: Google Test filter = ApiClient.HttpErrorBecomesUnauthorized
 [----------] Global test environment set-up.
 [----------] 1 test from ApiClient
 [ RUN      ] ApiClient.HttpErrorBecomesUnauthorized
-[       OK ] ApiClient.HttpErrorBecomesUnauthorized (2 ms)
-[----------] 1 test from ApiClient (2 ms total)
+[       OK ] ApiClient.HttpErrorBecomesUnauthorized (5 ms)
+[----------] 1 test from ApiClient (5 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (2 ms total)
+[==========] 1 test from 1 test suite ran. (5 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiClient.HttpErrorBecomesUnauthorized" end time: Nov 05 13:02 PKT
+"ApiClient.HttpErrorBecomesUnauthorized" end time: Nov 07 20:22 PKT
 "ApiClient.HttpErrorBecomesUnauthorized" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-8/25 Testing: ApiClient.ErrorFromResponseMarksAuth
-8/25 Test: ApiClient.ErrorFromResponseMarksAuth
+8/30 Testing: ApiClient.ErrorFromResponseMarksAuth
+8/30 Test: ApiClient.ErrorFromResponseMarksAuth
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=ApiClient.ErrorFromResponseMarksAuth" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"ApiClient.ErrorFromResponseMarksAuth" start time: Nov 05 13:02 PKT
+"ApiClient.ErrorFromResponseMarksAuth" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = ApiClient.ErrorFromResponseMarksAuth
@@ -201,18 +201,18 @@ Note: Google Test filter = ApiClient.ErrorFromResponseMarksAuth
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"ApiClient.ErrorFromResponseMarksAuth" end time: Nov 05 13:02 PKT
+"ApiClient.ErrorFromResponseMarksAuth" end time: Nov 07 20:22 PKT
 "ApiClient.ErrorFromResponseMarksAuth" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-9/25 Testing: Annotation.ParsesLabeledData
-9/25 Test: Annotation.ParsesLabeledData
+9/30 Testing: Annotation.ParsesLabeledData
+9/30 Test: Annotation.ParsesLabeledData
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Annotation.ParsesLabeledData" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Annotation.ParsesLabeledData" start time: Nov 05 13:02 PKT
+"Annotation.ParsesLabeledData" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Annotation.ParsesLabeledData
@@ -227,18 +227,18 @@ Note: Google Test filter = Annotation.ParsesLabeledData
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.03 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"Annotation.ParsesLabeledData" end time: Nov 05 13:02 PKT
+"Annotation.ParsesLabeledData" end time: Nov 07 20:22 PKT
 "Annotation.ParsesLabeledData" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-10/25 Testing: Annotation.SerializationRoundTrip
-10/25 Test: Annotation.SerializationRoundTrip
+10/30 Testing: Annotation.SerializationRoundTrip
+10/30 Test: Annotation.SerializationRoundTrip
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Annotation.SerializationRoundTrip" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Annotation.SerializationRoundTrip" start time: Nov 05 13:02 PKT
+"Annotation.SerializationRoundTrip" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Annotation.SerializationRoundTrip
@@ -253,18 +253,18 @@ Note: Google Test filter = Annotation.SerializationRoundTrip
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Annotation.SerializationRoundTrip" end time: Nov 05 13:02 PKT
+"Annotation.SerializationRoundTrip" end time: Nov 07 20:22 PKT
 "Annotation.SerializationRoundTrip" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-11/25 Testing: Annotation.TrackInterpolates
-11/25 Test: Annotation.TrackInterpolates
+11/30 Testing: Annotation.TrackInterpolates
+11/30 Test: Annotation.TrackInterpolates
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Annotation.TrackInterpolates" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Annotation.TrackInterpolates" start time: Nov 05 13:02 PKT
+"Annotation.TrackInterpolates" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Annotation.TrackInterpolates
@@ -279,18 +279,18 @@ Note: Google Test filter = Annotation.TrackInterpolates
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"Annotation.TrackInterpolates" end time: Nov 05 13:02 PKT
+"Annotation.TrackInterpolates" end time: Nov 07 20:22 PKT
 "Annotation.TrackInterpolates" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-12/25 Testing: Annotation.ShapeTypes
-12/25 Test: Annotation.ShapeTypes
+12/30 Testing: Annotation.ShapeTypes
+12/30 Test: Annotation.ShapeTypes
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Annotation.ShapeTypes" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Annotation.ShapeTypes" start time: Nov 05 13:02 PKT
+"Annotation.ShapeTypes" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Annotation.ShapeTypes
@@ -305,18 +305,70 @@ Note: Google Test filter = Annotation.ShapeTypes
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.05 sec
 ----------------------------------------------------------
 Test Passed.
-"Annotation.ShapeTypes" end time: Nov 05 13:02 PKT
+"Annotation.ShapeTypes" end time: Nov 07 20:22 PKT
 "Annotation.ShapeTypes" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-13/25 Testing: Geometry.BoundingRect
-13/25 Test: Geometry.BoundingRect
+13/30 Testing: Annotation.CopiedTemplateDimensionAndPlacement
+13/30 Test: Annotation.CopiedTemplateDimensionAndPlacement
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Annotation.CopiedTemplateDimensionAndPlacement" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"Annotation.CopiedTemplateDimensionAndPlacement" start time: Nov 07 20:22 PKT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = Annotation.CopiedTemplateDimensionAndPlacement
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Annotation
+[ RUN      ] Annotation.CopiedTemplateDimensionAndPlacement
+[       OK ] Annotation.CopiedTemplateDimensionAndPlacement (0 ms)
+[----------] 1 test from Annotation (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"Annotation.CopiedTemplateDimensionAndPlacement" end time: Nov 07 20:22 PKT
+"Annotation.CopiedTemplateDimensionAndPlacement" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/30 Testing: AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty
+14/30 Test: AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty" start time: Nov 07 20:22 PKT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from AnnotationModel
+[ RUN      ] AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty
+[       OK ] AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty (0 ms)
+[----------] 1 test from AnnotationModel (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty" end time: Nov 07 20:22 PKT
+"AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/30 Testing: Geometry.BoundingRect
+15/30 Test: Geometry.BoundingRect
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Geometry.BoundingRect" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Geometry.BoundingRect" start time: Nov 05 13:02 PKT
+"Geometry.BoundingRect" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Geometry.BoundingRect
@@ -331,18 +383,18 @@ Note: Google Test filter = Geometry.BoundingRect
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.05 sec
 ----------------------------------------------------------
 Test Passed.
-"Geometry.BoundingRect" end time: Nov 05 13:02 PKT
+"Geometry.BoundingRect" end time: Nov 07 20:22 PKT
 "Geometry.BoundingRect" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-14/25 Testing: Geometry.RectangleUsesOppositeCorners
-14/25 Test: Geometry.RectangleUsesOppositeCorners
+16/30 Testing: Geometry.RectangleUsesOppositeCorners
+16/30 Test: Geometry.RectangleUsesOppositeCorners
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Geometry.RectangleUsesOppositeCorners" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Geometry.RectangleUsesOppositeCorners" start time: Nov 05 13:02 PKT
+"Geometry.RectangleUsesOppositeCorners" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Geometry.RectangleUsesOppositeCorners
@@ -357,18 +409,18 @@ Note: Google Test filter = Geometry.RectangleUsesOppositeCorners
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.03 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"Geometry.RectangleUsesOppositeCorners" end time: Nov 05 13:02 PKT
+"Geometry.RectangleUsesOppositeCorners" end time: Nov 07 20:22 PKT
 "Geometry.RectangleUsesOppositeCorners" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-15/25 Testing: Geometry.PointInPolygon
-15/25 Test: Geometry.PointInPolygon
+17/30 Testing: Geometry.PointInPolygon
+17/30 Test: Geometry.PointInPolygon
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Geometry.PointInPolygon" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Geometry.PointInPolygon" start time: Nov 05 13:02 PKT
+"Geometry.PointInPolygon" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Geometry.PointInPolygon
@@ -386,15 +438,15 @@ Note: Google Test filter = Geometry.PointInPolygon
 Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Geometry.PointInPolygon" end time: Nov 05 13:02 PKT
+"Geometry.PointInPolygon" end time: Nov 07 20:22 PKT
 "Geometry.PointInPolygon" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-16/25 Testing: Geometry.DistanceToSegment
-16/25 Test: Geometry.DistanceToSegment
+18/30 Testing: Geometry.DistanceToSegment
+18/30 Test: Geometry.DistanceToSegment
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Geometry.DistanceToSegment" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Geometry.DistanceToSegment" start time: Nov 05 13:02 PKT
+"Geometry.DistanceToSegment" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Geometry.DistanceToSegment
@@ -409,18 +461,18 @@ Note: Google Test filter = Geometry.DistanceToSegment
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Geometry.DistanceToSegment" end time: Nov 05 13:02 PKT
+"Geometry.DistanceToSegment" end time: Nov 07 20:22 PKT
 "Geometry.DistanceToSegment" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-17/25 Testing: Geometry.HitTestRectangleAndPolygon
-17/25 Test: Geometry.HitTestRectangleAndPolygon
+19/30 Testing: Geometry.HitTestRectangleAndPolygon
+19/30 Test: Geometry.HitTestRectangleAndPolygon
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Geometry.HitTestRectangleAndPolygon" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Geometry.HitTestRectangleAndPolygon" start time: Nov 05 13:02 PKT
+"Geometry.HitTestRectangleAndPolygon" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Geometry.HitTestRectangleAndPolygon
@@ -435,18 +487,18 @@ Note: Google Test filter = Geometry.HitTestRectangleAndPolygon
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Geometry.HitTestRectangleAndPolygon" end time: Nov 05 13:02 PKT
+"Geometry.HitTestRectangleAndPolygon" end time: Nov 07 20:22 PKT
 "Geometry.HitTestRectangleAndPolygon" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-18/25 Testing: Geometry.TranslateAndScale
-18/25 Test: Geometry.TranslateAndScale
+20/30 Testing: Geometry.TranslateAndScale
+20/30 Test: Geometry.TranslateAndScale
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Geometry.TranslateAndScale" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Geometry.TranslateAndScale" start time: Nov 05 13:02 PKT
+"Geometry.TranslateAndScale" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Geometry.TranslateAndScale
@@ -461,18 +513,18 @@ Note: Google Test filter = Geometry.TranslateAndScale
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Geometry.TranslateAndScale" end time: Nov 05 13:02 PKT
+"Geometry.TranslateAndScale" end time: Nov 07 20:22 PKT
 "Geometry.TranslateAndScale" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-19/25 Testing: Geometry.RotatedRectangle
-19/25 Test: Geometry.RotatedRectangle
+21/30 Testing: Geometry.RotatedRectangle
+21/30 Test: Geometry.RotatedRectangle
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=Geometry.RotatedRectangle" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"Geometry.RotatedRectangle" start time: Nov 05 13:02 PKT
+"Geometry.RotatedRectangle" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = Geometry.RotatedRectangle
@@ -487,18 +539,18 @@ Note: Google Test filter = Geometry.RotatedRectangle
 [==========] 1 test from 1 test suite ran. (0 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.02 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"Geometry.RotatedRectangle" end time: Nov 05 13:02 PKT
+"Geometry.RotatedRectangle" end time: Nov 07 20:22 PKT
 "Geometry.RotatedRectangle" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-20/25 Testing: LocalStore.InMemoryRoundTrip
-20/25 Test: LocalStore.InMemoryRoundTrip
+22/30 Testing: LocalStore.InMemoryRoundTrip
+22/30 Test: LocalStore.InMemoryRoundTrip
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=LocalStore.InMemoryRoundTrip" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"LocalStore.InMemoryRoundTrip" start time: Nov 05 13:02 PKT
+"LocalStore.InMemoryRoundTrip" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = LocalStore.InMemoryRoundTrip
@@ -514,18 +566,18 @@ cvat.store: opened local database ":memory:"
 [==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.04 sec
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"LocalStore.InMemoryRoundTrip" end time: Nov 05 13:02 PKT
+"LocalStore.InMemoryRoundTrip" end time: Nov 07 20:22 PKT
 "LocalStore.InMemoryRoundTrip" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-21/25 Testing: LocalStore.SnapshotAndPendingEdits
-21/25 Test: LocalStore.SnapshotAndPendingEdits
+23/30 Testing: LocalStore.SnapshotAndPendingEdits
+23/30 Test: LocalStore.SnapshotAndPendingEdits
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=LocalStore.SnapshotAndPendingEdits" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"LocalStore.SnapshotAndPendingEdits" start time: Nov 05 13:02 PKT
+"LocalStore.SnapshotAndPendingEdits" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = LocalStore.SnapshotAndPendingEdits
@@ -534,25 +586,52 @@ Note: Google Test filter = LocalStore.SnapshotAndPendingEdits
 [----------] 1 test from LocalStore
 [ RUN      ] LocalStore.SnapshotAndPendingEdits
 cvat.store: opened local database ":memory:"
-[       OK ] LocalStore.SnapshotAndPendingEdits (3 ms)
-[----------] 1 test from LocalStore (3 ms total)
+[       OK ] LocalStore.SnapshotAndPendingEdits (4 ms)
+[----------] 1 test from LocalStore (4 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (3 ms total)
+[==========] 1 test from 1 test suite ran. (4 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.03 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"LocalStore.SnapshotAndPendingEdits" end time: Nov 05 13:02 PKT
+"LocalStore.SnapshotAndPendingEdits" end time: Nov 07 20:22 PKT
 "LocalStore.SnapshotAndPendingEdits" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-22/25 Testing: RecoveryStore.WrapsSnapshots
-22/25 Test: RecoveryStore.WrapsSnapshots
+24/30 Testing: LocalStore.PrunesOldPendingEdits
+24/30 Test: LocalStore.PrunesOldPendingEdits
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=LocalStore.PrunesOldPendingEdits" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"LocalStore.PrunesOldPendingEdits" start time: Nov 07 20:22 PKT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = LocalStore.PrunesOldPendingEdits
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from LocalStore
+[ RUN      ] LocalStore.PrunesOldPendingEdits
+cvat.store: opened local database ":memory:"
+[       OK ] LocalStore.PrunesOldPendingEdits (5 ms)
+[----------] 1 test from LocalStore (5 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (5 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.04 sec
+----------------------------------------------------------
+Test Passed.
+"LocalStore.PrunesOldPendingEdits" end time: Nov 07 20:22 PKT
+"LocalStore.PrunesOldPendingEdits" time elapsed: 00:00:00
+----------------------------------------------------------
+
+25/30 Testing: RecoveryStore.WrapsSnapshots
+25/30 Test: RecoveryStore.WrapsSnapshots
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=RecoveryStore.WrapsSnapshots" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"RecoveryStore.WrapsSnapshots" start time: Nov 05 13:02 PKT
+"RecoveryStore.WrapsSnapshots" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = RecoveryStore.WrapsSnapshots
@@ -561,25 +640,25 @@ Note: Google Test filter = RecoveryStore.WrapsSnapshots
 [----------] 1 test from RecoveryStore
 [ RUN      ] RecoveryStore.WrapsSnapshots
 cvat.store: opened local database ":memory:"
-[       OK ] RecoveryStore.WrapsSnapshots (3 ms)
-[----------] 1 test from RecoveryStore (3 ms total)
+[       OK ] RecoveryStore.WrapsSnapshots (6 ms)
+[----------] 1 test from RecoveryStore (6 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (3 ms total)
+[==========] 1 test from 1 test suite ran. (6 ms total)
 [  PASSED  ] 1 test.
 <end of output>
-Test time =   0.03 sec
+Test time =   0.04 sec
 ----------------------------------------------------------
 Test Passed.
-"RecoveryStore.WrapsSnapshots" end time: Nov 05 13:02 PKT
+"RecoveryStore.WrapsSnapshots" end time: Nov 07 20:22 PKT
 "RecoveryStore.WrapsSnapshots" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-23/25 Testing: FrameCache.MemoryLruEviction
-23/25 Test: FrameCache.MemoryLruEviction
+26/30 Testing: FrameCache.MemoryLruEviction
+26/30 Test: FrameCache.MemoryLruEviction
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=FrameCache.MemoryLruEviction" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"FrameCache.MemoryLruEviction" start time: Nov 05 13:02 PKT
+"FrameCache.MemoryLruEviction" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = FrameCache.MemoryLruEviction
@@ -597,15 +676,15 @@ Note: Google Test filter = FrameCache.MemoryLruEviction
 Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"FrameCache.MemoryLruEviction" end time: Nov 05 13:02 PKT
+"FrameCache.MemoryLruEviction" end time: Nov 07 20:22 PKT
 "FrameCache.MemoryLruEviction" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-24/25 Testing: FrameCache.DiskRoundTripAndJobRemoval
-24/25 Test: FrameCache.DiskRoundTripAndJobRemoval
+27/30 Testing: FrameCache.DiskRoundTripAndJobRemoval
+27/30 Test: FrameCache.DiskRoundTripAndJobRemoval
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=FrameCache.DiskRoundTripAndJobRemoval" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"FrameCache.DiskRoundTripAndJobRemoval" start time: Nov 05 13:02 PKT
+"FrameCache.DiskRoundTripAndJobRemoval" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = FrameCache.DiskRoundTripAndJobRemoval
@@ -617,21 +696,74 @@ Note: Google Test filter = FrameCache.DiskRoundTripAndJobRemoval
 [----------] 1 test from FrameCache (0 ms total)
 
 [----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
+[==========] 1 test from 1 test suite ran. (1 ms total)
 [  PASSED  ] 1 test.
 <end of output>
 Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"FrameCache.DiskRoundTripAndJobRemoval" end time: Nov 05 13:02 PKT
+"FrameCache.DiskRoundTripAndJobRemoval" end time: Nov 07 20:22 PKT
 "FrameCache.DiskRoundTripAndJobRemoval" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-25/25 Testing: FrameCache.SeparatesQualityNamespaces
-25/25 Test: FrameCache.SeparatesQualityNamespaces
+28/30 Testing: FrameCache.DiskPruningUsesLeastRecentlyAccessed
+28/30 Test: FrameCache.DiskPruningUsesLeastRecentlyAccessed
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=FrameCache.DiskPruningUsesLeastRecentlyAccessed" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"FrameCache.DiskPruningUsesLeastRecentlyAccessed" start time: Nov 07 20:22 PKT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = FrameCache.DiskPruningUsesLeastRecentlyAccessed
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FrameCache
+[ RUN      ] FrameCache.DiskPruningUsesLeastRecentlyAccessed
+cvat.media: pruned frame cache to 16 bytes
+[       OK ] FrameCache.DiskPruningUsesLeastRecentlyAccessed (2 ms)
+[----------] 1 test from FrameCache (2 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (2 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"FrameCache.DiskPruningUsesLeastRecentlyAccessed" end time: Nov 07 20:22 PKT
+"FrameCache.DiskPruningUsesLeastRecentlyAccessed" time elapsed: 00:00:00
+----------------------------------------------------------
+
+29/30 Testing: FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure
+29/30 Test: FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure
+Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure" "--gtest_also_run_disabled_tests"
+Directory: /home/haider/Projects/cvat-native/build
+"FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure" start time: Nov 07 20:22 PKT
+Output:
+----------------------------------------------------------
+Note: Google Test filter = FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from FrameCache
+[ RUN      ] FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure
+[       OK ] FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure (23 ms)
+[----------] 1 test from FrameCache (23 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (23 ms total)
+[  PASSED  ] 1 test.
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure" end time: Nov 07 20:22 PKT
+"FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure" time elapsed: 00:00:00
+----------------------------------------------------------
+
+30/30 Testing: FrameCache.SeparatesQualityNamespaces
+30/30 Test: FrameCache.SeparatesQualityNamespaces
 Command: "/home/haider/Projects/cvat-native/build/cvat_core_tests" "--gtest_filter=FrameCache.SeparatesQualityNamespaces" "--gtest_also_run_disabled_tests"
 Directory: /home/haider/Projects/cvat-native/build
-"FrameCache.SeparatesQualityNamespaces" start time: Nov 05 13:02 PKT
+"FrameCache.SeparatesQualityNamespaces" start time: Nov 07 20:22 PKT
 Output:
 ----------------------------------------------------------
 Note: Google Test filter = FrameCache.SeparatesQualityNamespaces
@@ -649,8 +781,8 @@ Note: Google Test filter = FrameCache.SeparatesQualityNamespaces
 Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"FrameCache.SeparatesQualityNamespaces" end time: Nov 05 13:02 PKT
+"FrameCache.SeparatesQualityNamespaces" end time: Nov 07 20:22 PKT
 "FrameCache.SeparatesQualityNamespaces" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Nov 05 13:02 PKT
+End testing: Nov 07 20:22 PKT

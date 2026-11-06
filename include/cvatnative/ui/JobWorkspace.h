@@ -2,6 +2,7 @@
 
 #include "cvatnative/api/Models.h"
 #include "cvatnative/model/Annotation.h"
+#include "cvatnative/ui/AnnotationCanvas.h"
 
 #include <QWidget>
 
@@ -11,6 +12,7 @@ class QAction;
 class QActionGroup;
 class QLabel;
 class QListWidget;
+class QResizeEvent;
 class QSlider;
 class QSpinBox;
 class QTimer;
@@ -30,6 +32,7 @@ class MediaService;
 class RecoveryStore;
 class RequestHandle;
 class ServerApi;
+class ToastWidget;
 
 class JobWorkspace : public QWidget {
     Q_OBJECT
@@ -49,6 +52,9 @@ public:
 signals:
     void backRequested();
 
+protected:
+    void resizeEvent(QResizeEvent* event) override;
+
 private:
     void setupUi();
     void connectModel();
@@ -65,6 +71,7 @@ private:
     void updateActions();
     void updateTitle();
     void setStatus(const QString& message, bool error = false);
+    void showToast(const QString& message, bool isError = false, int durationMs = 3000);
     void setTool(int tool);
 
     void saveRemote(std::function<void(bool)> done = {}, bool silent = false);
@@ -101,6 +108,7 @@ private:
     QLabel* titleLabel_ = nullptr;
     QLabel* statusLabel_ = nullptr;
     QLabel* dirtyLabel_ = nullptr;
+    ToastWidget* toast_ = nullptr;
     QSpinBox* frameSpin_ = nullptr;
     QSlider* frameSlider_ = nullptr;
     QToolBar* toolbar_ = nullptr;
@@ -110,12 +118,18 @@ private:
     QAction* deleteAction_ = nullptr;
     QActionGroup* toolGroup_ = nullptr;
     QTimer* autosaveTimer_ = nullptr;
+    QTimer* frameDebounce_ = nullptr;
     RequestHandle* frameRequest_ = nullptr;
+    quint64 frameGeneration_ = 0;
+    quint64 lastSavedRevision_ = 0;
 
     QVector<Label> labels_;
+    CopiedTemplate copiedTemplate_;
     int copiedLabelId_ = 0;
     bool annotationsLoaded_ = false;
     bool saving_ = false;
+    bool snapshotBusy_ = false;
+    bool snapshotPending_ = false;
     bool recoveryChecked_ = false;
     int requestedFrame_ = -1;
     int frameCount_ = 1;

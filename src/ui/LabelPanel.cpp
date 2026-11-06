@@ -151,11 +151,8 @@ void LabelPanel::rebuildAttributes(const QVector<AttributeValue>& attributes)
 {
     updating_ = true;
     editors_.clear();
-    while (QLayoutItem* item = attributeLayout_->takeAt(0)) {
-        if (item->widget()) {
-            item->widget()->deleteLater();
-        }
-        delete item;
+    while (attributeLayout_->rowCount() > 0) {
+        attributeLayout_->removeRow(0);
     }
 
     const Label* label = findLabel(objectLabelId_);

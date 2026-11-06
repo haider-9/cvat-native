@@ -1,6 +1,10 @@
 #include "cvatnative/media/FrameCache.h"
+#include "cvatnative/api/ApiClient.h"
+#include "cvatnative/media/MediaService.h"
 
+#include <QEventLoop>
 #include <QImage>
+#include <QTimer>
 #include <QTemporaryDir>
 
 #include <gtest/gtest.h>
@@ -56,6 +60,57 @@ TEST(FrameCache, DiskRoundTripAndJobRemoval)
     EXPECT_EQ(*read, payload);
 
     cache.removeJobDisk(42);
+    EXPECT_FALSE(cache.readDisk(key).has_value());
+}
+
+TEST(FrameCache, DiskPruningUsesLeastRecentlyAccessed)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    FrameCache cache(directory.path());
+    cache.setDiskLimit(1024);
+
+    FrameCache::Key first{7, 0, QStringLiteral("compressed")};
+    FrameCache::Key second{7, 1, QStringLiteral("compressed")};
+    FrameCache::Key third{7, 2, QStringLiteral("compressed")};
+    const QByteArray payload("12345678");
+    ASSERT_TRUE(cache.writeDisk(first, payload));
+    ASSERT_TRUE(cache.writeDisk(second, payload));
+    ASSERT_TRUE(cache.readDisk(first).has_value());
+    ASSERT_TRUE(cache.writeDisk(third, payload));
+
+    cache.setDiskLimit(payload.size() * 2);
+    cache.pruneDisk();
+
+    EXPECT_TRUE(cache.readDisk(first).has_value());
+    EXPECT_FALSE(cache.readDisk(second).has_value());
+    EXPECT_TRUE(cache.readDisk(third).has_value());
+}
+
+TEST(FrameCache, CorruptDiskFrameIsRemovedAfterDecodeFailure)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    FrameCache cache(directory.path());
+    FrameCache::Key key{23, 5, QStringLiteral("compressed")};
+    ASSERT_TRUE(cache.writeDisk(key, QByteArray("not-an-image")));
+
+    ApiClient client;
+    MediaService media(&client, &cache);
+    QEventLoop loop;
+    bool callbackCalled = false;
+    bool returnedError = false;
+    media.requestFrame(key.jobId, key.frame, key.quality,
+                       [&](Result<QImage> result) {
+        callbackCalled = true;
+        returnedError = !result;
+        loop.quit();
+    });
+    QTimer::singleShot(5000, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    EXPECT_TRUE(callbackCalled);
+    EXPECT_TRUE(returnedError);
     EXPECT_FALSE(cache.readDisk(key).has_value());
 }
 

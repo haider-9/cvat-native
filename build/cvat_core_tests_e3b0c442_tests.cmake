@@ -74,7 +74,7 @@ add_test([=[Annotation.ParsesLabeledData]=]  /home/haider/Projects/cvat-native/b
 set_tests_properties([=[Annotation.ParsesLabeledData]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:47]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:49]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
@@ -83,7 +83,7 @@ add_test([=[Annotation.SerializationRoundTrip]=]  /home/haider/Projects/cvat-nat
 set_tests_properties([=[Annotation.SerializationRoundTrip]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:61]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:63]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
@@ -92,7 +92,7 @@ add_test([=[Annotation.TrackInterpolates]=]  /home/haider/Projects/cvat-native/b
 set_tests_properties([=[Annotation.TrackInterpolates]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:75]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:77]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
@@ -101,7 +101,25 @@ add_test([=[Annotation.ShapeTypes]=]  /home/haider/Projects/cvat-native/build/cv
 set_tests_properties([=[Annotation.ShapeTypes]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:96]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:98]==]
+    WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
+    SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
+    
+)
+add_test([=[Annotation.CopiedTemplateDimensionAndPlacement]=]  /home/haider/Projects/cvat-native/build/cvat_core_tests [==[--gtest_filter=Annotation.CopiedTemplateDimensionAndPlacement]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Annotation.CopiedTemplateDimensionAndPlacement]=]
+  PROPERTIES
+    
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:135]==]
+    WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
+    SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
+    
+)
+add_test([=[AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty]=]  /home/haider/Projects/cvat-native/build/cvat_core_tests [==[--gtest_filter=AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty]=]
+  PROPERTIES
+    
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_annotation.cpp:106]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
@@ -187,11 +205,20 @@ set_tests_properties([=[LocalStore.SnapshotAndPendingEdits]=]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
 )
+add_test([=[LocalStore.PrunesOldPendingEdits]=]  /home/haider/Projects/cvat-native/build/cvat_core_tests [==[--gtest_filter=LocalStore.PrunesOldPendingEdits]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[LocalStore.PrunesOldPendingEdits]=]
+  PROPERTIES
+    
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_local_store.cpp:64]==]
+    WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
+    SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
+    
+)
 add_test([=[RecoveryStore.WrapsSnapshots]=]  /home/haider/Projects/cvat-native/build/cvat_core_tests [==[--gtest_filter=RecoveryStore.WrapsSnapshots]==] --gtest_also_run_disabled_tests)
 set_tests_properties([=[RecoveryStore.WrapsSnapshots]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_local_store.cpp:64]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_local_store.cpp:75]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
@@ -200,7 +227,7 @@ add_test([=[FrameCache.MemoryLruEviction]=]  /home/haider/Projects/cvat-native/b
 set_tests_properties([=[FrameCache.MemoryLruEviction]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:19]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:23]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
@@ -209,7 +236,25 @@ add_test([=[FrameCache.DiskRoundTripAndJobRemoval]=]  /home/haider/Projects/cvat
 set_tests_properties([=[FrameCache.DiskRoundTripAndJobRemoval]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:43]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:47]==]
+    WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
+    SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
+    
+)
+add_test([=[FrameCache.DiskPruningUsesLeastRecentlyAccessed]=]  /home/haider/Projects/cvat-native/build/cvat_core_tests [==[--gtest_filter=FrameCache.DiskPruningUsesLeastRecentlyAccessed]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[FrameCache.DiskPruningUsesLeastRecentlyAccessed]=]
+  PROPERTIES
+    
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:66]==]
+    WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
+    SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
+    
+)
+add_test([=[FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure]=]  /home/haider/Projects/cvat-native/build/cvat_core_tests [==[--gtest_filter=FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure]=]
+  PROPERTIES
+    
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:90]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
@@ -218,9 +263,9 @@ add_test([=[FrameCache.SeparatesQualityNamespaces]=]  /home/haider/Projects/cvat
 set_tests_properties([=[FrameCache.SeparatesQualityNamespaces]=]
   PROPERTIES
     
-    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:62]==]
+    DEF_SOURCE_LINE [==[/home/haider/Projects/cvat-native/tests/test_frame_cache.cpp:117]==]
     WORKING_DIRECTORY [==[/home/haider/Projects/cvat-native/build]==]
     SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==]
     
 )
-set(cvat_core_tests_TESTS [==[Core.VersionMacroIsAvailable]==] [==[Result.HoldsValue]==] [==[Result.HoldsError]==] [==[Result.RetryableClassification]==] [==[ApiClient.ResolveKeepsBasePath]==] [==[ApiClient.GetParsesJsonAndAuthorization]==] [==[ApiClient.HttpErrorBecomesUnauthorized]==] [==[ApiClient.ErrorFromResponseMarksAuth]==] [==[Annotation.ParsesLabeledData]==] [==[Annotation.SerializationRoundTrip]==] [==[Annotation.TrackInterpolates]==] [==[Annotation.ShapeTypes]==] [==[Geometry.BoundingRect]==] [==[Geometry.RectangleUsesOppositeCorners]==] [==[Geometry.PointInPolygon]==] [==[Geometry.DistanceToSegment]==] [==[Geometry.HitTestRectangleAndPolygon]==] [==[Geometry.TranslateAndScale]==] [==[Geometry.RotatedRectangle]==] [==[LocalStore.InMemoryRoundTrip]==] [==[LocalStore.SnapshotAndPendingEdits]==] [==[RecoveryStore.WrapsSnapshots]==] [==[FrameCache.MemoryLruEviction]==] [==[FrameCache.DiskRoundTripAndJobRemoval]==] [==[FrameCache.SeparatesQualityNamespaces]==])
+set(cvat_core_tests_TESTS [==[Core.VersionMacroIsAvailable]==] [==[Result.HoldsValue]==] [==[Result.HoldsError]==] [==[Result.RetryableClassification]==] [==[ApiClient.ResolveKeepsBasePath]==] [==[ApiClient.GetParsesJsonAndAuthorization]==] [==[ApiClient.HttpErrorBecomesUnauthorized]==] [==[ApiClient.ErrorFromResponseMarksAuth]==] [==[Annotation.ParsesLabeledData]==] [==[Annotation.SerializationRoundTrip]==] [==[Annotation.TrackInterpolates]==] [==[Annotation.ShapeTypes]==] [==[Annotation.CopiedTemplateDimensionAndPlacement]==] [==[AnnotationModel.AddingAndUpdatingShapesIncrementsRevisionAndDirty]==] [==[Geometry.BoundingRect]==] [==[Geometry.RectangleUsesOppositeCorners]==] [==[Geometry.PointInPolygon]==] [==[Geometry.DistanceToSegment]==] [==[Geometry.HitTestRectangleAndPolygon]==] [==[Geometry.TranslateAndScale]==] [==[Geometry.RotatedRectangle]==] [==[LocalStore.InMemoryRoundTrip]==] [==[LocalStore.SnapshotAndPendingEdits]==] [==[LocalStore.PrunesOldPendingEdits]==] [==[RecoveryStore.WrapsSnapshots]==] [==[FrameCache.MemoryLruEviction]==] [==[FrameCache.DiskRoundTripAndJobRemoval]==] [==[FrameCache.DiskPruningUsesLeastRecentlyAccessed]==] [==[FrameCache.CorruptDiskFrameIsRemovedAfterDecodeFailure]==] [==[FrameCache.SeparatesQualityNamespaces]==])

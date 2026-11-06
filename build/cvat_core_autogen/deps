@@ -517,6 +517,7 @@ cvat_core_autogen/timestamp: \
 	/usr/include/qt6/QtCore/qxptype_traits.h \
 	/usr/include/qt6/QtCore/qyieldcpu.h \
 	/usr/include/qt6/QtGui/QImage \
+	/usr/include/qt6/QtGui/QUndoStack \
 	/usr/include/qt6/QtGui/qcolor.h \
 	/usr/include/qt6/QtGui/qimage.h \
 	/usr/include/qt6/QtGui/qpaintdevice.h \
@@ -529,6 +530,7 @@ cvat_core_autogen/timestamp: \
 	/usr/include/qt6/QtGui/qtguiexports.h \
 	/usr/include/qt6/QtGui/qtguiglobal.h \
 	/usr/include/qt6/QtGui/qtransform.h \
+	/usr/include/qt6/QtGui/qundostack.h \
 	/usr/include/qt6/QtGui/qwindowdefs.h \
 	/usr/include/sched.h \
 	/usr/include/stdc-predef.h \

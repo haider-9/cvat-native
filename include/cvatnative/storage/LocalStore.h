@@ -36,6 +36,7 @@ public:
     bool open(const QString& path, QString* error = nullptr);
     void close();
     [[nodiscard]] bool isOpen() const;
+    [[nodiscard]] QString databasePath() const { return db_.databaseName(); }
     [[nodiscard]] QString lastError() const { return error_; }
 
     bool saveJson(const QString& key, const QJsonObject& value,
@@ -58,6 +59,7 @@ public:
     [[nodiscard]] int pendingEditCount(int jobId = -1) const;
 
     bool pruneSnapshots(int olderThanDays, int keepPerJob);
+    bool prunePendingEdits(int olderThanDays);
     bool transaction();
 
 private:

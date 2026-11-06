@@ -59,6 +59,11 @@ private:
         qint64 bytes = 0;
     };
 
+    struct DiskEntry {
+        qint64 bytes = 0;
+        quint64 lastAccess = 0;
+    };
+
     [[nodiscard]] QString diskPath(const Key& key) const;
     void touch(const QString& key);
     void evictLocked();
@@ -66,7 +71,10 @@ private:
     mutable QMutex mutex_;
     QHash<QString, Entry> images_;
     QList<QString> order_; // most recently used first
+    mutable QHash<QString, DiskEntry> diskEntries_;
+    mutable quint64 diskAccessCounter_ = 0;
     qint64 memoryUsage_ = 0;
+    mutable qint64 diskBytes_ = 0;
     qint64 memoryLimit_ = 256LL * 1024 * 1024;
     qint64 diskLimit_ = 1024LL * 1024 * 1024;
     QString diskRoot_;

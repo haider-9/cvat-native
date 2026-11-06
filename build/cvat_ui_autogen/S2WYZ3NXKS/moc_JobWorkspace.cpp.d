@@ -1,7 +1,9 @@
 /home/haider/Projects/cvat-native/build/cvat_ui_autogen/S2WYZ3NXKS/moc_JobWorkspace.cpp: /home/haider/Projects/cvat-native/include/cvatnative/ui/JobWorkspace.h \
   /home/haider/Projects/cvat-native/build/cvat_ui_autogen/moc_predefs.h \
+  /home/haider/Projects/cvat-native/include/cvatnative/annotation/AnnotationModel.h \
   /home/haider/Projects/cvat-native/include/cvatnative/api/Models.h \
   /home/haider/Projects/cvat-native/include/cvatnative/model/Annotation.h \
+  /home/haider/Projects/cvat-native/include/cvatnative/ui/AnnotationCanvas.h \
   /usr/include/alloca.h \
   /usr/include/asm-generic/bitsperlong.h \
   /usr/include/asm-generic/errno-base.h \
@@ -306,6 +308,10 @@
   /usr/include/qt6/QtCore/QDateTime \
   /usr/include/qt6/QtCore/QJsonObject \
   /usr/include/qt6/QtCore/QJsonValue \
+  /usr/include/qt6/QtCore/QList \
+  /usr/include/qt6/QtCore/QObject \
+  /usr/include/qt6/QtCore/QPointF \
+  /usr/include/qt6/QtCore/QSet \
   /usr/include/qt6/QtCore/QString \
   /usr/include/qt6/QtCore/QStringList \
   /usr/include/qt6/QtCore/QVector \
@@ -451,6 +457,8 @@
   /usr/include/qt6/QtCore/qversiontagging.h \
   /usr/include/qt6/QtCore/qxptype_traits.h \
   /usr/include/qt6/QtCore/qyieldcpu.h \
+  /usr/include/qt6/QtGui/QImage \
+  /usr/include/qt6/QtGui/QUndoStack \
   /usr/include/qt6/QtGui/qaction.h \
   /usr/include/qt6/QtGui/qbitmap.h \
   /usr/include/qt6/QtGui/qbrush.h \
@@ -464,19 +472,29 @@
   /usr/include/qt6/QtGui/qimage.h \
   /usr/include/qt6/QtGui/qkeysequence.h \
   /usr/include/qt6/QtGui/qpaintdevice.h \
+  /usr/include/qt6/QtGui/qpainter.h \
   /usr/include/qt6/QtGui/qpalette.h \
+  /usr/include/qt6/QtGui/qpen.h \
   /usr/include/qt6/QtGui/qpixelformat.h \
   /usr/include/qt6/QtGui/qpixmap.h \
   /usr/include/qt6/QtGui/qpolygon.h \
   /usr/include/qt6/QtGui/qregion.h \
   /usr/include/qt6/QtGui/qrgb.h \
   /usr/include/qt6/QtGui/qrgba64.h \
+  /usr/include/qt6/QtGui/qtextoption.h \
   /usr/include/qt6/QtGui/qtgui-config.h \
   /usr/include/qt6/QtGui/qtguiexports.h \
   /usr/include/qt6/QtGui/qtguiglobal.h \
   /usr/include/qt6/QtGui/qtransform.h \
+  /usr/include/qt6/QtGui/qundostack.h \
   /usr/include/qt6/QtGui/qwindowdefs.h \
+  /usr/include/qt6/QtWidgets/QGraphicsView \
   /usr/include/qt6/QtWidgets/QWidget \
+  /usr/include/qt6/QtWidgets/qabstractscrollarea.h \
+  /usr/include/qt6/QtWidgets/qframe.h \
+  /usr/include/qt6/QtWidgets/qgraphicsscene.h \
+  /usr/include/qt6/QtWidgets/qgraphicsview.h \
+  /usr/include/qt6/QtWidgets/qscrollarea.h \
   /usr/include/qt6/QtWidgets/qsizepolicy.h \
   /usr/include/qt6/QtWidgets/qtwidgets-config.h \
   /usr/include/qt6/QtWidgets/qtwidgetsexports.h \

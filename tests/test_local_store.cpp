@@ -61,6 +61,17 @@ TEST(LocalStore, SnapshotAndPendingEdits)
     EXPECT_EQ(store.pendingEditCount(), 0);
 }
 
+TEST(LocalStore, PrunesOldPendingEdits)
+{
+    LocalStore store(QStringLiteral("test-prune-pending-edits"));
+    ASSERT_TRUE(store.open(QStringLiteral(":memory:")));
+    ASSERT_GT(store.addPendingEdit(9, 4, QStringLiteral("update"),
+                                   QJsonObject{{QStringLiteral("value"), 1}}), 0);
+
+    ASSERT_TRUE(store.prunePendingEdits(-1));
+    EXPECT_EQ(store.pendingEditCount(9), 0);
+}
+
 TEST(RecoveryStore, WrapsSnapshots)
 {
     LocalStore local;

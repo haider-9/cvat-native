@@ -19,12 +19,14 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
+#include <QFutureWatcher>
 #include <QGroupBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QImage>
 #include <QJsonDocument>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QMenu>
 #include <QMessageBox>
@@ -37,14 +39,70 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QFormLayout>
+#include <QFrame>
+#include <QResizeEvent>
+#include <QTextEdit>
 #include <QToolButton>
 #include <QVBoxLayout>
 
+#include <QtConcurrent/QtConcurrentRun>
+
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <utility>
 
 namespace cvat {
+
+class ToastWidget : public QFrame {
+public:
+    explicit ToastWidget(QWidget* parent = nullptr)
+        : QFrame(parent)
+    {
+        setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        auto* layout = new QHBoxLayout(this);
+        layout->setContentsMargins(18, 10, 18, 10);
+        label_ = new QLabel(this);
+        label_->setAlignment(Qt::AlignCenter);
+        layout->addWidget(label_);
+
+        hideTimer_ = new QTimer(this);
+        hideTimer_->setSingleShot(true);
+        connect(hideTimer_, &QTimer::timeout, this, [this]() {
+            hide();
+        });
+        hide();
+    }
+
+    void showToast(const QString& text, bool isError = false, int durationMs = 3000)
+    {
+        label_->setText(text);
+        if (isError) {
+            setStyleSheet(QStringLiteral(
+                "QFrame { background-color: rgba(30, 20, 24, 0.96); "
+                "border: 1px solid #ef4444; border-radius: 8px; }"));
+            label_->setStyleSheet(QStringLiteral("font-size: 13px; font-weight: 600; color: #fca5a5;"));
+        } else {
+            setStyleSheet(QStringLiteral(
+                "QFrame { background-color: rgba(15, 28, 22, 0.96); "
+                "border: 1px solid #22c55e; border-radius: 8px; }"));
+            label_->setStyleSheet(QStringLiteral("font-size: 13px; font-weight: 600; color: #86efac;"));
+        }
+        adjustSize();
+        if (parentWidget()) {
+            const int x = (parentWidget()->width() - width()) / 2;
+            const int y = 46;
+            move(x, y);
+        }
+        show();
+        raise();
+        hideTimer_->start(durationMs);
+    }
+
+private:
+    QLabel* label_ = nullptr;
+    QTimer* hideTimer_ = nullptr;
+};
 
 namespace {
 QString shapeTypeName(const QString& type)
@@ -75,6 +133,13 @@ JobWorkspace::JobWorkspace(const Job& job, AnnotationsApi* annotations, JobsApi*
       store_(store),
       model_(new AnnotationModel(this))
 {
+    frameDebounce_ = new QTimer(this);
+    frameDebounce_->setSingleShot(true);
+    frameDebounce_->setInterval(120);
+    connect(frameDebounce_, &QTimer::timeout, this, [this]() {
+        requestFrame(requestedFrame_);
+    });
+
     setupUi();
     connectModel();
     load();
@@ -86,7 +151,6 @@ JobWorkspace::JobWorkspace(const Job& job, AnnotationsApi* annotations, JobsApi*
             return;
         }
         saveLocalSnapshot();
-        setStatus(QStringLiteral("Local draft saved"));
         if (Settings::instance().remoteAutosave()) {
             saveRemote({}, true);
         }
@@ -107,9 +171,16 @@ JobWorkspace::~JobWorkspace()
 
 void JobWorkspace::setupUi()
 {
+    toast_ = new ToastWidget(this);
+
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
+
+    auto shouldIgnoreSingleKey = [this]() -> bool {
+        QWidget* focused = focusWidget();
+        return focused && (qobject_cast<QLineEdit*>(focused) || qobject_cast<QTextEdit*>(focused));
+    };
 
     toolbar_ = new QToolBar(this);
     toolbar_->setMovable(false);
@@ -118,6 +189,8 @@ void JobWorkspace::setupUi()
 
     auto* back = toolbar_->addAction(QStringLiteral("Back"));
     back->setShortcut(QKeySequence(QStringLiteral("Alt+Left")));
+    back->setShortcutContext(Qt::WindowShortcut);
+    this->addAction(back);
     connect(back, &QAction::triggered, this, &JobWorkspace::requestBack);
 
     titleLabel_ = new QLabel(this);
@@ -125,38 +198,63 @@ void JobWorkspace::setupUi()
     toolbar_->addWidget(titleLabel_);
 
     toolbar_->addSeparator();
-    saveAction_ = toolbar_->addAction(QStringLiteral("Save"));
-    saveAction_->setShortcut(QKeySequence(QStringLiteral("S")));
-    saveAction_->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    connect(saveAction_, &QAction::triggered, this, [this]() { saveRemote(); });
-
-    auto* newLabelAction = toolbar_->addAction(QStringLiteral("New label"));
-    newLabelAction->setShortcut(QKeySequence(QStringLiteral("N")));
-    newLabelAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    newLabelAction->setToolTip(QStringLiteral("New label (N)"));
-    newLabelAction->setStatusTip(QStringLiteral("Start a rectangle with the active class (N)"));
-    connect(newLabelAction, &QAction::triggered, this, [this]() {
-        if (labelPanel_->activeLabel() <= 0) {
-            setStatus(QStringLiteral("Select a label class first"), true);
-            return;
-        }
-        canvas_->setTool(CanvasTool::Rectangle);
-        setStatus(QStringLiteral("Draw a new label with the selected class"));
+    saveAction_ = new QAction(QStringLiteral("Save"), this);
+    saveAction_->setShortcuts({QKeySequence(QStringLiteral("S")), QKeySequence::Save});
+    saveAction_->setShortcutContext(Qt::WindowShortcut);
+    saveAction_->setToolTip(QStringLiteral("Save to server (S or Ctrl+S)"));
+    this->addAction(saveAction_);
+    toolbar_->addAction(saveAction_);
+    connect(saveAction_, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
+        saveRemote();
     });
 
-    auto* copyLabelAction = toolbar_->addAction(QStringLiteral("Copy label"));
-    copyLabelAction->setShortcut(QKeySequence(QStringLiteral("C")));
-    copyLabelAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    copyLabelAction->setToolTip(QStringLiteral("Copy label (C)"));
-    copyLabelAction->setStatusTip(QStringLiteral("Copy the selected object's class (C)"));
-    connect(copyLabelAction, &QAction::triggered, this, &JobWorkspace::copyLabel);
+    auto* newLabelAction = new QAction(QStringLiteral("New label"), this);
+    newLabelAction->setShortcut(QKeySequence(QStringLiteral("N")));
+    newLabelAction->setShortcutContext(Qt::WindowShortcut);
+    newLabelAction->setToolTip(QStringLiteral("New label (N)"));
+    newLabelAction->setStatusTip(QStringLiteral("Start a 2-click rectangle with the active class (N)"));
+    this->addAction(newLabelAction);
+    toolbar_->addAction(newLabelAction);
+    connect(newLabelAction, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
+        if (labelPanel_->activeLabel() <= 0) {
+            setStatus(QStringLiteral("Select a label class first"), true);
+            showToast(QStringLiteral("✕ Select a label class first"), true);
+            return;
+        }
+        for (auto* action : toolGroup_->actions()) {
+            if (action->data().toInt() == static_cast<int>(CanvasTool::Rectangle)) {
+                action->setChecked(true);
+                break;
+            }
+        }
+        canvas_->setTool(CanvasTool::Rectangle);
+    });
 
-    auto* pasteLabelAction = toolbar_->addAction(QStringLiteral("Paste label"));
+    auto* copyLabelAction = new QAction(QStringLiteral("Copy label"), this);
+    copyLabelAction->setShortcut(QKeySequence(QStringLiteral("C")));
+    copyLabelAction->setShortcutContext(Qt::WindowShortcut);
+    copyLabelAction->setToolTip(QStringLiteral("Copy label (C) - class and dimensions"));
+    copyLabelAction->setStatusTip(QStringLiteral("Copy the selected object's class and dimensions (C)"));
+    this->addAction(copyLabelAction);
+    toolbar_->addAction(copyLabelAction);
+    connect(copyLabelAction, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
+        copyLabel();
+    });
+
+    auto* pasteLabelAction = new QAction(QStringLiteral("Place label"), this);
     pasteLabelAction->setShortcut(QKeySequence(QStringLiteral("V")));
-    pasteLabelAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    pasteLabelAction->setToolTip(QStringLiteral("Paste label (V)"));
-    pasteLabelAction->setStatusTip(QStringLiteral("Apply the copied class to selected objects (V)"));
-    connect(pasteLabelAction, &QAction::triggered, this, &JobWorkspace::pasteLabel);
+    pasteLabelAction->setShortcutContext(Qt::WindowShortcut);
+    pasteLabelAction->setToolTip(QStringLiteral("Place copied label (V)"));
+    pasteLabelAction->setStatusTip(QStringLiteral("Place the copied class and dimensions onto the image (V)"));
+    this->addAction(pasteLabelAction);
+    toolbar_->addAction(pasteLabelAction);
+    connect(pasteLabelAction, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
+        pasteLabel();
+    });
 
     auto* bridgeButton = new QToolButton(this);
     bridgeButton->setText(QStringLiteral("Bridge tools"));
@@ -179,29 +277,46 @@ void JobWorkspace::setupUi()
     bridgeButton->setMenu(bridgeMenu);
     toolbar_->addWidget(bridgeButton);
 
-    undoAction_ = toolbar_->addAction(QStringLiteral("Undo"));
+    undoAction_ = new QAction(QStringLiteral("Undo"), this);
     undoAction_->setShortcut(QKeySequence::Undo);
+    undoAction_->setShortcutContext(Qt::WindowShortcut);
+    this->addAction(undoAction_);
+    toolbar_->addAction(undoAction_);
     connect(undoAction_, &QAction::triggered, this, [this]() { model_->undo(); });
 
-    redoAction_ = toolbar_->addAction(QStringLiteral("Redo"));
+    redoAction_ = new QAction(QStringLiteral("Redo"), this);
     redoAction_->setShortcut(QKeySequence::Redo);
+    redoAction_->setShortcutContext(Qt::WindowShortcut);
+    this->addAction(redoAction_);
+    toolbar_->addAction(redoAction_);
     connect(redoAction_, &QAction::triggered, this, [this]() { model_->redo(); });
 
-    deleteAction_ = toolbar_->addAction(QStringLiteral("Delete"));
+    deleteAction_ = new QAction(QStringLiteral("Delete"), this);
     deleteAction_->setShortcut(QKeySequence::Delete);
+    deleteAction_->setShortcutContext(Qt::WindowShortcut);
+    this->addAction(deleteAction_);
+    toolbar_->addAction(deleteAction_);
     connect(deleteAction_, &QAction::triggered, this, &JobWorkspace::deleteSelection);
 
     toolbar_->addSeparator();
-    auto* previous = toolbar_->addAction(QStringLiteral("◀ Frame"));
+    auto* previous = new QAction(QStringLiteral("◀ Frame"), this);
     previous->setShortcut(QKeySequence(QStringLiteral("D")));
+    previous->setShortcutContext(Qt::WindowShortcut);
     previous->setToolTip(QStringLiteral("Previous frame (D)"));
-    connect(previous, &QAction::triggered, this, [this]() {
+    this->addAction(previous);
+    toolbar_->addAction(previous);
+    connect(previous, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
         setFrame(model_->currentFrame() - 1);
     });
-    auto* next = toolbar_->addAction(QStringLiteral("Frame ▶"));
+    auto* next = new QAction(QStringLiteral("Frame ▶"), this);
     next->setShortcut(QKeySequence(QStringLiteral("F")));
+    next->setShortcutContext(Qt::WindowShortcut);
     next->setToolTip(QStringLiteral("Next frame (F)"));
-    connect(next, &QAction::triggered, this, [this]() {
+    this->addAction(next);
+    toolbar_->addAction(next);
+    connect(next, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
         setFrame(model_->currentFrame() + 1);
     });
 
@@ -228,18 +343,21 @@ void JobWorkspace::setupUi()
     toolbar_->addSeparator();
     toolGroup_ = new QActionGroup(this);
     toolGroup_->setExclusive(true);
-    auto addTool = [this](const QString& text, CanvasTool tool, const QString& shortcut) {
+    auto addTool = [this, shouldIgnoreSingleKey](const QString& text, CanvasTool tool, const QString& shortcut) {
         auto* action = new QAction(text, this);
         action->setCheckable(true);
         action->setData(static_cast<int>(tool));
         action->setShortcut(QKeySequence(shortcut));
+        action->setShortcutContext(Qt::WindowShortcut);
+        this->addAction(action);
         toolGroup_->addAction(action);
         toolbar_->addAction(action);
         return action;
     };
     addTool(QStringLiteral("Select"), CanvasTool::Select, QStringLiteral("Q"))->setChecked(true);
     addTool(QStringLiteral("Box"), CanvasTool::Rectangle, QStringLiteral("R"));
-    connect(toolGroup_, &QActionGroup::triggered, this, [this](QAction* action) {
+    connect(toolGroup_, &QActionGroup::triggered, this, [this, shouldIgnoreSingleKey](QAction* action) {
+        if (shouldIgnoreSingleKey()) return;
         setTool(action->data().toInt());
     });
 
@@ -271,7 +389,7 @@ void JobWorkspace::setupUi()
     splitter->addWidget(side);
     splitter->setStretchFactor(0, 1);
     splitter->setStretchFactor(1, 0);
-    splitter->setSizes({1000, 320});
+    splitter->setSizes({1000, 420});
     layout->addWidget(splitter, 1);
 
     auto* footer = new QHBoxLayout;
@@ -289,6 +407,14 @@ void JobWorkspace::setupUi()
     });
     connect(canvas_, &AnnotationCanvas::zoomChanged, this, [this](double zoom) {
         setStatus(QStringLiteral("Zoom %1%").arg(static_cast<int>(zoom * 100)));
+    });
+    connect(canvas_, &AnnotationCanvas::toolChanged, this, [this](CanvasTool tool) {
+        for (auto* action : toolGroup_->actions()) {
+            if (action->data().toInt() == static_cast<int>(tool)) {
+                action->setChecked(true);
+                break;
+            }
+        }
     });
     connect(labelPanel_, &LabelPanel::labelActivated, this,
             [this](int labelId) { canvas_->setActiveLabel(labelId); });
@@ -317,6 +443,7 @@ void JobWorkspace::connectModel()
         refreshObjects();
         updateActions();
         updateTitle();
+        saveLocalSnapshot();
     });
     connect(model_, &AnnotationModel::selectionChanged, this, [this]() {
         updateSelectionUi();
@@ -457,6 +584,7 @@ int JobWorkspace::lastFrame() const
 void JobWorkspace::setFrame(int frame)
 {
     const int clamped = std::max(firstFrame(), std::min(lastFrame(), frame));
+    requestedFrame_ = clamped;
     model_->setCurrentFrame(clamped);
     {
         QSignalBlocker spinBlocker(frameSpin_);
@@ -464,23 +592,21 @@ void JobWorkspace::setFrame(int frame)
         frameSpin_->setValue(clamped);
         frameSlider_->setValue(clamped);
     }
-    requestFrame(clamped);
+    frameDebounce_->start();
     refreshObjects();
     updateTitle();
 }
 
 void JobWorkspace::requestFrame(int frame)
 {
-    requestedFrame_ = frame;
-    if (frameRequest_) {
-        RequestHandle* previous = frameRequest_;
-        frameRequest_ = nullptr;
-        previous->cancel();
-    }
+    const quint64 generation = ++frameGeneration_;
     setStatus(QStringLiteral("Loading frame %1…").arg(frame));
     frameRequest_ = media_->requestFrame(
         job_.id, frame, QStringLiteral("compressed"),
-        [this, frame](Result<QImage> result) {
+        [this, frame, generation](Result<QImage> result) {
+            if (generation != frameGeneration_) {
+                return;
+            }
             frameRequest_ = nullptr;
             if (frame != requestedFrame_) {
                 return;
@@ -516,10 +642,11 @@ void JobWorkspace::refreshObjects()
                 const QString kind = visible.fromTrack ? QStringLiteral("track")
                                                        : QStringLiteral("shape");
                 auto* item = new QListWidgetItem(
-                    QStringLiteral("%1 · %2 · %3 #%4")
-                        .arg(name, shapeTypeName(visible.shape.type), kind)
-                        .arg(visible.objectId),
+                    QStringLiteral("%1  ·  %2").arg(name, shapeTypeName(visible.shape.type)),
                     objectList_);
+                item->setToolTip(QStringLiteral("%1 · %2 · %3 #%4")
+                    .arg(name, shapeTypeName(visible.shape.type), kind)
+                    .arg(visible.objectId));
                 item->setData(Qt::UserRole, visible.key);
             }
             for (const auto& tag : model_->visibleTags()) {
@@ -596,53 +723,81 @@ void JobWorkspace::copyLabel()
     }
     const QString key = selectedKey();
     if (key.isEmpty()) {
-        setStatus(QStringLiteral("Select an object to copy its label"), true);
+        setStatus(QStringLiteral("Select a label first to copy its class and dimensions"), true);
+        showToast(QStringLiteral("✕ Select a label first to copy"), true);
         return;
     }
 
-    if (const auto visible = model_->visibleShape(key)) {
-        copiedLabelId_ = visible->shape.labelId;
-    } else if (key.startsWith(QLatin1Char('g'))) {
-        copiedLabelId_ = 0;
-        for (const auto& tag : model_->visibleTags()) {
-            if (model_->keyForTag(tag) == key) {
-                copiedLabelId_ = tag.labelId;
-                break;
-            }
+    const auto visible = model_->visibleShape(key);
+    if (!visible) {
+        setStatus(QStringLiteral("Select a visible shape to copy its class and dimensions"), true);
+        showToast(QStringLiteral("✕ Select a visible shape to copy"), true);
+        return;
+    }
+
+    const Shape& shape = visible->shape;
+    const Label* label = model_->label(shape.labelId);
+
+    copiedTemplate_.valid = true;
+    copiedTemplate_.labelId = shape.labelId;
+    copiedTemplate_.labelName = label ? label->name : QStringLiteral("label %1").arg(shape.labelId);
+    copiedTemplate_.color = label ? QColor(label->color) : QColor(76, 154, 255);
+    copiedTemplate_.shapeType = shape.type;
+    copiedTemplate_.attributes = shape.attributes;
+    copiedTemplate_.occluded = shape.occluded;
+    copiedTemplate_.rotation = shape.rotation;
+    copiedTemplate_.zOrder = shape.zOrder;
+    copiedLabelId_ = shape.labelId;
+
+    if (shape.points.size() >= 4 && (shape.type == QStringLiteral("rectangle") || shape.type == QStringLiteral("ellipse"))) {
+        const double x1 = std::min(shape.points[0], shape.points[2]);
+        const double x2 = std::max(shape.points[0], shape.points[2]);
+        const double y1 = std::min(shape.points[1], shape.points[3]);
+        const double y2 = std::max(shape.points[1], shape.points[3]);
+        copiedTemplate_.width = std::max(2.0, x2 - x1);
+        copiedTemplate_.height = std::max(2.0, y2 - y1);
+        copiedTemplate_.relativePoints = {
+            -copiedTemplate_.width / 2.0, -copiedTemplate_.height / 2.0,
+             copiedTemplate_.width / 2.0,  copiedTemplate_.height / 2.0
+        };
+    } else {
+        const RectD box = Geometry::boundingRect(shape.points);
+        copiedTemplate_.width = std::max(2.0, box.width);
+        copiedTemplate_.height = std::max(2.0, box.height);
+        const double cx = box.center().x();
+        const double cy = box.center().y();
+        copiedTemplate_.relativePoints.clear();
+        for (int i = 0; i + 1 < shape.points.size(); i += 2) {
+            copiedTemplate_.relativePoints.push_back(shape.points[i] - cx);
+            copiedTemplate_.relativePoints.push_back(shape.points[i + 1] - cy);
         }
     }
 
-    if (copiedLabelId_ > 0) {
-        const Label* label = model_->label(copiedLabelId_);
-        setStatus(QStringLiteral("Copied label: %1")
-                      .arg(label ? label->name : QString::number(copiedLabelId_)));
-    } else {
-        setStatus(QStringLiteral("Selected object has no label"), true);
-    }
+    const QString msg = QStringLiteral("Copied %1 [%2 × %3 px] — press V to place")
+        .arg(copiedTemplate_.labelName)
+        .arg(static_cast<int>(std::round(copiedTemplate_.width)))
+        .arg(static_cast<int>(std::round(copiedTemplate_.height)));
+    setStatus(msg);
 }
 
 void JobWorkspace::pasteLabel()
 {
-    if (!model_ || copiedLabelId_ <= 0) {
-        setStatus(QStringLiteral("Copy a label before pasting"), true);
-        return;
-    }
-    if (model_->selection().isEmpty()) {
-        setStatus(QStringLiteral("Select one or more objects to paste the label"), true);
+    if (!model_ || !copiedTemplate_.valid) {
+        setStatus(QStringLiteral("No copied label. Select a label and press C first"), true);
+        showToast(QStringLiteral("✕ No copied label. Press C on a label first"), true);
         return;
     }
 
-    int changed = 0;
-    const auto selected = model_->selection();
-    for (const QString& key : selected) {
-        changed += model_->setObjectLabel(key, copiedLabelId_) ? 1 : 0;
-    }
-    const Label* label = model_->label(copiedLabelId_);
-    setStatus(changed > 0
-                  ? QStringLiteral("Pasted label %1 object(s): %2")
-                        .arg(changed)
-                        .arg(label ? label->name : QString::number(copiedLabelId_))
-                  : QStringLiteral("Selected objects already use that label"));
+    labelPanel_->setActiveLabel(copiedTemplate_.labelId);
+    canvas_->setActiveLabel(copiedTemplate_.labelId);
+    canvas_->startTemplatePlacement(copiedTemplate_);
+
+    const QString msg = QStringLiteral("Placing %1 [%2 × %3 px] — click to place onto image (Esc to cancel)")
+        .arg(copiedTemplate_.labelName)
+        .arg(static_cast<int>(std::round(copiedTemplate_.width)))
+        .arg(static_cast<int>(std::round(copiedTemplate_.height)));
+    setStatus(msg);
+    showToast(msg);
 }
 
 void JobWorkspace::copyAnnotations()
@@ -902,7 +1057,19 @@ void JobWorkspace::updateTitle()
     }
     titleLabel_->setText(title);
     const bool dirty = model_ && model_->isDirty();
-    dirtyLabel_->setText(dirty ? QStringLiteral("● unsaved changes") : QString());
+    if (dirty) {
+        dirtyLabel_->setText(QStringLiteral("● Saved locally · press S to save to server"));
+        dirtyLabel_->setStyleSheet(QStringLiteral(
+            "color: #eab308; font-weight: 600; padding: 2px 8px; "
+            "border-radius: 4px; background: rgba(234, 179, 8, 0.15);"));
+    } else if (annotationsLoaded_) {
+        dirtyLabel_->setText(QStringLiteral("✓ Saved to server"));
+        dirtyLabel_->setStyleSheet(QStringLiteral(
+            "color: #22c55e; font-weight: 600; padding: 2px 8px; "
+            "border-radius: 4px; background: rgba(34, 197, 94, 0.15);"));
+    } else {
+        dirtyLabel_->setText(QString());
+    }
 }
 
 void JobWorkspace::setStatus(const QString& message, bool error)
@@ -910,6 +1077,23 @@ void JobWorkspace::setStatus(const QString& message, bool error)
     statusLabel_->setStyleSheet(error ? QStringLiteral("color: #c44;")
                                       : QStringLiteral("color: #888;"));
     statusLabel_->setText(message);
+}
+
+void JobWorkspace::showToast(const QString& message, bool isError, int durationMs)
+{
+    if (!toast_) {
+        toast_ = new ToastWidget(this);
+    }
+    toast_->showToast(message, isError, durationMs);
+}
+
+void JobWorkspace::resizeEvent(QResizeEvent* event)
+{
+    QWidget::resizeEvent(event);
+    if (toast_ && toast_->isVisible()) {
+        const int x = (width() - toast_->width()) / 2;
+        toast_->move(x, 46);
+    }
 }
 
 void JobWorkspace::setTool(int tool)
@@ -926,7 +1110,10 @@ void JobWorkspace::saveRemote(std::function<void(bool)> done, bool silent)
         return;
     }
     if (!annotationsLoaded_) {
-        setStatus(QStringLiteral("Annotations are not loaded yet"), true);
+        setStatus(QStringLiteral("Cannot save: annotations still loading from server"), true);
+        if (!silent) {
+            showToast(QStringLiteral("✕ Still loading annotations — try again in a moment"), true, 4000);
+        }
         if (done) {
             done(false);
         }
@@ -936,8 +1123,13 @@ void JobWorkspace::saveRemote(std::function<void(bool)> done, bool silent)
     const auto patch = model_->buildPatch();
     if (!patch.any()) {
         model_->markClean();
+        dirtyLabel_->setText(QStringLiteral("✓ Saved to server"));
+        dirtyLabel_->setStyleSheet(QStringLiteral(
+            "color: #22c55e; font-weight: 600; padding: 2px 8px; "
+            "border-radius: 4px; background: rgba(34, 197, 94, 0.15);"));
         if (!silent) {
-            setStatus(QStringLiteral("No changes to save"));
+            setStatus(QStringLiteral("Server up to date · No unsaved changes"));
+            showToast(QStringLiteral("✓ Server up to date · No unsaved changes"), false, 3000);
         }
         if (done) {
             done(true);
@@ -950,6 +1142,10 @@ void JobWorkspace::saveRemote(std::function<void(bool)> done, bool silent)
     saveLocalSnapshot();
     if (recovery_) {
         recovery_->clearJob(job_.id);
+    }
+    if (!silent) {
+        showToast(QStringLiteral("⏳ Saving changes to server…"), false, 10000);
+        setStatus(QStringLiteral("Saving changes to server…"));
     }
 
     struct Operation {
@@ -982,48 +1178,57 @@ void JobWorkspace::saveRemote(std::function<void(bool)> done, bool silent)
         if (!ok) {
             saving_ = false;
             setStatus(QStringLiteral("Save failed: ") + error, true);
+            if (!silent) {
+                showToast(QStringLiteral("✕ Save failed: ") + error, true, 5000);
+            }
             updateActions();
             if (done) {
                 done(false);
             }
             return;
         }
+
+        // All PATCH operations succeeded — mark clean immediately so the UI
+        // reflects the saved state without waiting for a second round-trip.
         for (const auto& operation : *operations) {
             if (recovery_ && operation.pendingId > 0) {
                 recovery_->removePatch(operation.pendingId);
             }
         }
-        annotations_->get(job_.id, [this, done, silent](Result<LabeledData> reloaded) {
-            if (!reloaded) {
-                saving_ = false;
-                setStatus(QStringLiteral("Saved, but reloading failed: ") +
-                          reloaded.error().toString(), true);
-                updateActions();
-                if (done) {
-                    done(false);
-                }
+        model_->markClean();
+        annotationsLoaded_ = true;
+        saving_ = false;
+        if (recovery_) {
+            recovery_->clearJob(job_.id);
+        }
+        if (store_) {
+            store_->removeSnapshot(job_.id, -1);
+        }
+        if (!silent) {
+            setStatus(QStringLiteral("Saved changes to server"));
+            showToast(QStringLiteral("✓ Saved changes to server"), false, 3000);
+        }
+        dirtyLabel_->setText(QStringLiteral("✓ Saved to server"));
+        dirtyLabel_->setStyleSheet(QStringLiteral(
+            "color: #22c55e; font-weight: 600; padding: 2px 8px; "
+            "border-radius: 4px; background: rgba(34, 197, 94, 0.15);"));
+        updateActions();
+        updateTitle();
+        if (done) {
+            done(true);
+        }
+
+        // Reload annotations silently in the background to sync server-assigned
+        // IDs (e.g. newly created shapes get their real id from the server).
+        // If this fails we stay in the already-clean state — no error shown.
+        annotations_->get(job_.id, [this](Result<LabeledData> reloaded) {
+            if (!reloaded || !model_) {
                 return;
             }
             const int frame = model_->currentFrame();
             model_->load(*reloaded, frame);
             model_->markClean();
-            annotationsLoaded_ = true;
-            saving_ = false;
-            if (recovery_) {
-                recovery_->clearJob(job_.id);
-            }
-            if (store_) {
-                store_->removeSnapshot(job_.id, -1);
-            }
-            if (!silent) {
-                setStatus(QStringLiteral("Saved to server"));
-            }
             refreshObjects();
-            updateActions();
-            updateTitle();
-            if (done) {
-                done(true);
-            }
         });
     };
 
@@ -1052,9 +1257,45 @@ void JobWorkspace::saveRemote(std::function<void(bool)> done, bool silent)
 
 void JobWorkspace::saveLocalSnapshot()
 {
-    if (recovery_ && model_) {
-        recovery_->saveSnapshot(job_.id, -1, model_->data());
+    if (!store_ || !store_->isOpen() || !model_) {
+        return;
     }
+    if (snapshotBusy_) {
+        snapshotPending_ = true;
+        return;
+    }
+    const quint64 revision = model_->revision();
+    if (revision == lastSavedRevision_) {
+        return;
+    }
+
+    const QString databasePath = store_->databasePath();
+    const int jobId = job_.id;
+    const LabeledData snapshot = model_->data();
+    snapshotBusy_ = true;
+
+    auto* watcher = new QFutureWatcher<bool>(this);
+    connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher, revision]() {
+        if (watcher->result()) {
+            lastSavedRevision_ = revision;
+        }
+        snapshotBusy_ = false;
+        watcher->deleteLater();
+        if (snapshotPending_ || (model_ && model_->revision() != lastSavedRevision_)) {
+            snapshotPending_ = false;
+            saveLocalSnapshot();
+        }
+    });
+    watcher->setFuture(QtConcurrent::run([databasePath, jobId, snapshot]() {
+        LocalStore workerStore;
+        if (!workerStore.open(databasePath)) {
+            return false;
+        }
+        RecoveryStore workerRecovery(&workerStore);
+        const bool saved = workerRecovery.saveSnapshot(jobId, -1, snapshot);
+        workerStore.close();
+        return saved;
+    }));
 }
 
 bool JobWorkspace::isDirty() const

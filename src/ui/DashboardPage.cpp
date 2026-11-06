@@ -33,7 +33,7 @@ QTableWidget* makeTable(const QStringList& headers, QWidget* parent)
 {
     auto* table = new QTableWidget(0, headers.size(), parent);
     table->setHorizontalHeaderLabels(headers);
-    table->horizontalHeader()->setStretchLastSection(true);
+    table->horizontalHeader()->setStretchLastSection(false);
     table->verticalHeader()->setVisible(false);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -94,12 +94,30 @@ DashboardPage::DashboardPage(ProjectsApi* projects, TasksApi* tasks, JobsApi* jo
     projectTable_ = makeTable({QStringLiteral("Name"), QStringLiteral("Status"),
                                QStringLiteral("Dimension"), QStringLiteral("Tasks"),
                                QStringLiteral("Updated")}, tabs_);
+    projectTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    projectTable_->setColumnWidth(1, 100);
+    projectTable_->setColumnWidth(2, 90);
+    projectTable_->setColumnWidth(3, 60);
+    projectTable_->setColumnWidth(4, 140);
+
     taskTable_ = makeTable({QStringLiteral("Name"), QStringLiteral("Project"),
                             QStringLiteral("Status"), QStringLiteral("Frames"),
                             QStringLiteral("Updated")}, tabs_);
+    taskTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    taskTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    taskTable_->setColumnWidth(2, 100);
+    taskTable_->setColumnWidth(3, 65);
+    taskTable_->setColumnWidth(4, 140);
+
     jobTable_ = makeTable({QStringLiteral("Job"), QStringLiteral("Task"),
                            QStringLiteral("Status"), QStringLiteral("Stage"),
                            QStringLiteral("State"), QStringLiteral("Frames")}, tabs_);
+    jobTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    jobTable_->setColumnWidth(0, 80);
+    jobTable_->setColumnWidth(2, 100);
+    jobTable_->setColumnWidth(3, 90);
+    jobTable_->setColumnWidth(4, 90);
+    jobTable_->setColumnWidth(5, 100);
     tabs_->addTab(projectTable_, QStringLiteral("Projects"));
     tabs_->addTab(taskTable_, QStringLiteral("Tasks"));
     tabs_->addTab(jobTable_, QStringLiteral("Jobs"));

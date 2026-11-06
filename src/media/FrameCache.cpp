@@ -26,6 +26,20 @@ FrameCache::FrameCache(const QString& diskRoot) : diskRoot_(diskRoot)
 {
     if (!diskRoot_.isEmpty()) {
         QDir().mkpath(diskRoot_);
+        QVector<QPair<QString, QDateTime>> files;
+        QDirIterator it(diskRoot_, QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            files.push_back({path, QFileInfo(path).lastModified()});
+        }
+        std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
+            return a.second < b.second;
+        });
+        for (const auto& file : files) {
+            const qint64 bytes = QFileInfo(file.first).size();
+            diskEntries_.insert(file.first, DiskEntry{bytes, ++diskAccessCounter_});
+            diskBytes_ += bytes;
+        }
     }
 }
 
@@ -191,7 +205,20 @@ bool FrameCache::writeDisk(const Key& key, const QByteArray& bytes)
     if (file.write(bytes) != bytes.size() || !file.commit()) {
         return false;
     }
-    pruneDisk();
+    bool needsPrune = false;
+    {
+        QMutexLocker locker(&mutex_);
+        const auto it = diskEntries_.constFind(path);
+        if (it != diskEntries_.constEnd()) {
+            diskBytes_ -= it->bytes;
+        }
+        diskEntries_.insert(path, DiskEntry{bytes.size(), ++diskAccessCounter_});
+        diskBytes_ += bytes.size();
+        needsPrune = diskBytes_ > diskLimit_;
+    }
+    if (needsPrune) {
+        pruneDisk();
+    }
     return true;
 }
 
@@ -205,14 +232,28 @@ std::optional<QByteArray> FrameCache::readDisk(const Key& key) const
     if (!file.open(QIODevice::ReadOnly)) {
         return std::nullopt;
     }
-    return file.readAll();
+    const QByteArray bytes = file.readAll();
+    {
+        QMutexLocker locker(&mutex_);
+        auto it = diskEntries_.find(path);
+        if (it != diskEntries_.end()) {
+            it->lastAccess = ++diskAccessCounter_;
+        }
+    }
+    return bytes;
 }
 
 void FrameCache::removeDisk(const Key& key)
 {
     const QString path = diskPath(key);
     if (!path.isEmpty()) {
-        QFile::remove(path);
+        const bool removed = QFile::remove(path);
+        QMutexLocker locker(&mutex_);
+        auto it = diskEntries_.find(path);
+        if (it != diskEntries_.end() && (removed || !QFileInfo::exists(path))) {
+            diskBytes_ -= it->bytes;
+            diskEntries_.erase(it);
+        }
     }
 }
 
@@ -225,6 +266,16 @@ void FrameCache::removeJobDisk(int jobId)
     if (directory.exists()) {
         directory.removeRecursively();
     }
+    const QString prefix = QStringLiteral("%1/job-%2/").arg(diskRoot_).arg(jobId);
+    QMutexLocker locker(&mutex_);
+    for (auto it = diskEntries_.begin(); it != diskEntries_.end();) {
+        if (it.key().startsWith(prefix)) {
+            diskBytes_ -= it->bytes;
+            it = diskEntries_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void FrameCache::pruneDisk()
@@ -232,44 +283,28 @@ void FrameCache::pruneDisk()
     if (diskRoot_.isEmpty()) {
         return;
     }
-    qint64 limit = 0;
-    {
-        QMutexLocker locker(&mutex_);
-        limit = diskLimit_;
-    }
-    if (limit <= 0) {
+    QMutexLocker locker(&mutex_);
+    if (diskBytes_ <= diskLimit_) {
         return;
     }
-
-    struct FileEntry {
-        QString path;
-        qint64 size = 0;
-        QDateTime modified;
-    };
-    QVector<FileEntry> files;
-    qint64 total = 0;
-    QDirIterator it(diskRoot_, QDir::Files, QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        const QString path = it.next();
-        const QFileInfo info(path);
-        files.push_back(FileEntry{path, info.size(), info.lastModified()});
-        total += info.size();
+    QVector<QPair<QString, DiskEntry>> files;
+    files.reserve(diskEntries_.size());
+    for (auto it = diskEntries_.cbegin(); it != diskEntries_.cend(); ++it) {
+        files.push_back({it.key(), it.value()});
     }
-    if (total <= limit) {
-        return;
-    }
-    std::sort(files.begin(), files.end(), [](const FileEntry& a, const FileEntry& b) {
-        return a.modified < b.modified;
+    std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
+        return a.second.lastAccess < b.second.lastAccess;
     });
-    for (const auto& file : files) {
-        if (total <= limit) {
+    for (const auto& entry : files) {
+        if (diskBytes_ <= diskLimit_) {
             break;
         }
-        if (QFile::remove(file.path)) {
-            total -= file.size;
+        if (QFile::remove(entry.first) || !QFileInfo::exists(entry.first)) {
+            diskBytes_ -= entry.second.bytes;
+            diskEntries_.remove(entry.first);
         }
     }
-    qCInfo(logMedia) << "pruned frame cache to" << total << "bytes";
+    qCInfo(logMedia) << "pruned frame cache to" << diskBytes_ << "bytes";
 }
 
 } // namespace cvat
