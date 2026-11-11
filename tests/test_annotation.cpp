@@ -132,6 +132,49 @@ TEST(AnnotationModel, AddingAndUpdatingShapesIncrementsRevisionAndDirty)
     EXPECT_GT(model.revision(), revAfterAdd);
 }
 
+TEST(AnnotationModel, BatchUpdatingShapesAndUndo)
+{
+    AnnotationModel model;
+    Shape s1;
+    s1.labelId = 1;
+    s1.type = QStringLiteral("rectangle");
+    s1.points = {10, 10, 50, 50};
+    s1.frame = 0;
+    model.addShape(s1);
+
+    Shape s2;
+    s2.labelId = 1;
+    s2.type = QStringLiteral("rectangle");
+    s2.points = {100, 100, 200, 200};
+    s2.frame = 0;
+    model.addShape(s2);
+
+    const auto visible = model.visibleShapes();
+    ASSERT_EQ(visible.size(), 2);
+
+    Shape m1 = visible[0].shape;
+    m1.points = {5, 5, 55, 55};
+    Shape m2 = visible[1].shape;
+    m2.points = {95, 95, 205, 205};
+
+    const int updated = model.updateVisibleShapes({{visible[0].key, m1}, {visible[1].key, m2}});
+    EXPECT_EQ(updated, 2);
+
+    const auto visibleAfter = model.visibleShapes();
+    ASSERT_EQ(visibleAfter.size(), 2);
+    EXPECT_DOUBLE_EQ(visibleAfter[0].shape.points[0], 5.0);
+    EXPECT_DOUBLE_EQ(visibleAfter[1].shape.points[0], 95.0);
+
+    // Single undo reverts both shapes
+    EXPECT_TRUE(model.canUndo());
+    EXPECT_TRUE(model.undo());
+
+    const auto visibleReverted = model.visibleShapes();
+    ASSERT_EQ(visibleReverted.size(), 2);
+    EXPECT_DOUBLE_EQ(visibleReverted[0].shape.points[0], 10.0);
+    EXPECT_DOUBLE_EQ(visibleReverted[1].shape.points[0], 100.0);
+}
+
 TEST(Annotation, CopiedTemplateDimensionAndPlacement)
 {
     Shape shape;

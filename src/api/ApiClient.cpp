@@ -58,6 +58,15 @@ QString extractErrorMessage(const QByteArray& body, int status)
         }
     }
     QString text = QString::fromUtf8(body).trimmed();
+    if (text.startsWith(QLatin1Char('<')) || text.contains(QStringLiteral("<html"), Qt::CaseInsensitive)) {
+        if (status == 405) {
+            return QStringLiteral("Method Not Allowed (HTTP 405). Ensure the server address is the CVAT root (e.g. https://app.cvat.ai) without /login.");
+        }
+        if (status == 404) {
+            return QStringLiteral("Not Found (HTTP 404). Check the CVAT server address.");
+        }
+        return QStringLiteral("HTTP %1 response from server.").arg(status);
+    }
     if (text.size() > 500) {
         text = text.left(500) + QStringLiteral("…");
     }
@@ -119,8 +128,14 @@ void RequestHandle::sendAttempt()
     }
 
     QUrl url = client_->resolve(spec_.path);
-    if (!spec_.query.isEmpty()) {
-        url.setQuery(spec_.query);
+    QUrlQuery query = spec_.query;
+    if (!client_->organization_.isEmpty() && !query.hasQueryItem(QStringLiteral("org")) &&
+        !spec_.path.startsWith(QStringLiteral("/api/organizations")) &&
+        !spec_.path.startsWith(QStringLiteral("/api/auth"))) {
+        query.addQueryItem(QStringLiteral("org"), client_->organization_);
+    }
+    if (!query.isEmpty()) {
+        url.setQuery(query);
     }
 
     QNetworkRequest request(url);
@@ -277,16 +292,76 @@ ApiClient::ApiClient(QObject* parent)
 
 ApiClient::~ApiClient() = default;
 
+QUrl ApiClient::normalizeServerUrl(QString input)
+{
+    input = input.trimmed();
+    if (input.isEmpty()) {
+        return {};
+    }
+    // If no scheme was provided, default to https:// (or http:// if localhost/loopback)
+    if (!input.startsWith(QStringLiteral("http://"), Qt::CaseInsensitive) &&
+        !input.startsWith(QStringLiteral("https://"), Qt::CaseInsensitive)) {
+        if (input.startsWith(QStringLiteral("localhost"), Qt::CaseInsensitive) ||
+            input.startsWith(QStringLiteral("127.0.0.1"))) {
+            input.prepend(QStringLiteral("http://"));
+        } else {
+            input.prepend(QStringLiteral("https://"));
+        }
+    }
+    QUrl url(input);
+    if (!url.isValid() || url.host().isEmpty()) {
+        return {};
+    }
+
+    // Force https for app.cvat.ai or any *.cvat.ai domain
+    if (url.scheme().compare(QStringLiteral("http"), Qt::CaseInsensitive) == 0) {
+        if (url.host().compare(QStringLiteral("app.cvat.ai"), Qt::CaseInsensitive) == 0 ||
+            url.host().endsWith(QStringLiteral(".cvat.ai"), Qt::CaseInsensitive)) {
+            url.setScheme(QStringLiteral("https"));
+        }
+    }
+
+    // Strip common frontend web routes from the path
+    QString path = url.path();
+    const QStringList frontendRoots = {
+        QStringLiteral("/auth/login"),
+        QStringLiteral("/auth/register"),
+        QStringLiteral("/login"),
+        QStringLiteral("/register"),
+        QStringLiteral("/tasks"),
+        QStringLiteral("/projects"),
+        QStringLiteral("/jobs"),
+        QStringLiteral("/organization"),
+        QStringLiteral("/settings"),
+        QStringLiteral("/models"),
+        QStringLiteral("/cloudstorages"),
+        QStringLiteral("/analytics")
+    };
+
+    for (const auto& route : frontendRoots) {
+        const int idx = path.indexOf(route);
+        if (idx >= 0) {
+            path = path.left(idx);
+            break;
+        }
+    }
+
+    while (path.endsWith(QLatin1Char('/'))) {
+        path.chop(1);
+    }
+    url.setPath(path);
+    return url;
+}
+
 void ApiClient::setBaseUrl(const QUrl& url)
 {
-    baseUrl_ = url;
-    if (baseUrl_.path().endsWith(QLatin1Char('/'))) {
-        QString path = baseUrl_.path();
-        while (path.endsWith(QLatin1Char('/')) && path.size() > 1) {
-            path.chop(1);
-        }
-        baseUrl_.setPath(path);
+    const QUrl normalized = normalizeServerUrl(url.toString());
+    baseUrl_ = normalized.isValid() ? normalized : url;
+    QString path = baseUrl_.path();
+    while (path.endsWith(QLatin1Char('/'))) {
+        path.chop(1);
     }
+    baseUrl_.setPath(path);
 }
 
 void ApiClient::setToken(const QString& token) { token_ = token; }

@@ -40,6 +40,11 @@ public:
                     }
                     const QByteArray header = data.left(headerEnd);
                     for (const auto& line : header.split('\n')) {
+                        const int colon = line.indexOf(':');
+                        if (colon > 0) {
+                            lastHeaders_.insert(line.left(colon).trimmed().toLower(),
+                                               QString::fromUtf8(line.mid(colon + 1)).trimmed());
+                        }
                         if (line.toLower().startsWith("x-test-path:")) {
                             lastPath_ = QString::fromUtf8(line.mid(13)).trimmed();
                         }
@@ -83,9 +88,13 @@ public:
         return MockReply{200, R"({"count":1,"next":null,"previous":null,"results":[]})"};
     }
 
+    QString lastPath() const { return lastPath_; }
+    QString lastHeader(const QByteArray& name) const { return lastHeaders_.value(name.toLower()); }
+
 private:
     QHash<QTcpSocket*, QByteArray> buffer_;
     QString lastPath_;
+    QHash<QByteArray, QString> lastHeaders_;
 };
 
 template <typename T>
@@ -171,4 +180,45 @@ TEST(ApiClient, ErrorFromResponseMarksAuth)
     const ApiError error = ApiClient::errorFromResponse(response);
     EXPECT_EQ(error.kind, ErrorKind::Unauthorized);
     EXPECT_TRUE(error.message.contains(QStringLiteral("Invalid token")));
+}
+
+TEST(ApiClient, AttachesOrganizationQueryAndHeader)
+{
+    MockServer server;
+    const quint16 port = server.start();
+    ASSERT_GT(port, 0);
+
+    ApiClient client;
+    client.setBaseUrl(QUrl(QStringLiteral("http://127.0.0.1:%1").arg(port)));
+    client.setOrganization(QStringLiteral("MarkedUp"));
+
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("action"), QStringLiteral("create"));
+
+    bool completed = false;
+    auto result = waitFor<Result<ApiResponse>>(
+        [&](std::function<void(Result<ApiResponse>)> callback) {
+            client.get(QStringLiteral("/api/jobs/2365764/annotations"), query, std::move(callback));
+        },
+        &completed);
+
+    ASSERT_TRUE(completed);
+    ASSERT_TRUE(result.hasValue());
+    EXPECT_TRUE(server.lastPath().contains(QStringLiteral("org=MarkedUp")));
+    EXPECT_TRUE(server.lastPath().contains(QStringLiteral("action=create")));
+    EXPECT_EQ(server.lastHeader("x-organization"), QStringLiteral("MarkedUp"));
+}
+
+TEST(ApiClient, NormalizesServerUrls)
+{
+    EXPECT_EQ(ApiClient::normalizeServerUrl(QStringLiteral("http://app.cvat.ai/login")).toString(QUrl::StripTrailingSlash),
+              QStringLiteral("https://app.cvat.ai"));
+    EXPECT_EQ(ApiClient::normalizeServerUrl(QStringLiteral("app.cvat.ai/login/")).toString(QUrl::StripTrailingSlash),
+              QStringLiteral("https://app.cvat.ai"));
+    EXPECT_EQ(ApiClient::normalizeServerUrl(QStringLiteral("https://app.cvat.ai/tasks/1331125/jobs/2365764")).toString(QUrl::StripTrailingSlash),
+              QStringLiteral("https://app.cvat.ai"));
+    EXPECT_EQ(ApiClient::normalizeServerUrl(QStringLiteral("http://localhost:8080/auth/login")).toString(QUrl::StripTrailingSlash),
+              QStringLiteral("http://localhost:8080"));
+    EXPECT_EQ(ApiClient::normalizeServerUrl(QStringLiteral("https://company.org/cvat/tasks/10")).toString(QUrl::StripTrailingSlash),
+              QStringLiteral("https://company.org/cvat"));
 }

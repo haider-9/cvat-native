@@ -311,6 +311,7 @@
   /usr/include/qt6/QtCore/QList \
   /usr/include/qt6/QtCore/QObject \
   /usr/include/qt6/QtCore/QPointF \
+  /usr/include/qt6/QtCore/QPointer \
   /usr/include/qt6/QtCore/QSet \
   /usr/include/qt6/QtCore/QString \
   /usr/include/qt6/QtCore/QStringList \
@@ -399,6 +400,7 @@
   /usr/include/qt6/QtCore/qoverload.h \
   /usr/include/qt6/QtCore/qpair.h \
   /usr/include/qt6/QtCore/qpoint.h \
+  /usr/include/qt6/QtCore/qpointer.h \
   /usr/include/qt6/QtCore/qprocessordetection.h \
   /usr/include/qt6/QtCore/qrect.h \
   /usr/include/qt6/QtCore/qrefcount.h \

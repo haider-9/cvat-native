@@ -54,6 +54,7 @@ QString dateText(const QDateTime& date)
 QTableWidgetItem* item(const QString& text, const QVariant& id = {})
 {
     auto* result = new QTableWidgetItem(text);
+    result->setToolTip(text);
     if (id.isValid()) {
         result->setData(Qt::UserRole, id);
     }
@@ -94,30 +95,36 @@ DashboardPage::DashboardPage(ProjectsApi* projects, TasksApi* tasks, JobsApi* jo
     projectTable_ = makeTable({QStringLiteral("Name"), QStringLiteral("Status"),
                                QStringLiteral("Dimension"), QStringLiteral("Tasks"),
                                QStringLiteral("Updated")}, tabs_);
-    projectTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    projectTable_->setColumnWidth(1, 100);
-    projectTable_->setColumnWidth(2, 90);
-    projectTable_->setColumnWidth(3, 60);
-    projectTable_->setColumnWidth(4, 140);
+    projectTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    projectTable_->horizontalHeader()->setMinimumSectionSize(60);
+    projectTable_->setColumnWidth(0, 500); // Name
+    projectTable_->setColumnWidth(1, 110); // Status
+    projectTable_->setColumnWidth(2, 100); // Dimension
+    projectTable_->setColumnWidth(3, 70);  // Tasks
+    projectTable_->setColumnWidth(4, 150); // Updated
 
     taskTable_ = makeTable({QStringLiteral("Name"), QStringLiteral("Project"),
                             QStringLiteral("Status"), QStringLiteral("Frames"),
                             QStringLiteral("Updated")}, tabs_);
-    taskTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
-    taskTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    taskTable_->setColumnWidth(2, 100);
-    taskTable_->setColumnWidth(3, 65);
-    taskTable_->setColumnWidth(4, 140);
+    taskTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    taskTable_->horizontalHeader()->setMinimumSectionSize(60);
+    taskTable_->setColumnWidth(0, 500); // Name
+    taskTable_->setColumnWidth(1, 240); // Project
+    taskTable_->setColumnWidth(2, 110); // Status
+    taskTable_->setColumnWidth(3, 75);  // Frames
+    taskTable_->setColumnWidth(4, 150); // Updated
 
     jobTable_ = makeTable({QStringLiteral("Job"), QStringLiteral("Task"),
                            QStringLiteral("Status"), QStringLiteral("Stage"),
                            QStringLiteral("State"), QStringLiteral("Frames")}, tabs_);
-    jobTable_->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-    jobTable_->setColumnWidth(0, 80);
-    jobTable_->setColumnWidth(2, 100);
-    jobTable_->setColumnWidth(3, 90);
-    jobTable_->setColumnWidth(4, 90);
-    jobTable_->setColumnWidth(5, 100);
+    jobTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    jobTable_->horizontalHeader()->setMinimumSectionSize(60);
+    jobTable_->setColumnWidth(0, 90);  // Job ID
+    jobTable_->setColumnWidth(1, 500); // Task Name
+    jobTable_->setColumnWidth(2, 110); // Status
+    jobTable_->setColumnWidth(3, 100); // Stage
+    jobTable_->setColumnWidth(4, 100); // State
+    jobTable_->setColumnWidth(5, 110); // Frames
     tabs_->addTab(projectTable_, QStringLiteral("Projects"));
     tabs_->addTab(taskTable_, QStringLiteral("Tasks"));
     tabs_->addTab(jobTable_, QStringLiteral("Jobs"));

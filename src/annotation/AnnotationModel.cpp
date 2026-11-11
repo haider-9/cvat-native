@@ -471,61 +471,73 @@ void AnnotationModel::addShape(Shape shape)
 
 bool AnnotationModel::updateVisibleShape(const QString& key, const Shape& shape)
 {
-    if (!key.contains(QLatin1Char(':'))) {
-        return false;
-    }
-    const QChar kind = key.at(0);
-    const int id = key.mid(2).toInt();
+    return updateVisibleShapes({{key, shape}}) > 0;
+}
 
-    if (kind == QLatin1Char('s')) {
-        beginMutation();
-        Shape* target = shapeById(id);
-        if (!target) {
-            mutationBefore_ = {};
-            return false;
-        }
-        const std::optional<int> persistedId = target->id;
-        *target = shape;
-        target->id = persistedId;
-        target->frame = currentFrame_;
-        endMutation();
-        return true;
+int AnnotationModel::updateVisibleShapes(const QVector<QPair<QString, Shape>>& updates)
+{
+    if (updates.isEmpty()) {
+        return 0;
     }
-    if (kind == QLatin1Char('t')) {
-        beginMutation();
-        Track* track = trackById(id);
-        if (!track) {
-            mutationBefore_ = {};
-            return false;
+    beginMutation();
+    int changed = 0;
+    for (const auto& pair : updates) {
+        const QString& key = pair.first;
+        const Shape& shape = pair.second;
+        if (!key.contains(QLatin1Char(':'))) {
+            continue;
         }
-        TrackedShape replacement;
-        replacement.type = shape.type;
-        replacement.points = shape.points;
-        replacement.frame = currentFrame_;
-        replacement.occluded = shape.occluded;
-        replacement.outside = shape.outside;
-        replacement.zOrder = shape.zOrder;
-        replacement.rotation = shape.rotation;
-        replacement.attributes = shape.attributes;
+        const QChar kind = key.at(0);
+        const int id = key.mid(2).toInt();
 
-        auto it = std::find_if(track->shapes.begin(), track->shapes.end(),
-                               [this](const TrackedShape& keyframe) {
-            return keyframe.frame == currentFrame_;
-        });
-        if (it != track->shapes.end()) {
-            replacement.id = it->id;
-            *it = replacement;
-        } else {
-            track->shapes.push_back(replacement);
-            std::sort(track->shapes.begin(), track->shapes.end(),
-                      [](const TrackedShape& a, const TrackedShape& b) {
-                return a.frame < b.frame;
+        if (kind == QLatin1Char('s')) {
+            Shape* target = shapeById(id);
+            if (!target) {
+                continue;
+            }
+            const std::optional<int> persistedId = target->id;
+            *target = shape;
+            target->id = persistedId;
+            target->frame = currentFrame_;
+            ++changed;
+        } else if (kind == QLatin1Char('t')) {
+            Track* track = trackById(id);
+            if (!track) {
+                continue;
+            }
+            TrackedShape replacement;
+            replacement.type = shape.type;
+            replacement.points = shape.points;
+            replacement.frame = currentFrame_;
+            replacement.occluded = shape.occluded;
+            replacement.outside = shape.outside;
+            replacement.zOrder = shape.zOrder;
+            replacement.rotation = shape.rotation;
+            replacement.attributes = shape.attributes;
+
+            auto it = std::find_if(track->shapes.begin(), track->shapes.end(),
+                                   [this](const TrackedShape& keyframe) {
+                return keyframe.frame == currentFrame_;
             });
+            if (it != track->shapes.end()) {
+                replacement.id = it->id;
+                *it = replacement;
+            } else {
+                track->shapes.push_back(replacement);
+                std::sort(track->shapes.begin(), track->shapes.end(),
+                          [](const TrackedShape& a, const TrackedShape& b) {
+                    return a.frame < b.frame;
+                });
+            }
+            ++changed;
         }
-        endMutation();
-        return true;
     }
-    return false;
+    if (changed == 0) {
+        mutationBefore_ = {};
+        return 0;
+    }
+    endMutation();
+    return changed;
 }
 
 bool AnnotationModel::removeObject(const QString& key)

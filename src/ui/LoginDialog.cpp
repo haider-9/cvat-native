@@ -29,7 +29,11 @@ LoginDialog::LoginDialog(ApiClient* client, QWidget* parent)
     auto* form = new QFormLayout;
     layout->addLayout(form);
 
-    serverEdit_ = new QLineEdit(Settings::instance().serverUrl(), this);
+    const QUrl initialUrl = ApiClient::normalizeServerUrl(Settings::instance().serverUrl());
+    const QString initialServer = initialUrl.isValid()
+        ? initialUrl.toString(QUrl::StripTrailingSlash)
+        : Settings::instance().serverUrl();
+    serverEdit_ = new QLineEdit(initialServer, this);
     serverEdit_->setPlaceholderText(QStringLiteral("https://cvat.example.com"));
     form->addRow(QStringLiteral("Server"), serverEdit_);
 
@@ -126,28 +130,18 @@ void LoginDialog::fail(const QString& message)
 
 void LoginDialog::submit()
 {
-    const QUrl url(serverUrl());
-    if (!url.isValid() || url.scheme().isEmpty() || url.host().isEmpty()) {
-        fail(QStringLiteral("Enter a valid http(s) server URL."));
+    const QUrl normalizedUrl = ApiClient::normalizeServerUrl(serverUrl());
+    if (!normalizedUrl.isValid() || normalizedUrl.host().isEmpty()) {
+        fail(QStringLiteral("Enter a valid http(s) server URL (e.g. https://app.cvat.ai)."));
         return;
     }
-    QUrl normalizedUrl = url;
-    const QString normalizedPath = normalizedUrl.path();
-    if (normalizedPath.endsWith(QStringLiteral("/auth/login")) ||
-        normalizedPath.endsWith(QStringLiteral("/auth/login/"))) {
-        normalizedUrl.setPath(normalizedPath.left(normalizedPath.lastIndexOf(
-            QStringLiteral("/auth/login"))));
-        if (normalizedUrl.path().isEmpty()) {
-            normalizedUrl.setPath(QStringLiteral("/"));
-        }
-        serverEdit_->setText(normalizedUrl.toString());
-    }
+    QUrl finalUrl = normalizedUrl;
     // The bundled CVAT Traefik route matches localhost, not its loopback IP.
-    if (normalizedUrl.host() == QStringLiteral("127.0.0.1")) {
-        normalizedUrl.setHost(QStringLiteral("localhost"));
-        serverEdit_->setText(normalizedUrl.toString());
+    if (finalUrl.host() == QStringLiteral("127.0.0.1")) {
+        finalUrl.setHost(QStringLiteral("localhost"));
     }
-    client_->setBaseUrl(normalizedUrl);
+    serverEdit_->setText(finalUrl.toString(QUrl::StripTrailingSlash));
+    client_->setBaseUrl(finalUrl);
     if (tabs_->currentIndex() == 0) {
         submitPassword();
     } else {

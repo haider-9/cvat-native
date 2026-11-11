@@ -87,7 +87,11 @@ SettingsDialog::SettingsDialog(ApiClient* client, QWidget* parent)
 void SettingsDialog::load()
 {
     auto& settings = Settings::instance();
-    serverEdit_->setText(settings.serverUrl());
+    const QUrl initialUrl = ApiClient::normalizeServerUrl(settings.serverUrl());
+    const QString initialServer = initialUrl.isValid()
+        ? initialUrl.toString(QUrl::StripTrailingSlash)
+        : settings.serverUrl();
+    serverEdit_->setText(initialServer);
     usernameEdit_->setText(settings.username());
     schemeCombo_->setCurrentIndex(settings.authScheme() == QStringLiteral("bearer") ? 1 : 0);
     timeoutSpin_->setValue(settings.requestTimeoutMs());
@@ -101,15 +105,22 @@ void SettingsDialog::load()
 
 void SettingsDialog::save()
 {
-    const QUrl url(serverEdit_->text().trimmed());
-    if (!url.isValid() || url.scheme().isEmpty() || url.host().isEmpty()) {
+    const QUrl normalizedUrl = ApiClient::normalizeServerUrl(serverEdit_->text().trimmed());
+    if (!normalizedUrl.isValid() || normalizedUrl.host().isEmpty()) {
         QMessageBox::warning(this, QStringLiteral("Invalid server"),
-                             QStringLiteral("Enter a valid http(s) URL."));
+                             QStringLiteral("Enter a valid http(s) URL (e.g. https://app.cvat.ai)."));
         return;
     }
 
+    QUrl finalUrl = normalizedUrl;
+    if (finalUrl.host() == QStringLiteral("127.0.0.1")) {
+        finalUrl.setHost(QStringLiteral("localhost"));
+    }
+    const QString serverString = finalUrl.toString(QUrl::StripTrailingSlash);
+    serverEdit_->setText(serverString);
+
     auto& settings = Settings::instance();
-    settings.setServerUrl(url.toString());
+    settings.setServerUrl(serverString);
     settings.setUsername(usernameEdit_->text().trimmed());
     const QString scheme = schemeCombo_->currentData().toString();
     settings.setAuthScheme(scheme);
@@ -123,7 +134,7 @@ void SettingsDialog::save()
     settings.sync();
 
     if (client_) {
-        client_->setBaseUrl(url);
+        client_->setBaseUrl(finalUrl);
         client_->setTimeoutMs(timeoutSpin_->value());
         client_->setMaxRetries(retriesSpin_->value());
         client_->setAuthScheme(scheme == QStringLiteral("bearer") ? AuthScheme::Bearer

@@ -94,6 +94,7 @@ public:
 
     void setBaseUrl(const QUrl& url);
     [[nodiscard]] QUrl baseUrl() const { return baseUrl_; }
+    [[nodiscard]] static QUrl normalizeServerUrl(QString input);
 
     void setToken(const QString& token);
     [[nodiscard]] QString token() const { return token_; }

@@ -594,6 +594,17 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
         }
         if (!pendingPoints_.isEmpty()) {
             finishPolygon();
+            return;
+        }
+
+        AnnotationItem* item = annotationAt(scenePosition);
+        if (item) {
+            if (model_ && !model_->selection().contains(item->key())) {
+                model_->selectOnly(item->key());
+            }
+            emit annotationContextMenuRequested(item->key(), event->globalPosition().toPoint());
+            event->accept();
+            return;
         }
         return;
     }
@@ -844,6 +855,21 @@ void AnnotationCanvas::keyReleaseEvent(QKeyEvent* event)
         return;
     }
     QGraphicsView::keyReleaseEvent(event);
+}
+
+void AnnotationCanvas::contextMenuEvent(QContextMenuEvent* event)
+{
+    const QPointF scenePosition = mapToScene(event->pos());
+    AnnotationItem* item = annotationAt(scenePosition);
+    if (item) {
+        if (model_ && !model_->selection().contains(item->key())) {
+            model_->selectOnly(item->key());
+        }
+        emit annotationContextMenuRequested(item->key(), event->globalPos());
+        event->accept();
+        return;
+    }
+    QGraphicsView::contextMenuEvent(event);
 }
 
 void AnnotationCanvas::fitToView()

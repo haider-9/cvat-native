@@ -5,11 +5,13 @@
 #include "cvatnative/ui/AnnotationCanvas.h"
 
 #include <QWidget>
+#include <QPointer>
 
 #include <functional>
 
 class QAction;
 class QActionGroup;
+class QDialog;
 class QLabel;
 class QListWidget;
 class QResizeEvent;
@@ -80,6 +82,8 @@ private:
     void pasteLabel();
     void copyAnnotations();
     void pasteAnnotations();
+    void showNewLabelDialog();
+    void showLabelContextMenu(const QString& key, const QPoint& globalPos);
     void showGrowDialog();
     void showMoveDialog();
     void showRelabelDialog();
@@ -133,6 +137,7 @@ private:
     bool recoveryChecked_ = false;
     int requestedFrame_ = -1;
     int frameCount_ = 1;
+    QPointer<QDialog> growDialog_;
 };
 
 } // namespace cvat

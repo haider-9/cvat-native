@@ -31,6 +31,10 @@ public:
     [[nodiscard]] int handleAt(const QPointF& position, double tolerance) const;
     [[nodiscard]] QVector<QPointF> handlePoints() const;
 
+protected:
+    void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override;
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override;
+
 private:
     [[nodiscard]] QPolygonF polygon() const;
     [[nodiscard]] bool closed() const;
@@ -40,6 +44,7 @@ private:
     QColor color_;
     QString labelName_;
     QString type_;
+    bool hovered_ = false;
 };
 
 } // namespace cvat

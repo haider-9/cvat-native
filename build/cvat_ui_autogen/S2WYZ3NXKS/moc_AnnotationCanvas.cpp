@@ -49,7 +49,10 @@ template <> constexpr inline auto cvat::AnnotationCanvas::qt_create_metaobjectda
         "toolChanged",
         "CanvasTool",
         "tool",
-        "templatePlaced"
+        "templatePlaced",
+        "annotationContextMenuRequested",
+        "QPoint",
+        "globalPos"
     };
 
     QtMocHelpers::UintData qt_methods {
@@ -72,6 +75,10 @@ template <> constexpr inline auto cvat::AnnotationCanvas::qt_create_metaobjectda
         // Signal 'templatePlaced'
         QtMocHelpers::SignalData<void(const QString &)>(11, 2, QMC::AccessPublic, QMetaType::Void, {{
             { QMetaType::QString, 7 },
+        }}),
+        // Signal 'annotationContextMenuRequested'
+        QtMocHelpers::SignalData<void(const QString &, const QPoint &)>(12, 2, QMC::AccessPublic, QMetaType::Void, {{
+            { QMetaType::QString, 7 }, { 0x80000000 | 13, 14 },
         }}),
     };
     QtMocHelpers::UintData qt_properties {
@@ -101,6 +108,7 @@ void cvat::AnnotationCanvas::qt_static_metacall(QObject *_o, QMetaObject::Call _
         case 2: _t->shapeCreated((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
         case 3: _t->toolChanged((*reinterpret_cast<std::add_pointer_t<CanvasTool>>(_a[1]))); break;
         case 4: _t->templatePlaced((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1]))); break;
+        case 5: _t->annotationContextMenuRequested((*reinterpret_cast<std::add_pointer_t<QString>>(_a[1])),(*reinterpret_cast<std::add_pointer_t<QPoint>>(_a[2]))); break;
         default: ;
         }
     }
@@ -114,6 +122,8 @@ void cvat::AnnotationCanvas::qt_static_metacall(QObject *_o, QMetaObject::Call _
         if (QtMocHelpers::indexOfMethod<void (AnnotationCanvas::*)(CanvasTool )>(_a, &AnnotationCanvas::toolChanged, 3))
             return;
         if (QtMocHelpers::indexOfMethod<void (AnnotationCanvas::*)(const QString & )>(_a, &AnnotationCanvas::templatePlaced, 4))
+            return;
+        if (QtMocHelpers::indexOfMethod<void (AnnotationCanvas::*)(const QString & , const QPoint & )>(_a, &AnnotationCanvas::annotationContextMenuRequested, 5))
             return;
     }
 }
@@ -137,14 +147,14 @@ int cvat::AnnotationCanvas::qt_metacall(QMetaObject::Call _c, int _id, void **_a
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 5)
+        if (_id < 6)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 5;
+        _id -= 6;
     }
     if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 5)
+        if (_id < 6)
             *reinterpret_cast<QMetaType *>(_a[0]) = QMetaType();
-        _id -= 5;
+        _id -= 6;
     }
     return _id;
 }
@@ -177,5 +187,11 @@ void cvat::AnnotationCanvas::toolChanged(CanvasTool _t1)
 void cvat::AnnotationCanvas::templatePlaced(const QString & _t1)
 {
     QMetaObject::activate<void>(this, &staticMetaObject, 4, nullptr, _t1);
+}
+
+// SIGNAL 5
+void cvat::AnnotationCanvas::annotationContextMenuRequested(const QString & _t1, const QPoint & _t2)
+{
+    QMetaObject::activate<void>(this, &staticMetaObject, 5, nullptr, _t1, _t2);
 }
 QT_WARNING_POP

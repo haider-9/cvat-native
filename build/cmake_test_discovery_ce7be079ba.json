@@ -1,5 +1,5 @@
 {
-  "tests": 30,
+  "tests": 33,
   "name": "AllTests",
   "testsuites": [
     {
@@ -36,27 +36,37 @@
     },
     {
       "name": "ApiClient",
-      "tests": 4,
+      "tests": 6,
       "testsuite": [
         {
           "name": "ResolveKeepsBasePath",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
-          "line": 115
+          "line": 124
         },
         {
           "name": "GetParsesJsonAndAuthorization",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
-          "line": 125
+          "line": 134
         },
         {
           "name": "HttpErrorBecomesUnauthorized",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
-          "line": 149
+          "line": 158
         },
         {
           "name": "ErrorFromResponseMarksAuth",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
-          "line": 166
+          "line": 175
+        },
+        {
+          "name": "AttachesOrganizationQueryAndHeader",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
+          "line": 185
+        },
+        {
+          "name": "NormalizesServerUrls",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_api_client.cpp",
+          "line": 212
         }
       ]
     },
@@ -87,18 +97,23 @@
         {
           "name": "CopiedTemplateDimensionAndPlacement",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 135
+          "line": 178
         }
       ]
     },
     {
       "name": "AnnotationModel",
-      "tests": 1,
+      "tests": 2,
       "testsuite": [
         {
           "name": "AddingAndUpdatingShapesIncrementsRevisionAndDirty",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
           "line": 106
+        },
+        {
+          "name": "BatchUpdatingShapesAndUndo",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
+          "line": 135
         }
       ]
     },

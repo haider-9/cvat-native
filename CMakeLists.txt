@@ -112,6 +112,7 @@ target_link_libraries(cvat-native PRIVATE cvat_ui)
 
 install(TARGETS cvat-native RUNTIME DESTINATION bin)
 install(FILES packaging/cvat-native.desktop DESTINATION share/applications)
+install(FILES packaging/cvat-native.svg DESTINATION share/icons/hicolor/scalable/apps)
 
 if(CVATNATIVE_BUILD_TESTS)
     enable_testing()

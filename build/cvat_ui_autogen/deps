@@ -329,6 +329,7 @@ cvat_ui_autogen/timestamp: \
 	/usr/include/qt6/QtCore/QList \
 	/usr/include/qt6/QtCore/QObject \
 	/usr/include/qt6/QtCore/QPointF \
+	/usr/include/qt6/QtCore/QPointer \
 	/usr/include/qt6/QtCore/QSet \
 	/usr/include/qt6/QtCore/QString \
 	/usr/include/qt6/QtCore/QStringList \
@@ -418,6 +419,7 @@ cvat_ui_autogen/timestamp: \
 	/usr/include/qt6/QtCore/qoverload.h \
 	/usr/include/qt6/QtCore/qpair.h \
 	/usr/include/qt6/QtCore/qpoint.h \
+	/usr/include/qt6/QtCore/qpointer.h \
 	/usr/include/qt6/QtCore/qprocessordetection.h \
 	/usr/include/qt6/QtCore/qrect.h \
 	/usr/include/qt6/QtCore/qrefcount.h \
@@ -767,11 +769,6 @@ cvat_ui_autogen/timestamp: \
 	/usr/lib/cmake/Qt6Gui/Qt6QOffscreenIntegrationPluginTargets-relwithdebinfo.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QOffscreenIntegrationPluginTargets.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QOffscreenIntegrationPluginTargetsPrecheck.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QPdfPluginAdditionalTargetInfo.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QPdfPluginConfig.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QPdfPluginTargets-relwithdebinfo.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QPdfPluginTargets.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QPdfPluginTargetsPrecheck.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QSvgIconPluginAdditionalTargetInfo.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QSvgIconPluginConfig.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QSvgIconPluginTargets-relwithdebinfo.cmake \
@@ -802,11 +799,6 @@ cvat_ui_autogen/timestamp: \
 	/usr/lib/cmake/Qt6Gui/Qt6QTuioTouchPluginTargets-relwithdebinfo.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QTuioTouchPluginTargets.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QTuioTouchPluginTargetsPrecheck.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QVirtualKeyboardPluginAdditionalTargetInfo.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QVirtualKeyboardPluginConfig.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QVirtualKeyboardPluginTargets-relwithdebinfo.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QVirtualKeyboardPluginTargets.cmake \
-	/usr/lib/cmake/Qt6Gui/Qt6QVirtualKeyboardPluginTargetsPrecheck.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QVkKhrDisplayIntegrationPluginAdditionalTargetInfo.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QVkKhrDisplayIntegrationPluginConfig.cmake \
 	/usr/lib/cmake/Qt6Gui/Qt6QVkKhrDisplayIntegrationPluginTargets-relwithdebinfo.cmake \

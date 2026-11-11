@@ -68,6 +68,7 @@ signals:
     void shapeCreated(const QString& key);
     void toolChanged(CanvasTool tool);
     void templatePlaced(const QString& key);
+    void annotationContextMenuRequested(const QString& key, const QPoint& globalPos);
 
 protected:
     void mousePressEvent(QMouseEvent* event) override;
@@ -77,6 +78,7 @@ protected:
     void wheelEvent(QWheelEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
     enum class Interaction { None, Move, Resize, CreateRectangle, Pan, PlaceTemplate };

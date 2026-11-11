@@ -73,6 +73,7 @@ public:
 
     void addShape(Shape shape);
     bool updateVisibleShape(const QString& key, const Shape& shape);
+    int updateVisibleShapes(const QVector<QPair<QString, Shape>>& updates);
     bool removeObject(const QString& key);
     bool removeObjects(const QSet<QString>& keys);
 

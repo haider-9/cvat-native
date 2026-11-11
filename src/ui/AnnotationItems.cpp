@@ -116,13 +116,28 @@ QPainterPath AnnotationItem::shape() const
     return path;
 }
 
+void AnnotationItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+{
+    hovered_ = true;
+    update();
+    QGraphicsItem::hoverEnterEvent(event);
+}
+
+void AnnotationItem::hoverLeaveEvent(QGraphicsSceneHoverEvent* event)
+{
+    hovered_ = false;
+    update();
+    QGraphicsItem::hoverLeaveEvent(event);
+}
+
 void AnnotationItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
                            QWidget* widget)
 {
     Q_UNUSED(widget);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
-    const bool selected = option && (option->state & QStyle::State_Selected);
+    const bool selected = (option && (option->state & QStyle::State_Selected)) || isSelected();
+    const bool isHovered = hovered_;
     const QPolygonF points = polygon();
     if (points.isEmpty()) {
         return;
@@ -130,13 +145,14 @@ void AnnotationItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* op
 
     QPen pen(color_);
     pen.setCosmetic(true);
-    pen.setWidthF(selected ? 2.5 : 1.8);
+    pen.setWidthF(selected ? 2.5 : (isHovered ? 2.0 : 1.8));
     if (shape_.occluded) {
         pen.setStyle(Qt::DashLine);
     }
     painter->setPen(pen);
     painter->setBrush(selected ? QColor(color_.red(), color_.green(), color_.blue(), 45)
-                               : QColor(color_.red(), color_.green(), color_.blue(), 18));
+                               : (isHovered ? QColor(color_.red(), color_.green(), color_.blue(), 30)
+                                            : QColor(color_.red(), color_.green(), color_.blue(), 18)));
 
     if (type_ == QStringLiteral("points")) {
         painter->setBrush(Qt::NoBrush);
@@ -164,7 +180,8 @@ void AnnotationItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* op
         painter->setBrush(color_);
     }
 
-    if (!labelName_.isEmpty()) {
+    // Only show class name badge when hovered or selected
+    if ((selected || isHovered) && !labelName_.isEmpty()) {
         QFont font = painter->font();
         font.setPointSizeF(9.0);
         painter->setFont(font);
