@@ -1,5 +1,6 @@
 #include "cvatnative/model/Annotation.h"
 #include "cvatnative/annotation/AnnotationModel.h"
+#include "cvatnative/api/Models.h"
 
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -45,6 +46,28 @@ QJsonObject sampleData()
     })").object();
 }
 } // namespace
+
+TEST(Label, FlattenHierarchy)
+{
+    const QJsonObject json = QJsonDocument::fromJson(R"({
+        "id": 1,
+        "name": "vehicle",
+        "sublabels": [{
+            "id": 2,
+            "name": "car",
+            "sublabels": [{"id": 3, "name": "sedan"}]
+        }]
+    })").object();
+    const QVector<Label> flattened = flattenLabelHierarchy({Label::fromJson(json)});
+
+    ASSERT_EQ(flattened.size(), 3);
+    EXPECT_EQ(flattened[0].id, 1);
+    EXPECT_EQ(flattened[1].id, 2);
+    EXPECT_EQ(flattened[2].id, 3);
+    for (const auto& label : flattened) {
+        EXPECT_TRUE(label.sublabels.isEmpty());
+    }
+}
 
 TEST(Annotation, ParsesLabeledData)
 {

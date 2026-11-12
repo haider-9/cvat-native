@@ -1,8 +1,8 @@
 # CVAT Native
 
 CVAT Native is a Qt 6 Widgets client for an existing CVAT server. It is a
-native Linux application, not a replacement CVAT backend and not an embedded
-browser. The current implementation provides a modular API client, local
+native desktop application for Linux and Windows, not a replacement CVAT
+backend and not an embedded browser. The current implementation provides a modular API client, local
 SQLite storage, recovery snapshots, bounded frame caching, annotation models,
 and an annotation-focused dashboard and workspace.
 
@@ -17,12 +17,13 @@ dataset export is therefore not reachable in the application.
 
 ## Current status
 
-The project currently builds as C++20 with Qt 6.12 and CMake 4.4 on the target
-Arch Linux workstation. The source tree contains API modules for
+The project builds as C++20 with Qt 6.12 and CMake 4.4 on the target Arch
+Linux workstation. A Windows build recipe using MSYS2 UCRT64 is in `BUILD.md`.
+The source tree contains API modules for
 authentication, users, projects, tasks, jobs, annotations, labels, media and
 server information, plus the first native annotation canvas and settings UI.
 
-The current test suite contains 28 CTest-discovered cases covering result
+The current test suite contains 34 CTest-discovered cases covering result
 handling, API request behavior, annotation serialization, geometry, local
 storage and frame caching. Network-facing tests require the local test server
 to finish before their result can be assessed; see `BUILD.md`.
@@ -32,7 +33,7 @@ to finish before their result can be assessed; see `BUILD.md`.
 - `ARCHITECTURE.md` describes the module boundaries and data flow.
 - `API_REFERENCE.md` records the verified CVAT contract and native mapping.
 - `CVAT_BRIDGE_INVENTORY.md` classifies every reusable bridge component.
-- `BUILD.md` contains Arch Linux setup and validation commands.
+- `BUILD.md` contains Arch Linux and Windows setup and validation commands.
 - `ROADMAP.md` separates implemented work from the next buildable milestones.
 
 ## Scope

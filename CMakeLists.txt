@@ -32,6 +32,9 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS
 qt_standard_project_setup()
 
 if(CVATNATIVE_ENABLE_ASAN)
+    if(MSVC)
+        message(FATAL_ERROR "CVATNATIVE_ENABLE_ASAN requires GCC/Clang sanitizer support")
+    endif()
     add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
     add_link_options(-fsanitize=address,undefined)
 endif()
@@ -78,12 +81,19 @@ target_link_libraries(cvat_core PUBLIC
     Qt6::Sql
     Qt6::Concurrent
 )
+if(WIN32)
+    target_link_libraries(cvat_core PUBLIC advapi32)
+endif()
 target_compile_definitions(cvat_core PUBLIC
     CVATNATIVE_VERSION="${PROJECT_VERSION}"
     QT_NO_CAST_FROM_ASCII
     QT_NO_CAST_TO_ASCII
 )
-target_compile_options(cvat_core PRIVATE -Wall -Wextra -Wpedantic)
+if(MSVC)
+    target_compile_options(cvat_core PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(cvat_core PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
 add_library(cvat_ui STATIC
     include/cvatnative/ui/MainWindow.h
@@ -105,14 +115,22 @@ add_library(cvat_ui STATIC
 )
 target_include_directories(cvat_ui PUBLIC include)
 target_link_libraries(cvat_ui PUBLIC cvat_core Qt6::Widgets)
-target_compile_options(cvat_ui PRIVATE -Wall -Wextra -Wpedantic)
+if(MSVC)
+    target_compile_options(cvat_ui PRIVATE /W4 /permissive-)
+else()
+    target_compile_options(cvat_ui PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
 add_executable(cvat-native src/app/main.cpp)
 target_link_libraries(cvat-native PRIVATE cvat_ui)
 
-install(TARGETS cvat-native RUNTIME DESTINATION bin)
-install(FILES packaging/cvat-native.desktop DESTINATION share/applications)
-install(FILES packaging/cvat-native.svg DESTINATION share/icons/hicolor/scalable/apps)
+if(WIN32)
+    install(TARGETS cvat-native RUNTIME DESTINATION .)
+else()
+    install(TARGETS cvat-native RUNTIME DESTINATION bin)
+    install(FILES packaging/cvat-native.desktop DESTINATION share/applications)
+    install(FILES packaging/cvat-native.svg DESTINATION share/icons/hicolor/scalable/apps)
+endif()
 
 if(CVATNATIVE_BUILD_TESTS)
     enable_testing()
@@ -128,7 +146,11 @@ if(CVATNATIVE_BUILD_TESTS)
         tests/test_frame_cache.cpp
     )
     target_link_libraries(cvat_core_tests PRIVATE cvat_core GTest::gtest Qt6::Network Qt6::Sql)
-    target_compile_options(cvat_core_tests PRIVATE -Wall -Wextra -Wpedantic)
+    if(MSVC)
+        target_compile_options(cvat_core_tests PRIVATE /W4 /permissive-)
+    else()
+        target_compile_options(cvat_core_tests PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
     include(GoogleTest)
     gtest_discover_tests(cvat_core_tests)
 endif()

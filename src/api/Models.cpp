@@ -223,6 +223,28 @@ QJsonObject Label::toRequestJson(bool includeId) const
     return json;
 }
 
+namespace {
+
+void appendFlattenedLabels(const QVector<Label>& labels, QVector<Label>& flattened)
+{
+    for (const auto& label : labels) {
+        Label flatLabel = label;
+        const QVector<Label> sublabels = flatLabel.sublabels;
+        flatLabel.sublabels.clear();
+        flattened.push_back(std::move(flatLabel));
+        appendFlattenedLabels(sublabels, flattened);
+    }
+}
+
+} // namespace
+
+QVector<Label> flattenLabelHierarchy(const QVector<Label>& labels)
+{
+    QVector<Label> flattened;
+    appendFlattenedLabels(labels, flattened);
+    return flattened;
+}
+
 FrameInfo FrameInfo::fromJson(const QJsonObject& json)
 {
     FrameInfo frame;

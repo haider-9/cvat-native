@@ -3,16 +3,66 @@
 #include "cvatnative/core/Logging.h"
 #include "cvatnative/core/Settings.h"
 
+#include <QCryptographicHash>
 #include <QFile>
 #include <QFileInfo>
 #include <QProcess>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTimer>
+#include <QtGlobal>
+
+#ifdef Q_OS_WIN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <wincred.h>
+#include <string>
+#endif
 
 namespace cvat {
 
 namespace {
+#ifdef Q_OS_WIN
+QString windowsCredentialTarget(const QString& server, const QString& username)
+{
+    const QByteArray key = server.toUtf8() + '\n' + username.toUtf8();
+    const QByteArray digest = QCryptographicHash::hash(key, QCryptographicHash::Sha256).toHex();
+    return QStringLiteral("cvat-native:%1").arg(QString::fromLatin1(digest));
+}
+
+bool storeWindowsCredential(const QString& server, const QString& username,
+                            const QString& token, QString* error)
+{
+    const QByteArray tokenBytes = token.toUtf8();
+    if (tokenBytes.size() > CRED_MAX_CREDENTIAL_BLOB_SIZE) {
+        if (error) {
+            *error = QStringLiteral("Token exceeds the Windows Credential Manager size limit");
+        }
+        return false;
+    }
+
+    const std::wstring target = windowsCredentialTarget(server, username).toStdWString();
+    const std::wstring usernameWide = username.toStdWString();
+    CREDENTIALW credential{};
+    credential.Type = CRED_TYPE_GENERIC;
+    credential.TargetName = const_cast<LPWSTR>(target.c_str());
+    credential.UserName = const_cast<LPWSTR>(usernameWide.c_str());
+    credential.Persist = CRED_PERSIST_LOCAL_MACHINE;
+    credential.CredentialBlobSize = static_cast<DWORD>(tokenBytes.size());
+    credential.CredentialBlob = reinterpret_cast<LPBYTE>(
+        const_cast<char*>(tokenBytes.constData()));
+
+    if (!CredWriteW(&credential, 0)) {
+        if (error) {
+            *error = QStringLiteral("Windows Credential Manager error %1").arg(GetLastError());
+        }
+        return false;
+    }
+    return true;
+}
+#else
 constexpr auto kService = "cvat-native";
 
 bool runSecretTool(const QStringList& arguments, const QByteArray& input,
@@ -59,6 +109,7 @@ bool runSecretTool(const QStringList& arguments, const QByteArray& input,
     }
     return true;
 }
+#endif
 } // namespace
 
 CredentialStore& CredentialStore::instance()
@@ -81,7 +132,11 @@ QString CredentialStore::lookupKey(const QString& server, const QString& usernam
 
 bool CredentialStore::hasSecureBackend() const
 {
+#ifdef Q_OS_WIN
+    return true;
+#else
     return !QStandardPaths::findExecutable(QStringLiteral("secret-tool")).isEmpty();
+#endif
 }
 
 CredentialStore::Result CredentialStore::store(const QString& server, const QString& username,
@@ -93,8 +148,16 @@ CredentialStore::Result CredentialStore::store(const QString& server, const QStr
         return result;
     }
 
-    QByteArray ignored;
     QString error;
+#ifdef Q_OS_WIN
+    if (storeWindowsCredential(server, username, token, &error)) {
+        result.ok = true;
+        result.secure = true;
+        result.message = QStringLiteral("Token saved in Windows Credential Manager");
+        return result;
+    }
+#else
+    QByteArray ignored;
     if (runSecretTool({QStringLiteral("store"),
                        QStringLiteral("--label=CVAT Native %1").arg(server),
                        QStringLiteral("service"), QString::fromLatin1(kService),
@@ -106,9 +169,15 @@ CredentialStore::Result CredentialStore::store(const QString& server, const QStr
         result.message = QStringLiteral("Token saved in the system keyring");
         return result;
     }
+#endif
 
+#ifdef Q_OS_WIN
+    qCWarning(logApp) << "Windows Credential Manager unavailable; falling back to a credential file:"
+                      << error;
+#else
     qCWarning(logApp) << "Secret Service unavailable; falling back to a 0600 credential file:"
                       << error;
+#endif
 
     const QString path = fallbackPath();
     QSettings settings(path, QSettings::IniFormat);
@@ -122,12 +191,29 @@ CredentialStore::Result CredentialStore::store(const QString& server, const QStr
     }
     result.ok = true;
     result.secure = false;
+#ifdef Q_OS_WIN
+    result.message = QStringLiteral("Token saved in an unencrypted fallback file; Windows Credential Manager was unavailable");
+#else
     result.message = QStringLiteral("Token saved in a 0600 fallback file; install libsecret for keyring storage");
+#endif
     return result;
 }
 
 std::optional<QString> CredentialStore::load(const QString& server, const QString& username) const
 {
+#ifdef Q_OS_WIN
+    const std::wstring target = windowsCredentialTarget(server, username).toStdWString();
+    PCREDENTIALW credential = nullptr;
+    if (CredReadW(target.c_str(), CRED_TYPE_GENERIC, 0, &credential)) {
+        const QByteArray tokenBytes(reinterpret_cast<const char*>(credential->CredentialBlob),
+                                    static_cast<qsizetype>(credential->CredentialBlobSize));
+        CredFree(credential);
+        const QString token = QString::fromUtf8(tokenBytes);
+        if (!token.isEmpty()) {
+            return token;
+        }
+    }
+#else
     QByteArray output;
     QString error;
     if (runSecretTool({QStringLiteral("lookup"),
@@ -140,6 +226,7 @@ std::optional<QString> CredentialStore::load(const QString& server, const QStrin
             return token;
         }
     }
+#endif
 
     QSettings settings(fallbackPath(), QSettings::IniFormat);
     const QString token = settings.value(lookupKey(server, username)).toString();
@@ -151,12 +238,17 @@ std::optional<QString> CredentialStore::load(const QString& server, const QStrin
 
 bool CredentialStore::erase(const QString& server, const QString& username)
 {
+#ifdef Q_OS_WIN
+    const std::wstring target = windowsCredentialTarget(server, username).toStdWString();
+    CredDeleteW(target.c_str(), CRED_TYPE_GENERIC, 0);
+#else
     QString error;
     runSecretTool({QStringLiteral("clear"),
                    QStringLiteral("service"), QString::fromLatin1(kService),
                    QStringLiteral("server"), server,
                    QStringLiteral("username"), username},
                   {}, nullptr, &error);
+#endif
 
     QSettings settings(fallbackPath(), QSettings::IniFormat);
     settings.remove(lookupKey(server, username));

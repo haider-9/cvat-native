@@ -143,6 +143,8 @@ struct Label {
     [[nodiscard]] QJsonObject toRequestJson(bool includeId = true) const;
 };
 
+QVector<Label> flattenLabelHierarchy(const QVector<Label>& labels);
+
 struct FrameInfo {
     int width = 0;
     int height = 0;

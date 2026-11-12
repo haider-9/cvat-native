@@ -738,7 +738,7 @@ void JobWorkspace::loadLabels()
     const int projectId = job_.projectId;
     const int taskId = job_.taskId;
     auto apply = [this](const QVector<Label>& labels) {
-        labels_ = labels;
+        labels_ = flattenLabelHierarchy(labels);
         model_->setLabels(labels_);
         labelPanel_->setLabels(labels_);
         if (!labels_.isEmpty()) {
