@@ -66,6 +66,7 @@ private:
     void loadAnnotations();
     void loadFrame(int frame);
     void setFrame(int frame);
+    void showGoToFrameDialog();
     void requestFrame(int frame);
 
     void refreshObjects();

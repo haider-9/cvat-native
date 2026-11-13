@@ -26,6 +26,7 @@
 #include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QImage>
+#include <QInputDialog>
 #include <QJsonDocument>
 #include <QLabel>
 #include <QLineEdit>
@@ -602,6 +603,13 @@ void JobWorkspace::setupUi()
         }
     });
 
+    auto* goToFrame = new QAction(QStringLiteral("Go to frame…"), this);
+    goToFrame->setShortcut(QKeySequence(QStringLiteral("Ctrl+G")));
+    goToFrame->setShortcutContext(Qt::WindowShortcut);
+    goToFrame->setToolTip(QStringLiteral("Jump to a frame number (Ctrl+G)"));
+    this->addAction(goToFrame);
+    connect(goToFrame, &QAction::triggered, this, &JobWorkspace::showGoToFrameDialog);
+
     toolbar_->addSeparator();
     toolGroup_ = new QActionGroup(this);
     toolGroup_->setExclusive(true);
@@ -849,6 +857,20 @@ int JobWorkspace::lastFrame() const
         return firstFrame() + job_.frameCount - 1;
     }
     return firstFrame();
+}
+
+void JobWorkspace::showGoToFrameDialog()
+{
+    const int first = firstFrame();
+    const int last = lastFrame();
+    bool ok = false;
+    const int frame = QInputDialog::getInt(
+        this, QStringLiteral("Go to frame"),
+        QStringLiteral("Frame (%1 to %2):").arg(first).arg(last),
+        model_->currentFrame(), first, last, 1, &ok);
+    if (ok) {
+        setFrame(frame);
+    }
 }
 
 void JobWorkspace::setFrame(int frame)
