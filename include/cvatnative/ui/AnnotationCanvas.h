@@ -9,6 +9,7 @@
 #include <QString>
 #include <QVector>
 
+class QGraphicsLineItem;
 class QGraphicsPathItem;
 class QGraphicsPixmapItem;
 class QGraphicsRectItem;
@@ -62,6 +63,11 @@ public:
     void resetZoom();
     [[nodiscard]] double zoom() const;
 
+    // Thin horizontal and vertical guides that follow the pointer across the
+    // whole visible area, as in CVAT's web client. On by default.
+    void setCrosshairEnabled(bool enabled);
+    [[nodiscard]] bool crosshairEnabled() const { return crosshairEnabled_; }
+
 signals:
     void statusMessage(const QString& message);
     void zoomChanged(double factor);
@@ -79,11 +85,14 @@ protected:
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
+    void enterEvent(QEnterEvent* event) override;
+    void leaveEvent(QEvent* event) override;
 
 private:
     enum class Interaction { None, Move, Resize, CreateRectangle, Pan, PlaceTemplate };
 
     void updateSelectionVisuals();
+    void updateCrosshair();
     void clearPendingCreation();
     void finishPolygon();
     void updatePolygonPreview(const QPointF& cursor);
@@ -109,6 +118,11 @@ private:
     QGraphicsRectItem* rectangleBadgeBg_ = nullptr;
     QGraphicsSimpleTextItem* rectangleBadgeText_ = nullptr;
     QGraphicsPathItem* polygonPreview_ = nullptr;
+    QGraphicsLineItem* crosshairH_ = nullptr;
+    QGraphicsLineItem* crosshairV_ = nullptr;
+    QPoint lastCursor_;
+    bool crosshairEnabled_ = true;
+    bool cursorInside_ = false;
     CopiedTemplate templateData_;
     QGraphicsRectItem* templateRectPreview_ = nullptr;
     QGraphicsPathItem* templatePathPreview_ = nullptr;

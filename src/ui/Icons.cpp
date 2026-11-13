@@ -165,6 +165,15 @@ void drawIcon(QPainter& p, Icon icon)
         }
         break;
 
+    case Icon::Crosshair:
+        // Circle with four ticks pointing at it.
+        p.drawEllipse(QPointF(12, 12), 5, 5);
+        p.drawLine(QPointF(12, 2), QPointF(12, 7));
+        p.drawLine(QPointF(12, 17), QPointF(12, 22));
+        p.drawLine(QPointF(2, 12), QPointF(7, 12));
+        p.drawLine(QPointF(17, 12), QPointF(22, 12));
+        break;
+
     case Icon::FitView:
         p.drawPolyline(QPolygonF{QPointF(4, 9), QPointF(4, 4), QPointF(9, 4)});
         p.drawPolyline(QPolygonF{QPointF(15, 4), QPointF(20, 4), QPointF(20, 9)});

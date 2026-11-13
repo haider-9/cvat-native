@@ -629,6 +629,12 @@ void JobWorkspace::setupUi()
     auto* zoomOut = toolbar_->addAction(makeIcon(Icon::ZoomOut), QStringLiteral("Zoom out"));
     connect(zoomOut, &QAction::triggered, this, [this]() { canvas_->zoomOut(); });
     auto* fit = toolbar_->addAction(makeIcon(Icon::FitView), QStringLiteral("Fit"));
+    toolbar_->addSeparator();
+    auto* guides = toolbar_->addAction(makeIcon(Icon::Crosshair), QStringLiteral("Guides"));
+    guides->setCheckable(true);
+    guides->setChecked(true);
+    guides->setToolTip(QStringLiteral("Show crosshair guides that follow the pointer"));
+    connect(guides, &QAction::toggled, this, [this](bool on) { canvas_->setCrosshairEnabled(on); });
     connect(fit, &QAction::triggered, this, [this]() { canvas_->fitToView(); });
 
     auto* splitter = new QSplitter(Qt::Horizontal, this);

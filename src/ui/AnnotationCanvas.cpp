@@ -3,6 +3,7 @@
 #include "cvatnative/annotation/Geometry.h"
 #include "cvatnative/ui/AnnotationItems.h"
 
+#include <QGraphicsLineItem>
 #include <QGraphicsPathItem>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsRectItem>
@@ -38,6 +39,27 @@ AnnotationCanvas::AnnotationCanvas(QWidget* parent)
     background_->setZValue(-1000);
     background_->setTransformationMode(Qt::SmoothTransformation);
     scene_->addItem(background_);
+
+    // Guides are scene items so they stay 1 px wide at any zoom. They are not
+    // selectable or movable and do not accept mouse input, so they never
+    // intercept the pointer.
+    auto makeGuide = [this]() {
+        auto* line = new QGraphicsLineItem;
+        QPen pen(QColor(230, 30, 30));
+        pen.setWidth(1);
+        pen.setCosmetic(true);
+        line->setPen(pen);
+        line->setZValue(900);
+        line->setVisible(false);
+        scene_->addItem(line);
+        return line;
+    };
+    crosshairH_ = makeGuide();
+    crosshairV_ = makeGuide();
+
+    connect(horizontalScrollBar(), &QScrollBar::valueChanged, this, [this]() { updateCrosshair(); });
+    connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this]() { updateCrosshair(); });
+    connect(this, &AnnotationCanvas::zoomChanged, this, [this]() { updateCrosshair(); });
 }
 
 void AnnotationCanvas::setModel(AnnotationModel* model)
@@ -89,6 +111,7 @@ void AnnotationCanvas::setTool(CanvasTool tool)
         setCursor(Qt::CrossCursor);
         break;
     }
+    updateCrosshair();
 }
 
 void AnnotationCanvas::setActiveLabel(int labelId)
@@ -675,6 +698,10 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
 
 void AnnotationCanvas::mouseMoveEvent(QMouseEvent* event)
 {
+    lastCursor_ = event->position().toPoint();
+    cursorInside_ = true;
+    updateCrosshair();
+
     const QPointF scenePosition = mapToScene(event->position().toPoint());
 
     switch (interaction_) {
@@ -902,6 +929,44 @@ void AnnotationCanvas::resetZoom()
 double AnnotationCanvas::zoom() const
 {
     return transform().m11();
+}
+
+void AnnotationCanvas::setCrosshairEnabled(bool enabled)
+{
+    crosshairEnabled_ = enabled;
+    updateCrosshair();
+}
+
+void AnnotationCanvas::enterEvent(QEnterEvent* event)
+{
+    cursorInside_ = true;
+    QGraphicsView::enterEvent(event);
+}
+
+void AnnotationCanvas::leaveEvent(QEvent* event)
+{
+    cursorInside_ = false;
+    updateCrosshair();
+    QGraphicsView::leaveEvent(event);
+}
+
+void AnnotationCanvas::updateCrosshair()
+{
+    // Guides only help while placing geometry, so hide them in Select mode.
+    const bool drawing = tool_ != CanvasTool::Select || interaction_ == Interaction::PlaceTemplate;
+    const bool visible = crosshairEnabled_ && cursorInside_ && drawing;
+    crosshairH_->setVisible(visible);
+    crosshairV_->setVisible(visible);
+    if (!visible) {
+        return;
+    }
+
+    // Span the visible part of the scene so the guides reach the window edges
+    // at any zoom or scroll position.
+    const QPointF cursor = mapToScene(lastCursor_);
+    const QRectF area = mapToScene(viewport()->rect()).boundingRect();
+    crosshairH_->setLine(area.left(), cursor.y(), area.right(), cursor.y());
+    crosshairV_->setLine(cursor.x(), area.top(), cursor.x(), area.bottom());
 }
 
 } // namespace cvat

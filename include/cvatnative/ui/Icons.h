@@ -30,6 +30,7 @@ enum class Icon {
     ZoomIn,
     ZoomOut,
     FitView,
+    Crosshair,
 };
 
 // Requires a QGuiApplication (the palette is read when the icon is made).
