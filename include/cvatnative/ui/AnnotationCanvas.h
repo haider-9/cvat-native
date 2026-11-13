@@ -9,6 +9,7 @@
 #include <QString>
 #include <QVector>
 
+class QGraphicsItem;
 class QGraphicsLineItem;
 class QGraphicsPathItem;
 class QGraphicsPixmapItem;
@@ -35,6 +36,9 @@ struct CopiedTemplate {
     bool occluded = false;
     double rotation = 0.0;
     int zOrder = 0;
+    // Centre of this shape relative to the group anchor when several shapes
+    // are placed together. Zero for a single shape.
+    QPointF offset;
 };
 
 // High-performance canvas: the frame is a QPixmap, annotations are lightweight
@@ -53,6 +57,9 @@ public:
     [[nodiscard]] int activeLabel() const { return activeLabel_; }
 
     void startTemplatePlacement(const CopiedTemplate& tmpl);
+    // Places a group of shapes together: a preview of all of them follows the
+    // pointer, and one click places every shape at the same offsets.
+    void startGroupPlacement(const QVector<CopiedTemplate>& items);
     void cancelTemplatePlacement();
     [[nodiscard]] bool isPlacingTemplate() const;
 
@@ -123,9 +130,8 @@ private:
     QPoint lastCursor_;
     bool crosshairEnabled_ = true;
     bool cursorInside_ = false;
-    CopiedTemplate templateData_;
-    QGraphicsRectItem* templateRectPreview_ = nullptr;
-    QGraphicsPathItem* templatePathPreview_ = nullptr;
+    QVector<CopiedTemplate> templates_;
+    QList<QGraphicsItem*> templatePreviewItems_;
     QGraphicsRectItem* templateBadgeBg_ = nullptr;
     QGraphicsSimpleTextItem* templateBadgeText_ = nullptr;
     QImage frame_;

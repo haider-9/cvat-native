@@ -126,10 +126,22 @@ bool AnnotationCanvas::isPlacingTemplate() const
 
 void AnnotationCanvas::startTemplatePlacement(const CopiedTemplate& tmpl)
 {
+    startGroupPlacement({tmpl});
+}
+
+void AnnotationCanvas::startGroupPlacement(const QVector<CopiedTemplate>& items)
+{
     clearPendingCreation();
     clearTemplatePlacement();
-    templateData_ = tmpl;
-    activeLabel_ = tmpl.labelId;
+    for (const auto& item : items) {
+        if (item.valid) {
+            templates_.push_back(item);
+        }
+    }
+    if (templates_.isEmpty()) {
+        return;
+    }
+    activeLabel_ = templates_.first().labelId;
     interaction_ = Interaction::PlaceTemplate;
     setCursor(Qt::CrossCursor);
 
@@ -151,7 +163,7 @@ void AnnotationCanvas::cancelTemplatePlacement()
 void AnnotationCanvas::clearTemplatePlacement()
 {
     clearTemplatePreview();
-    templateData_ = {};
+    templates_.clear();
     if (interaction_ == Interaction::PlaceTemplate) {
         interaction_ = Interaction::None;
     }
@@ -159,16 +171,11 @@ void AnnotationCanvas::clearTemplatePlacement()
 
 void AnnotationCanvas::clearTemplatePreview()
 {
-    if (templateRectPreview_) {
-        scene_->removeItem(templateRectPreview_);
-        delete templateRectPreview_;
-        templateRectPreview_ = nullptr;
+    for (auto* item : templatePreviewItems_) {
+        scene_->removeItem(item);
+        delete item;
     }
-    if (templatePathPreview_) {
-        scene_->removeItem(templatePathPreview_);
-        delete templatePathPreview_;
-        templatePathPreview_ = nullptr;
-    }
+    templatePreviewItems_.clear();
     if (templateBadgeBg_) {
         scene_->removeItem(templateBadgeBg_);
         delete templateBadgeBg_;
@@ -183,56 +190,62 @@ void AnnotationCanvas::clearTemplatePreview()
 
 void AnnotationCanvas::updateTemplatePreview(const QPointF& center)
 {
-    if (interaction_ != Interaction::PlaceTemplate || !templateData_.valid) {
+    if (interaction_ != Interaction::PlaceTemplate || templates_.isEmpty()) {
         return;
     }
-    const double w = templateData_.width;
-    const double h = templateData_.height;
-    const double left = center.x() - w / 2.0;
-    const double top = center.y() - h / 2.0;
-    const QRectF rect(left, top, w, h);
 
-    if (templateData_.shapeType == QStringLiteral("rectangle") ||
-        templateData_.shapeType == QStringLiteral("ellipse")) {
-        if (!templateRectPreview_) {
-            QPen pen(templateData_.color, 2, Qt::DashLine);
-            pen.setCosmetic(true);
-            templateRectPreview_ = scene_->addRect(
-                rect, pen,
-                QColor(templateData_.color.red(), templateData_.color.green(),
-                       templateData_.color.blue(), 55));
-            templateRectPreview_->setZValue(20000);
-        } else {
-            templateRectPreview_->setRect(rect);
+    // Create one preview item per shape the first time, then only move them.
+    if (templatePreviewItems_.size() != templates_.size()) {
+        for (auto* item : templatePreviewItems_) {
+            scene_->removeItem(item);
+            delete item;
         }
-    } else {
-        QPainterPath path;
-        if (!templateData_.relativePoints.isEmpty()) {
-            path.moveTo(center.x() + templateData_.relativePoints[0],
-                        center.y() + templateData_.relativePoints[1]);
-            for (int i = 2; i + 1 < templateData_.relativePoints.size(); i += 2) {
-                path.lineTo(center.x() + templateData_.relativePoints[i],
-                            center.y() + templateData_.relativePoints[i + 1]);
+        templatePreviewItems_.clear();
+        for (const auto& t : templates_) {
+            QPen pen(t.color, 2, Qt::DashLine);
+            pen.setCosmetic(true);
+            const QColor fill(t.color.red(), t.color.green(), t.color.blue(), 55);
+            QGraphicsItem* item = nullptr;
+            if (t.shapeType == QStringLiteral("rectangle") || t.shapeType == QStringLiteral("ellipse")) {
+                item = scene_->addRect(QRectF(), pen, fill);
+            } else {
+                item = scene_->addPath(QPainterPath(), pen, fill);
             }
-            path.closeSubpath();
-        }
-        if (!templatePathPreview_) {
-            QPen pen(templateData_.color, 2, Qt::DashLine);
-            pen.setCosmetic(true);
-            templatePathPreview_ = scene_->addPath(
-                path, pen,
-                QColor(templateData_.color.red(), templateData_.color.green(),
-                       templateData_.color.blue(), 55));
-            templatePathPreview_->setZValue(20000);
-        } else {
-            templatePathPreview_->setPath(path);
+            item->setZValue(20000);
+            templatePreviewItems_.push_back(item);
         }
     }
 
-    const QString badgeStr = QStringLiteral("%1 · %2 × %3 px")
-        .arg(templateData_.labelName)
-        .arg(static_cast<int>(std::round(w)))
-        .arg(static_cast<int>(std::round(h)));
+    QRectF bounds;
+    for (int i = 0; i < templates_.size(); ++i) {
+        const CopiedTemplate& t = templates_[i];
+        const QPointF c = center + t.offset;
+        const QRectF rect(c.x() - t.width / 2.0, c.y() - t.height / 2.0, t.width, t.height);
+        bounds |= rect;
+
+        QGraphicsItem* item = templatePreviewItems_[i];
+        if (auto* rectItem = qgraphicsitem_cast<QGraphicsRectItem*>(item)) {
+            rectItem->setRect(rect);
+        } else if (auto* pathItem = qgraphicsitem_cast<QGraphicsPathItem*>(item)) {
+            QPainterPath path;
+            if (!t.relativePoints.isEmpty()) {
+                path.moveTo(c.x() + t.relativePoints[0], c.y() + t.relativePoints[1]);
+                for (int p = 2; p + 1 < t.relativePoints.size(); p += 2) {
+                    path.lineTo(c.x() + t.relativePoints[p], c.y() + t.relativePoints[p + 1]);
+                }
+                path.closeSubpath();
+            }
+            pathItem->setPath(path);
+        }
+    }
+
+    const CopiedTemplate& first = templates_.first();
+    const QString badgeStr = templates_.size() == 1
+        ? QStringLiteral("%1 · %2 × %3 px")
+              .arg(first.labelName)
+              .arg(static_cast<int>(std::round(first.width)))
+              .arg(static_cast<int>(std::round(first.height)))
+        : QStringLiteral("%1 annotations").arg(templates_.size());
 
     if (!templateBadgeText_) {
         templateBadgeText_ = scene_->addSimpleText(badgeStr);
@@ -250,58 +263,67 @@ void AnnotationCanvas::updateTemplatePreview(const QPointF& center)
         templateBadgeBg_ = scene_->addRect(QRectF());
         templateBadgeBg_->setZValue(20001);
         templateBadgeBg_->setBrush(QColor(15, 23, 42, 225));
-        templateBadgeBg_->setPen(QPen(templateData_.color, 1));
+        templateBadgeBg_->setPen(QPen(first.color, 1));
     }
 
     const QRectF tRect = templateBadgeText_->boundingRect();
     const double badgeW = tRect.width() + 12;
     const double badgeH = tRect.height() + 4;
-    const double badgeX = center.x() - badgeW / 2.0;
-    const double badgeY = top + h + 6;
+    const double badgeX = bounds.center().x() - badgeW / 2.0;
+    const double badgeY = bounds.bottom() + 6;
     templateBadgeBg_->setRect(badgeX, badgeY, badgeW, badgeH);
     templateBadgeText_->setPos(badgeX + 6, badgeY + 2);
 }
 
 void AnnotationCanvas::placeTemplateAt(const QPointF& pos)
 {
-    if (!model_ || !templateData_.valid) {
+    if (!model_ || templates_.isEmpty()) {
         clearTemplatePlacement();
         return;
     }
-    cvat::Shape shape;
-    shape.labelId = templateData_.labelId;
-    shape.type = templateData_.shapeType;
-    shape.frame = model_->currentFrame();
-    shape.attributes = templateData_.attributes;
-    shape.occluded = templateData_.occluded;
-    shape.rotation = templateData_.rotation;
-    shape.zOrder = model_->nextZOrder();
 
-    if (shape.type == QStringLiteral("rectangle") || shape.type == QStringLiteral("ellipse") ||
-        shape.type == QStringLiteral("mask")) {
-        const double left = pos.x() - templateData_.width / 2.0;
-        const double top = pos.y() - templateData_.height / 2.0;
-        const double right = left + templateData_.width;
-        const double bottom = top + templateData_.height;
-        shape.points = {left, top, right, bottom};
-    } else {
-        shape.points.clear();
-        for (int i = 0; i + 1 < templateData_.relativePoints.size(); i += 2) {
-            shape.points.push_back(pos.x() + templateData_.relativePoints[i]);
-            shape.points.push_back(pos.y() + templateData_.relativePoints[i + 1]);
+    // Build every shape before clearing the placement state.
+    const QVector<CopiedTemplate> templates = templates_;
+    QVector<cvat::Shape> shapes;
+    for (const auto& t : templates) {
+        const QPointF c = pos + t.offset;
+        cvat::Shape shape;
+        shape.labelId = t.labelId;
+        shape.type = t.shapeType;
+        shape.frame = model_->currentFrame();
+        shape.attributes = t.attributes;
+        shape.occluded = t.occluded;
+        shape.rotation = t.rotation;
+        shape.zOrder = model_->nextZOrder() + static_cast<int>(shapes.size());
+
+        if (shape.type == QStringLiteral("rectangle") || shape.type == QStringLiteral("ellipse") ||
+            shape.type == QStringLiteral("mask")) {
+            const double left = c.x() - t.width / 2.0;
+            const double top = c.y() - t.height / 2.0;
+            shape.points = {left, top, left + t.width, top + t.height};
+        } else {
+            for (int i = 0; i + 1 < t.relativePoints.size(); i += 2) {
+                shape.points.push_back(c.x() + t.relativePoints[i]);
+                shape.points.push_back(c.y() + t.relativePoints[i + 1]);
+            }
         }
+        shapes.push_back(shape);
     }
 
-    const QString placedName = templateData_.labelName;
-    const int placedW = static_cast<int>(std::round(templateData_.width));
-    const int placedH = static_cast<int>(std::round(templateData_.height));
-
     clearTemplatePlacement();
-    model_->addShape(shape);
+    // One call, so the whole placement is a single undo step.
+    model_->addShapes(shapes);
 
     setTool(CanvasTool::Select);
     emit toolChanged(CanvasTool::Select);
-    emit statusMessage(QStringLiteral("Placed %1 [%2 × %3 px]").arg(placedName).arg(placedW).arg(placedH));
+    if (templates.size() == 1) {
+        emit statusMessage(QStringLiteral("Placed %1 [%2 × %3 px]")
+                               .arg(templates.first().labelName)
+                               .arg(static_cast<int>(std::round(templates.first().width)))
+                               .arg(static_cast<int>(std::round(templates.first().height))));
+    } else {
+        emit statusMessage(QStringLiteral("Placed %1 annotations").arg(templates.size()));
+    }
     emit shapeCreated(model_->selection().isEmpty() ? QString() : *model_->selection().begin());
 }
 
@@ -738,20 +760,16 @@ void AnnotationCanvas::mouseMoveEvent(QMouseEvent* event)
 
     if (tool_ == CanvasTool::Select) {
         AnnotationItem* item = annotationAt(scenePosition);
+        // Hover only changes the cursor. Selection is changed by clicks, so
+        // moving the pointer never drops a multi-selection.
         if (!item) {
             setCursor(spacePanning_ ? Qt::OpenHandCursor : Qt::ArrowCursor);
-            if (model_ && !model_->selection().isEmpty()) {
-                model_->clearSelection();
-            }
             return;
         }
-        // Select on hover — no click needed.
-        if (model_ && !model_->selection().contains(item->key())) {
-            model_->selectOnly(item->key());
-        }
+        const bool selected = model_ && model_->selection().contains(item->key());
         const int handle = item->handleAt(item->mapFromScene(scenePosition),
                                           10.0 / std::max(0.05, zoom()));
-        if (handle >= 0 && model_->selection().contains(item->key())) {
+        if (selected && handle >= 0) {
             setCursor(Qt::SizeFDiagCursor);
         } else {
             setCursor(Qt::OpenHandCursor);

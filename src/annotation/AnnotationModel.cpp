@@ -459,12 +459,24 @@ int AnnotationModel::nextZOrder() const
 
 void AnnotationModel::addShape(Shape shape)
 {
+    addShapes({std::move(shape)});
+}
+
+void AnnotationModel::addShapes(const QVector<Shape>& shapes)
+{
+    if (shapes.isEmpty()) {
+        return;
+    }
     beginMutation();
-    shape.id = nextLocalId_--;
-    shape.frame = currentFrame_;
-    shape.zOrder = nextZOrder();
-    data_.shapes.push_back(shape);
-    selection_ = {keyForShape(shape)};
+    QSet<QString> keys;
+    for (Shape shape : shapes) {
+        shape.id = nextLocalId_--;
+        shape.frame = currentFrame_;
+        shape.zOrder = nextZOrder();
+        data_.shapes.push_back(shape);
+        keys.insert(keyForShape(shape));
+    }
+    selection_ = keys;
     endMutation();
     emit selectionChanged();
 }

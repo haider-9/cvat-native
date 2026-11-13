@@ -524,10 +524,19 @@ void JobWorkspace::setupUi()
     bridgeButton->setPopupMode(QToolButton::InstantPopup);
     bridgeButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     auto* bridgeMenu = new QMenu(bridgeButton);
-    bridgeMenu->addAction(makeIcon(Icon::Copy), QStringLiteral("Copy annotations"), this,
-                          &JobWorkspace::copyAnnotations);
-    bridgeMenu->addAction(makeIcon(Icon::Paste), QStringLiteral("Paste annotations"), this,
-                          &JobWorkspace::pasteAnnotations);
+    // Ctrl+C / Ctrl+V copy and paste the selected annotations on the current
+    // frame, as in CVAT. The single-key C and V actions copy a label's class.
+    auto* copyAnnotationsAction = bridgeMenu->addAction(makeIcon(Icon::Copy),
+        QStringLiteral("Copy annotations"), this, &JobWorkspace::copyAnnotations);
+    copyAnnotationsAction->setShortcut(QKeySequence::Copy);
+    copyAnnotationsAction->setShortcutContext(Qt::WindowShortcut);
+    this->addAction(copyAnnotationsAction);
+
+    auto* pasteAnnotationsAction = bridgeMenu->addAction(makeIcon(Icon::Paste),
+        QStringLiteral("Paste annotations"), this, &JobWorkspace::pasteAnnotations);
+    pasteAnnotationsAction->setShortcut(QKeySequence::Paste);
+    pasteAnnotationsAction->setShortcutContext(Qt::WindowShortcut);
+    this->addAction(pasteAnnotationsAction);
     bridgeMenu->addSeparator();
     bridgeMenu->addAction(makeIcon(Icon::Trash), QStringLiteral("Delete annotations"), this,
                           &JobWorkspace::showDeleteDialog);
@@ -1181,25 +1190,78 @@ void JobWorkspace::pasteAnnotations()
             rawShapes.push_back(converted);
         }
     }
-    int pasted = 0;
+    // Every pasted shape becomes a placement template. Offsets are measured
+    // from the centre of the whole group, so the layout survives placement.
+    struct Entry {
+        Shape shape;
+        QRectF box;
+    };
+    QVector<Entry> entries;
     int skipped = 0;
     for (const auto& value : rawShapes) {
         Shape shape = Shape::fromJson(value.toObject());
-        shape.id.reset();
-        shape.frame = model_->currentFrame();
-        if (model_->label(shape.labelId)) {
-            model_->addShape(shape);
-            ++pasted;
-        } else {
+        if (!model_->label(shape.labelId) || shape.points.size() < 2) {
             ++skipped;
+            continue;
         }
+        double minX = shape.points[0], maxX = shape.points[0];
+        double minY = shape.points[1], maxY = shape.points[1];
+        for (int i = 0; i + 1 < shape.points.size(); i += 2) {
+            minX = std::min(minX, shape.points[i]);
+            maxX = std::max(maxX, shape.points[i]);
+            minY = std::min(minY, shape.points[i + 1]);
+            maxY = std::max(maxY, shape.points[i + 1]);
+        }
+        entries.push_back({shape, QRectF(QPointF(minX, minY), QPointF(maxX, maxY))});
     }
-    setStatus(pasted > 0
-                  ? QStringLiteral("Pasted %1 annotation(s)%2")
-                        .arg(pasted)
-                        .arg(skipped ? QStringLiteral(", %1 skipped").arg(skipped) : QString())
-                  : QStringLiteral("No clipboard annotations matched this job's labels"),
-              pasted == 0);
+    if (entries.isEmpty()) {
+        setStatus(QStringLiteral("No clipboard annotations matched this job's labels"), true);
+        return;
+    }
+
+    QRectF all = entries.first().box;
+    for (const auto& entry : entries) {
+        all = QRectF(QPointF(std::min(all.left(), entry.box.left()), std::min(all.top(), entry.box.top())),
+                     QPointF(std::max(all.right(), entry.box.right()), std::max(all.bottom(), entry.box.bottom())));
+    }
+    const QPointF anchor = all.center();
+
+    QVector<CopiedTemplate> group;
+    for (const auto& entry : entries) {
+        const Shape& shape = entry.shape;
+        const Label* label = model_->label(shape.labelId);
+        const QPointF centre = entry.box.center();
+
+        CopiedTemplate t;
+        t.valid = true;
+        t.labelId = shape.labelId;
+        t.labelName = label ? label->name : QStringLiteral("label %1").arg(shape.labelId);
+        t.color = label ? QColor(label->color) : QColor(76, 154, 255);
+        t.shapeType = shape.type;
+        t.attributes = shape.attributes;
+        t.occluded = shape.occluded;
+        t.rotation = shape.rotation;
+        t.zOrder = shape.zOrder;
+        t.offset = centre - anchor;
+        t.width = std::max(2.0, entry.box.width());
+        t.height = std::max(2.0, entry.box.height());
+        if (shape.type == QStringLiteral("rectangle") || shape.type == QStringLiteral("ellipse")) {
+            t.relativePoints = {-t.width / 2.0, -t.height / 2.0, t.width / 2.0, t.height / 2.0};
+        } else {
+            for (int i = 0; i + 1 < shape.points.size(); i += 2) {
+                t.relativePoints.push_back(shape.points[i] - centre.x());
+                t.relativePoints.push_back(shape.points[i + 1] - centre.y());
+            }
+        }
+        group.push_back(t);
+    }
+
+    labelPanel_->setActiveLabel(group.first().labelId);
+    canvas_->setActiveLabel(group.first().labelId);
+    canvas_->startGroupPlacement(group);
+    setStatus(QStringLiteral("Placing %1 annotation(s)%2 — click to place (Esc to cancel)")
+                  .arg(group.size())
+                  .arg(skipped ? QStringLiteral(", %1 skipped").arg(skipped) : QString()));
 }
 
 void JobWorkspace::showNewLabelDialog()
