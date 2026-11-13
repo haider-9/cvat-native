@@ -18,6 +18,7 @@
 #include "cvatnative/storage/LocalStore.h"
 #include "cvatnative/storage/RecoveryStore.h"
 #include "cvatnative/ui/DashboardPage.h"
+#include "cvatnative/ui/Icons.h"
 #include "cvatnative/ui/JobWorkspace.h"
 #include "cvatnative/ui/LoginDialog.h"
 #include "cvatnative/ui/SettingsDialog.h"
@@ -123,28 +124,28 @@ void MainWindow::setupUi()
 {
     auto* fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
 
-    auto* connectAction = new QAction(QStringLiteral("&Connect…"), this);
+    auto* connectAction = new QAction(makeIcon(Icon::Connect), QStringLiteral("&Connect…"), this);
     connectAction->setShortcut(QKeySequence(QStringLiteral("Ctrl+L")));
     connect(connectAction, &QAction::triggered, this, &MainWindow::showLogin);
     fileMenu->addAction(connectAction);
 
-    logoutAction_ = new QAction(QStringLiteral("Log &out"), this);
+    logoutAction_ = new QAction(makeIcon(Icon::Logout), QStringLiteral("Log &out"), this);
     connect(logoutAction_, &QAction::triggered, this, &MainWindow::logout);
     fileMenu->addAction(logoutAction_);
 
-    auto* settingsAction = new QAction(QStringLiteral("&Settings…"), this);
+    auto* settingsAction = new QAction(makeIcon(Icon::Settings), QStringLiteral("&Settings…"), this);
     settingsAction->setShortcut(QKeySequence::Preferences);
     connect(settingsAction, &QAction::triggered, this, &MainWindow::showSettings);
     fileMenu->addAction(settingsAction);
 
     fileMenu->addSeparator();
-    auto* quitAction = new QAction(QStringLiteral("&Quit"), this);
+    auto* quitAction = new QAction(makeIcon(Icon::Quit), QStringLiteral("&Quit"), this);
     quitAction->setShortcut(QKeySequence::Quit);
     connect(quitAction, &QAction::triggered, this, &QWidget::close);
     fileMenu->addAction(quitAction);
 
     auto* viewMenu = menuBar()->addMenu(QStringLiteral("&View"));
-    dashboardAction_ = new QAction(QStringLiteral("&Dashboard"), this);
+    dashboardAction_ = new QAction(makeIcon(Icon::Dashboard), QStringLiteral("&Dashboard"), this);
     dashboardAction_->setShortcut(QKeySequence(QStringLiteral("Ctrl+Shift+D")));
     dashboardAction_->setEnabled(false);
     connect(dashboardAction_, &QAction::triggered, this, [this]() {
@@ -157,7 +158,7 @@ void MainWindow::setupUi()
     viewMenu->addAction(dashboardAction_);
 
     auto* helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
-    auto* aboutAction = new QAction(QStringLiteral("&About CVAT Native"), this);
+    auto* aboutAction = new QAction(makeIcon(Icon::About), QStringLiteral("&About CVAT Native"), this);
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAbout);
     helpMenu->addAction(aboutAction);
 
