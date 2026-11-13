@@ -36,8 +36,6 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
     labelList_ = new QListWidget(labelGroup);
     labelList_->setAlternatingRowColors(true);
     labelList_->setMaximumHeight(180);
-    labelList_->setMouseTracking(true);
-    labelList_->viewport()->setMouseTracking(true);
     labelLayout->addWidget(labelList_);
     layout->addWidget(labelGroup);
 
@@ -67,21 +65,6 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
             return;
         }
         activeLabel_ = labels_[row].id;
-        emit labelActivated(activeLabel_);
-    });
-    connect(labelList_, &QListWidget::itemEntered, this, [this](QListWidgetItem* item) {
-        if (updating_ || !item) {
-            return;
-        }
-        const int row = labelList_->row(item);
-        if (row < 0 || row >= labels_.size()) {
-            return;
-        }
-        activeLabel_ = labels_[row].id;
-        {
-            QSignalBlocker blocker(labelList_);
-            labelList_->setCurrentRow(row);
-        }
         emit labelActivated(activeLabel_);
     });
     connect(occludedBox_, &QCheckBox::toggled, this, [this](bool checked) {
