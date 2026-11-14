@@ -494,6 +494,23 @@ void JobWorkspace::setupUi()
         setStatus(QStringLiteral("Ready to draw '%1' (N)").arg(activeLabel->name));
     });
 
+    // [ and ] step the active class up and down the label list. They are not on
+    // the toolbar; they exist for quick switching while drawing.
+    for (const auto& binding : {std::pair<const char*, int>{"[", -1}, std::pair<const char*, int>{"]", 1}}) {
+        auto* step = new QAction(binding.second < 0 ? QStringLiteral("Previous label")
+                                                    : QStringLiteral("Next label"), this);
+        step->setShortcut(QKeySequence(QString::fromLatin1(binding.first)));
+        step->setShortcutContext(Qt::WindowShortcut);
+        step->setToolTip(binding.second < 0 ? QStringLiteral("Previous label ([)")
+                                            : QStringLiteral("Next label (])"));
+        this->addAction(step);
+        const int direction = binding.second;
+        connect(step, &QAction::triggered, this, [this, shouldIgnoreSingleKey, direction]() {
+            if (shouldIgnoreSingleKey()) return;
+            stepActiveLabel(direction);
+        });
+    }
+
     auto* copyLabelAction = makeAction(Icon::Copy, QStringLiteral("Copy label"), this);
     copyLabelAction->setShortcut(QKeySequence(QStringLiteral("C")));
     copyLabelAction->setShortcutContext(Qt::WindowShortcut);
@@ -1027,6 +1044,28 @@ QString JobWorkspace::selectedKey() const
         return {};
     }
     return *model_->selection().constBegin();
+}
+
+void JobWorkspace::stepActiveLabel(int step)
+{
+    if (labels_.isEmpty()) {
+        return;
+    }
+    const int current = labelPanel_->activeLabel();
+    int index = 0;
+    for (int i = 0; i < labels_.size(); ++i) {
+        if (labels_[i].id == current) {
+            index = i;
+            break;
+        }
+    }
+    const int count = static_cast<int>(labels_.size());
+    index = ((index + step) % count + count) % count;
+
+    const Label& next = labels_[index];
+    labelPanel_->setActiveLabel(next.id);
+    canvas_->setActiveLabel(next.id);
+    setStatus(QStringLiteral("Active label: %1").arg(next.name));
 }
 
 void JobWorkspace::copyLabel()

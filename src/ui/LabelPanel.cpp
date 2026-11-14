@@ -37,6 +37,9 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
     labelList_->setAlternatingRowColors(true);
     labelList_->setMaximumHeight(180);
     labelLayout->addWidget(labelList_);
+    auto* shortcutHint = new QLabel(QStringLiteral("[ and ] switch label"), labelGroup);
+    shortcutHint->setStyleSheet(QStringLiteral("color: #888; font-size: 11px;"));
+    labelLayout->addWidget(shortcutHint);
     layout->addWidget(labelGroup);
 
     auto* objectGroup = new QGroupBox(QStringLiteral("Selected object"), this);

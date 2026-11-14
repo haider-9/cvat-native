@@ -81,6 +81,7 @@ private:
     void saveLocalSnapshot();
     void copyLabel();
     void pasteLabel();
+    void stepActiveLabel(int step);
     void copyAnnotations();
     void pasteAnnotations();
     void showNewLabelDialog();
