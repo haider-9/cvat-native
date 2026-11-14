@@ -365,10 +365,55 @@ void AnnotationCanvas::updateSelectionVisuals()
 
 AnnotationItem* AnnotationCanvas::annotationAt(const QPointF& scenePosition) const
 {
-    const auto hits = scene_->items(scenePosition);
-    for (auto* item : hits) {
-        if (auto* annotation = dynamic_cast<AnnotationItem*>(item)) {
-            return annotation;
+    for (const QString& key : hitCandidates(scenePosition)) {
+        if (AnnotationItem* item = itemForKey(key)) {
+            return item;
+        }
+    }
+    return nullptr;
+}
+
+QVector<QString> AnnotationCanvas::hitCandidates(const QPointF& scenePosition) const
+{
+    if (!model_) {
+        return {};
+    }
+    // Hit-test the geometry, not the scene's stacking order. Qt's scene hit test
+    // reports a closed shape's whole interior, so a large shape drawn on top
+    // would hide a small one completely.
+    const double tolerance = 4.0 / std::max(0.05, zoom());
+    struct Candidate {
+        QString key;
+        double area;
+        int zOrder;
+    };
+    QVector<Candidate> found;
+    for (const auto& visible : model_->visibleShapes()) {
+        if (!Geometry::hitTest(visible.shape, scenePosition.x(), scenePosition.y(), tolerance)) {
+            continue;
+        }
+        const RectD box = Geometry::boundingRect(visible.shape.points);
+        found.push_back({visible.key, box.width * box.height, visible.shape.zOrder});
+    }
+    std::stable_sort(found.begin(), found.end(), [](const Candidate& a, const Candidate& b) {
+        if (a.area != b.area) {
+            return a.area < b.area;
+        }
+        return a.zOrder > b.zOrder;
+    });
+    QVector<QString> keys;
+    keys.reserve(found.size());
+    for (const auto& candidate : found) {
+        keys.push_back(candidate.key);
+    }
+    return keys;
+}
+
+AnnotationItem* AnnotationCanvas::itemForKey(const QString& key) const
+{
+    for (auto* item : items_) {
+        if (item->key() == key) {
+            return item;
         }
     }
     return nullptr;
@@ -665,9 +710,30 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
     }
 
     if (tool_ == CanvasTool::Select) {
-        AnnotationItem* item = annotationAt(scenePosition);
+        cycleKey_.clear();
+        const bool additive = event->modifiers() & Qt::ControlModifier;
+        const QVector<QString> candidates = hitCandidates(scenePosition);
+        AnnotationItem* item = nullptr;
+        if (!candidates.isEmpty()) {
+            // A shape that is already selected stays the drag target, so dragging
+            // moves what the user is holding. Otherwise take the smallest shape.
+            int index = 0;
+            if (!additive) {
+                for (int i = 0; i < candidates.size(); ++i) {
+                    if (model_->selection().contains(candidates[i])) {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+            item = itemForKey(candidates[index]);
+            const bool alreadySelected = model_->selection().contains(candidates[index]);
+            if (!additive && alreadySelected && candidates.size() > 1) {
+                cycleKey_ = candidates[(index + 1) % candidates.size()];
+            }
+        }
         if (item) {
-            beginMoveOrResize(item, scenePosition, event->modifiers() & Qt::ControlModifier);
+            beginMoveOrResize(item, scenePosition, additive);
         } else {
             if (!(event->modifiers() & Qt::ControlModifier)) {
                 model_->clearSelection();
@@ -804,6 +870,9 @@ void AnnotationCanvas::mouseReleaseEvent(QMouseEvent* event)
         AnnotationItem* item = dragItem_;
         const bool changed = dragShape_.points != dragOriginal_.points ||
             dragShape_.rotation != dragOriginal_.rotation;
+        const bool clicked = interaction_ == Interaction::Move && !changed &&
+            (mapToScene(event->position().toPoint()) - dragStart_).manhattanLength() <
+                3.0 / std::max(0.05, zoom());
         interaction_ = Interaction::None;
         dragItem_ = nullptr;
         dragHandle_ = -1;
@@ -812,6 +881,11 @@ void AnnotationCanvas::mouseReleaseEvent(QMouseEvent* event)
             const QString key = item->key();
             model_->updateVisibleShape(key, dragShape_);
         }
+        if (clicked && !cycleKey_.isEmpty()) {
+            model_->selectOnly(cycleKey_);
+            updateSelectionVisuals();
+        }
+        cycleKey_.clear();
         return;
     }
 

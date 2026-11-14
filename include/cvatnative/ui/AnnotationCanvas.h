@@ -101,6 +101,10 @@ private:
 
     void updateSelectionVisuals();
     void updateCrosshair();
+    // Shapes under the point, smallest first, so a small shape nested inside a
+    // large one stays selectable. Equal areas favour the one drawn on top.
+    [[nodiscard]] QVector<QString> hitCandidates(const QPointF& scenePosition) const;
+    [[nodiscard]] AnnotationItem* itemForKey(const QString& key) const;
     void clearPendingCreation();
     void finishPolygon();
     void updatePolygonPreview(const QPointF& cursor);
@@ -129,6 +133,9 @@ private:
     QGraphicsLineItem* crosshairH_ = nullptr;
     QGraphicsLineItem* crosshairV_ = nullptr;
     QPoint lastCursor_;
+    // Shape to select when a press on the already-selected shape is released
+    // without dragging. Lets repeated clicks step through stacked shapes.
+    QString cycleKey_;
     bool crosshairEnabled_ = true;
     bool cursorInside_ = false;
     QVector<CopiedTemplate> templates_;
