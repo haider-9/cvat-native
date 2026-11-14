@@ -11,6 +11,7 @@
 
 class QGraphicsItem;
 class QGraphicsLineItem;
+class QResizeEvent;
 class QGraphicsPathItem;
 class QGraphicsPixmapItem;
 class QGraphicsRectItem;
@@ -20,6 +21,7 @@ class QGraphicsSimpleTextItem;
 namespace cvat {
 
 class AnnotationItem;
+class MiniMap;
 
 enum class CanvasTool { Select, Rectangle, Polygon, Polyline, Points };
 
@@ -76,6 +78,9 @@ public:
     [[nodiscard]] bool crosshairEnabled() const { return crosshairEnabled_; }
     void setGuideColor(const QColor& color);
 
+    void setMiniMapEnabled(bool enabled);
+    [[nodiscard]] bool miniMapEnabled() const { return miniMapEnabled_; }
+
 signals:
     void statusMessage(const QString& message);
     void zoomChanged(double factor);
@@ -95,12 +100,16 @@ protected:
     void contextMenuEvent(QContextMenuEvent* event) override;
     void enterEvent(QEnterEvent* event) override;
     void leaveEvent(QEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     enum class Interaction { None, Move, Resize, CreateRectangle, Pan, PlaceTemplate };
 
     void updateSelectionVisuals();
     void updateCrosshair();
+    void updateMiniMap();
+    void placeMiniMap();
+    void updateSceneRect();
     // Shapes under the point, smallest first, so a small shape nested inside a
     // large one stays selectable. Equal areas favour the one drawn on top.
     [[nodiscard]] QVector<QString> hitCandidates(const QPointF& scenePosition) const;
@@ -136,6 +145,8 @@ private:
     // Shape to select when a press on the already-selected shape is released
     // without dragging. Lets repeated clicks step through stacked shapes.
     QString cycleKey_;
+    MiniMap* miniMap_ = nullptr;
+    bool miniMapEnabled_ = true;
     bool crosshairEnabled_ = true;
     bool cursorInside_ = false;
     QVector<CopiedTemplate> templates_;

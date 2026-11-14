@@ -103,10 +103,12 @@ add_library(cvat_ui STATIC
     include/cvatnative/ui/LoginDialog.h
     include/cvatnative/ui/DashboardPage.h
     include/cvatnative/ui/JobWorkspace.h
+    include/cvatnative/ui/MiniMap.h
 
     src/ui/MainWindow.cpp
     src/ui/Icons.cpp
     src/ui/Appearance.cpp
+    src/ui/MiniMap.cpp
     src/ui/LoginDialog.cpp
     src/ui/DashboardPage.cpp
     src/ui/JobWorkspace.cpp

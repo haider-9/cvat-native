@@ -146,6 +146,16 @@ void Settings::setFontPointSize(int size)
     d->settings.setValue(QStringLiteral("appearance/fontPointSize"), size);
 }
 
+bool Settings::showMiniMap() const
+{
+    return d->settings.value(QStringLiteral("view/showMiniMap"), true).toBool();
+}
+
+void Settings::setShowMiniMap(bool enabled)
+{
+    d->settings.setValue(QStringLiteral("view/showMiniMap"), enabled);
+}
+
 QString Settings::cacheDirectory() const
 {
     const QString root = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);

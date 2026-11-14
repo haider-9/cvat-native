@@ -716,6 +716,17 @@ void JobWorkspace::setupUi()
         }
     });
     footer->addSpacing(12);
+    auto* miniMapToggle = new QCheckBox(QStringLiteral("Minimap"), this);
+    miniMapToggle->setToolTip(QStringLiteral("Show an overview of the frame when it is zoomed in"));
+    miniMapToggle->setChecked(Settings::instance().showMiniMap());
+    canvas_->setMiniMapEnabled(miniMapToggle->isChecked());
+    connect(miniMapToggle, &QCheckBox::toggled, this, [this](bool on) {
+        canvas_->setMiniMapEnabled(on);
+        Settings::instance().setShowMiniMap(on);
+        Settings::instance().sync();
+    });
+    footer->addWidget(miniMapToggle);
+    footer->addSpacing(12);
     footer->addWidget(statusLabel_, 1);
     footer->addWidget(dirtyLabel_);
     layout->addLayout(footer);

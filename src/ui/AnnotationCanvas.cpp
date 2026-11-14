@@ -2,6 +2,7 @@
 
 #include "cvatnative/annotation/Geometry.h"
 #include "cvatnative/ui/AnnotationItems.h"
+#include "cvatnative/ui/MiniMap.h"
 
 #include <QGraphicsLineItem>
 #include <QGraphicsPathItem>
@@ -75,9 +76,18 @@ AnnotationCanvas::AnnotationCanvas(QWidget* parent)
     crosshairH_ = makeGuide();
     crosshairV_ = makeGuide();
 
-    connect(horizontalScrollBar(), &QScrollBar::valueChanged, this, [this]() { updateCrosshair(); });
-    connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this]() { updateCrosshair(); });
-    connect(this, &AnnotationCanvas::zoomChanged, this, [this]() { updateCrosshair(); });
+    // Parented to the canvas, not the viewport: the viewport scrolls its child
+    // widgets along with the image, which would carry the minimap away.
+    miniMap_ = new MiniMap(this);
+    miniMap_->hide();
+    connect(miniMap_, &MiniMap::panRequested, this, [this](const QPointF& imagePoint) {
+        centerOn(imagePoint);
+        updateMiniMap();
+    });
+
+    connect(horizontalScrollBar(), &QScrollBar::valueChanged, this, [this]() { updateCrosshair(); updateMiniMap(); });
+    connect(verticalScrollBar(), &QScrollBar::valueChanged, this, [this]() { updateCrosshair(); updateMiniMap(); });
+    connect(this, &AnnotationCanvas::zoomChanged, this, [this]() { updateSceneRect(); updateCrosshair(); updateMiniMap(); });
 }
 
 void AnnotationCanvas::setModel(AnnotationModel* model)
@@ -104,7 +114,8 @@ void AnnotationCanvas::setFrameImage(const QImage& image)
         return;
     }
     background_->setPixmap(QPixmap::fromImage(image));
-    scene_->setSceneRect(QRectF(0, 0, image.width(), image.height()));
+    updateSceneRect();
+    miniMap_->setFrame(image);
     if (firstImage_) {
         firstImage_ = false;
         fitToView();
@@ -925,9 +936,74 @@ void AnnotationCanvas::mouseDoubleClickEvent(QMouseEvent* event)
 
 void AnnotationCanvas::wheelEvent(QWheelEvent* event)
 {
-    const double factor = event->angleDelta().y() > 0 ? 1.18 : 1.0 / 1.18;
-    zoomAt(event->position().toPoint(), factor);
+    // Scale by how far the wheel moved, so one notch is about 10% and trackpads
+    // zoom smoothly. Horizontal scrolling does not zoom.
+    const int delta = event->angleDelta().y();
+    if (delta == 0) {
+        event->ignore();
+        return;
+    }
+    zoomAt(event->position().toPoint(), std::pow(1.1, delta / 120.0));
     event->accept();
+}
+
+void AnnotationCanvas::resizeEvent(QResizeEvent* event)
+{
+    QGraphicsView::resizeEvent(event);
+    updateSceneRect();
+    updateMiniMap();
+}
+
+void AnnotationCanvas::setMiniMapEnabled(bool enabled)
+{
+    miniMapEnabled_ = enabled;
+    updateMiniMap();
+}
+
+void AnnotationCanvas::placeMiniMap()
+{
+    const int margin = 12;
+    const QRect area = viewport()->geometry();
+    miniMap_->move(area.right() - miniMap_->width() - margin,
+                   area.bottom() - miniMap_->height() - margin);
+}
+
+void AnnotationCanvas::updateSceneRect()
+{
+    // Let the image move until its edge reaches the centre of the view. This is
+    // only needed along an axis where the image is larger than the view; an
+    // image that fits stays put, so fit-to-view does not gain scrollbars.
+    const QRectF image = background_ ? background_->boundingRect() : QRectF();
+    if (image.isEmpty()) {
+        return;
+    }
+    // Compare against the whole widget, not the viewport: scrollbars shrink the
+    // viewport, and using it would switch the margin on because of the scrollbars.
+    const double s = std::max(1e-6, zoom());
+    const QSizeF canvas = size();
+    const double marginX = image.width() * s > canvas.width() ? canvas.width() / s / 2.0 : 0.0;
+    const double marginY = image.height() * s > canvas.height() ? canvas.height() / s / 2.0 : 0.0;
+    scene_->setSceneRect(image.adjusted(-marginX, -marginY, marginX, marginY));
+}
+
+void AnnotationCanvas::updateMiniMap()
+{
+    const QRectF frameRect = background_ ? background_->boundingRect() : QRectF();
+    if (!miniMapEnabled_ || frame_.isNull() || frameRect.isEmpty()) {
+        miniMap_->hide();
+        return;
+    }
+    // Only useful when part of the frame is off screen.
+    const QRectF visible = mapToScene(viewport()->rect()).boundingRect();
+    const bool wholeFrameVisible = visible.contains(frameRect.adjusted(-0.5, -0.5, 0.5, 0.5));
+    if (wholeFrameVisible) {
+        miniMap_->hide();
+        return;
+    }
+    miniMap_->setView(visible.intersected(frameRect), frameRect.size());
+    placeMiniMap();
+    miniMap_->show();
+    miniMap_->raise();
 }
 
 void AnnotationCanvas::zoomAt(const QPoint& viewportPosition, double factor)
@@ -1024,14 +1100,12 @@ void AnnotationCanvas::fitToView()
 
 void AnnotationCanvas::zoomIn()
 {
-    scale(1.2, 1.2);
-    emit zoomChanged(zoom());
+    zoomAt(viewport()->rect().center(), 1.2);
 }
 
 void AnnotationCanvas::zoomOut()
 {
-    scale(1.0 / 1.2, 1.0 / 1.2);
-    emit zoomChanged(zoom());
+    zoomAt(viewport()->rect().center(), 1.0 / 1.2);
 }
 
 void AnnotationCanvas::resetZoom()

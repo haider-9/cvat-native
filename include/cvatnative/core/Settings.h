@@ -54,6 +54,9 @@ public:
     int fontPointSize() const; // 0 = application default
     void setFontPointSize(int size);
 
+    bool showMiniMap() const;
+    void setShowMiniMap(bool enabled);
+
     void sync();
 
 private:
