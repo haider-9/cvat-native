@@ -20,6 +20,24 @@
 
 namespace cvat {
 
+namespace {
+// Cursor for a resize handle: corners are diagonal, edge midpoints are straight.
+Qt::CursorShape cursorForHandle(int handle)
+{
+    switch (handle) {
+    case 0:
+    case 2: return Qt::SizeFDiagCursor;
+    case 1:
+    case 3: return Qt::SizeBDiagCursor;
+    case 4:
+    case 6: return Qt::SizeVerCursor;
+    case 5:
+    case 7: return Qt::SizeHorCursor;
+    default: return Qt::SizeFDiagCursor; // polygon vertices
+    }
+}
+} // namespace
+
 AnnotationCanvas::AnnotationCanvas(QWidget* parent)
     : QGraphicsView(parent),
       scene_(new QGraphicsScene(this))
@@ -607,7 +625,7 @@ void AnnotationCanvas::beginMoveOrResize(AnnotationItem* item, const QPointF& sc
     dragHandle_ = item->handleAt(item->mapFromScene(scenePosition),
                                  10.0 / std::max(0.05, zoom()));
     interaction_ = dragHandle_ >= 0 ? Interaction::Resize : Interaction::Move;
-    setCursor(dragHandle_ >= 0 ? Qt::SizeFDiagCursor : Qt::ClosedHandCursor);
+    setCursor(dragHandle_ >= 0 ? cursorForHandle(dragHandle_) : Qt::ClosedHandCursor);
 }
 
 void AnnotationCanvas::applyMove(const QPointF& scenePosition)
@@ -639,6 +657,10 @@ void AnnotationCanvas::applyResize(const QPointF& scenePosition)
         case 1: rect.setTopRight(scenePosition); break;
         case 2: rect.setBottomRight(scenePosition); break;
         case 3: rect.setBottomLeft(scenePosition); break;
+        case 4: rect.setTop(scenePosition.y()); break;
+        case 5: rect.setRight(scenePosition.x()); break;
+        case 6: rect.setBottom(scenePosition.y()); break;
+        case 7: rect.setLeft(scenePosition.x()); break;
         default: break;
         }
         rect = rect.normalized();
@@ -836,7 +858,7 @@ void AnnotationCanvas::mouseMoveEvent(QMouseEvent* event)
         const int handle = item->handleAt(item->mapFromScene(scenePosition),
                                           10.0 / std::max(0.05, zoom()));
         if (selected && handle >= 0) {
-            setCursor(Qt::SizeFDiagCursor);
+            setCursor(cursorForHandle(handle));
         } else {
             setCursor(Qt::OpenHandCursor);
         }

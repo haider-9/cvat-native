@@ -62,7 +62,25 @@ QRectF AnnotationItem::boundingRect() const
 
 QVector<QPointF> AnnotationItem::handlePoints() const
 {
-    return polygon();
+    const QPolygonF corners = polygon();
+    const bool boxLike = type_ == QStringLiteral("rectangle") || type_ == QStringLiteral("ellipse") ||
+                         type_ == QStringLiteral("mask");
+    if (!boxLike || corners.size() != 4) {
+        return corners;
+    }
+    // Indices 0-3 are the corners (TL, TR, BR, BL); 4-7 are the midpoints of the
+    // top, right, bottom and left edges, giving eight handles as in CVAT.
+    QVector<QPointF> handles;
+    handles.reserve(8);
+    for (const QPointF& corner : corners) {
+        handles.push_back(corner);
+    }
+    for (int i = 0; i < 4; ++i) {
+        const QPointF& a = corners[i];
+        const QPointF& b = corners[(i + 1) % 4];
+        handles.push_back(QPointF((a.x() + b.x()) / 2.0, (a.y() + b.y()) / 2.0));
+    }
+    return handles;
 }
 
 int AnnotationItem::handleAt(const QPointF& position, double tolerance) const
@@ -173,7 +191,7 @@ void AnnotationItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* op
         const double handle = 7.0 / std::max(0.05, scale);
         painter->setPen(QPen(QColor(30, 30, 30), 1.0 / std::max(0.05, scale)));
         painter->setBrush(Qt::white);
-        for (const auto& point : points) {
+        for (const auto& point : handlePoints()) {
             painter->drawRect(QRectF(point.x() - handle / 2.0, point.y() - handle / 2.0,
                                      handle, handle));
         }
