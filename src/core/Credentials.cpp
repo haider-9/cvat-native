@@ -4,6 +4,7 @@
 #include "cvatnative/core/Settings.h"
 
 #include <QCryptographicHash>
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QProcess>
@@ -180,6 +181,12 @@ CredentialStore::Result CredentialStore::store(const QString& server, const QStr
 #endif
 
     const QString path = fallbackPath();
+    // Make the directory owner-only before QSettings writes the token. QSettings
+    // replaces the file on save, so the file's own permissions can be briefly
+    // looser; with an owner-only directory no other user can reach it.
+    const QString dir = QFileInfo(path).absolutePath();
+    QDir().mkpath(dir);
+    QFile::setPermissions(dir, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
     QSettings settings(path, QSettings::IniFormat);
     settings.setValue(lookupKey(server, username), token);
     settings.sync();

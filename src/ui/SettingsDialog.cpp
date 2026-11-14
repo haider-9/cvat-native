@@ -168,6 +168,20 @@ void SettingsDialog::save()
     if (finalUrl.host() == QStringLiteral("127.0.0.1")) {
         finalUrl.setHost(QStringLiteral("localhost"));
     }
+    const QString host = finalUrl.host().toLower();
+    const bool loopback = host == QLatin1String("localhost") || host == QLatin1String("127.0.0.1")
+        || host == QLatin1String("::1");
+    if (finalUrl.scheme() == QLatin1String("http") && !loopback) {
+        const auto answer = QMessageBox::warning(
+            this, QStringLiteral("Unencrypted connection"),
+            QStringLiteral("This server uses plain HTTP, so your API token and annotations "
+                           "would be sent unencrypted. Use https:// unless the network is trusted.\n\n"
+                           "Save anyway?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (answer != QMessageBox::Yes) {
+            return;
+        }
+    }
     const QString serverString = finalUrl.toString(QUrl::StripTrailingSlash);
     serverEdit_->setText(serverString);
 

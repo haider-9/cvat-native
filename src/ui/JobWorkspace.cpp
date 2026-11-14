@@ -762,7 +762,11 @@ void JobWorkspace::loadLabels()
 {
     const int projectId = job_.projectId;
     const int taskId = job_.taskId;
-    auto apply = [this](const QVector<Label>& labels) {
+    const QPointer<JobWorkspace> self(this);
+    auto apply = [this, self](const QVector<Label>& labels) {
+        if (!self) {
+            return;
+        }
         labels_ = flattenLabelHierarchy(labels);
         model_->setLabels(labels_);
         labelPanel_->setLabels(labels_);
@@ -774,8 +778,11 @@ void JobWorkspace::loadLabels()
         }
     };
 
-    labelsApi_->list(projectId, projectId > 0 ? 0 : taskId, {}, [this, apply, projectId](
+    labelsApi_->list(projectId, projectId > 0 ? 0 : taskId, {}, [this, self, apply, projectId](
                                                               Result<QVector<Label>> result) {
+        if (!self) {
+            return;
+        }
         if (!result) {
             setStatus(QStringLiteral("Could not load labels: ") + result.error().toString(), true);
             return;
@@ -792,8 +799,9 @@ void JobWorkspace::loadLabels()
 
 void JobWorkspace::loadMeta()
 {
-    media_->requestMeta(job_.id, [this](Result<DataMeta> result) {
-        if (!result) {
+    const QPointer<JobWorkspace> self(this);
+    media_->requestMeta(job_.id, [this, self](Result<DataMeta> result) {
+        if (!self || !result) {
             return;
         }
         const DataMeta meta = *result;
@@ -815,7 +823,11 @@ void JobWorkspace::loadMeta()
 
 void JobWorkspace::loadAnnotations()
 {
-    annotations_->get(job_.id, [this](Result<LabeledData> result) {
+    const QPointer<JobWorkspace> self(this);
+    annotations_->get(job_.id, [this, self](Result<LabeledData> result) {
+        if (!self) {
+            return;
+        }
         if (!result) {
             setStatus(QStringLiteral("Could not load annotations: ") +
                       result.error().toString(), true);
