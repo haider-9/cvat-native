@@ -106,6 +106,46 @@ void Settings::setShowDeletedFrames(bool enabled)
     d->settings.setValue(QStringLiteral("view/showDeletedFrames"), enabled);
 }
 
+QString Settings::themeMode() const
+{
+    return d->settings.value(QStringLiteral("appearance/theme"), QStringLiteral("system")).toString();
+}
+
+void Settings::setThemeMode(const QString& mode)
+{
+    d->settings.setValue(QStringLiteral("appearance/theme"), mode);
+}
+
+QString Settings::guideColor() const
+{
+    return d->settings.value(QStringLiteral("appearance/guideColor"), QStringLiteral("#e61e1e")).toString();
+}
+
+void Settings::setGuideColor(const QString& color)
+{
+    d->settings.setValue(QStringLiteral("appearance/guideColor"), color);
+}
+
+QString Settings::fontFamily() const
+{
+    return d->settings.value(QStringLiteral("appearance/fontFamily"), QString()).toString();
+}
+
+void Settings::setFontFamily(const QString& family)
+{
+    d->settings.setValue(QStringLiteral("appearance/fontFamily"), family);
+}
+
+int Settings::fontPointSize() const
+{
+    return d->settings.value(QStringLiteral("appearance/fontPointSize"), 0).toInt();
+}
+
+void Settings::setFontPointSize(int size)
+{
+    d->settings.setValue(QStringLiteral("appearance/fontPointSize"), size);
+}
+
 QString Settings::cacheDirectory() const
 {
     const QString root = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);

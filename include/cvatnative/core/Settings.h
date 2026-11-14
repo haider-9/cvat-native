@@ -42,6 +42,18 @@ public:
     QString dataDirectory() const;
     QString databasePath() const;
 
+    QString themeMode() const; // "system", "light" or "dark"
+    void setThemeMode(const QString& mode);
+
+    QString guideColor() const; // "#rrggbb"
+    void setGuideColor(const QString& color);
+
+    QString fontFamily() const; // empty = application default
+    void setFontFamily(const QString& family);
+
+    int fontPointSize() const; // 0 = application default
+    void setFontPointSize(int size);
+
     void sync();
 
 private:

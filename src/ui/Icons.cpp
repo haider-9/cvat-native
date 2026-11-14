@@ -1,5 +1,6 @@
 #include "cvatnative/ui/Icons.h"
 
+#include <QAction>
 #include <QGuiApplication>
 #include <QPainter>
 #include <QPainterPath>
@@ -9,6 +10,9 @@
 #include <QPointF>
 #include <QPolygonF>
 #include <QRectF>
+#include <QToolButton>
+#include <QVariant>
+#include <QWidget>
 
 namespace cvat {
 
@@ -205,6 +209,49 @@ QIcon makeIcon(Icon icon)
         result.addPixmap(pixmap);
     }
     return result;
+}
+
+namespace {
+constexpr const char* kIconProperty = "cvatIcon";
+} // namespace
+
+QAction* makeAction(Icon icon, const QString& text, QObject* parent)
+{
+    auto* action = new QAction(makeIcon(icon), text, parent);
+    action->setProperty(kIconProperty, static_cast<int>(icon));
+    return action;
+}
+
+QAction* addIconAction(QWidget* widget, Icon icon, const QString& text)
+{
+    QAction* action = makeAction(icon, text, widget);
+    widget->addAction(action);
+    return action;
+}
+
+void setButtonIcon(QToolButton* button, Icon icon)
+{
+    button->setIcon(makeIcon(icon));
+    button->setProperty(kIconProperty, static_cast<int>(icon));
+}
+
+void refreshIcons(QWidget* root)
+{
+    if (!root) {
+        return;
+    }
+    for (QAction* action : root->findChildren<QAction*>()) {
+        const QVariant value = action->property(kIconProperty);
+        if (value.isValid()) {
+            action->setIcon(makeIcon(static_cast<Icon>(value.toInt())));
+        }
+    }
+    for (QToolButton* button : root->findChildren<QToolButton*>()) {
+        const QVariant value = button->property(kIconProperty);
+        if (value.isValid()) {
+            button->setIcon(makeIcon(static_cast<Icon>(value.toInt())));
+        }
+    }
 }
 
 } // namespace cvat

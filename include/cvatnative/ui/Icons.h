@@ -1,6 +1,12 @@
 #pragma once
 
 #include <QIcon>
+#include <QString>
+
+class QAction;
+class QObject;
+class QToolButton;
+class QWidget;
 
 namespace cvat {
 
@@ -35,5 +41,12 @@ enum class Icon {
 
 // Requires a QGuiApplication (the palette is read when the icon is made).
 QIcon makeIcon(Icon icon);
+
+// Actions and buttons made with these helpers remember their icon, so
+// refreshIcons() can redraw them after the palette changes.
+QAction* makeAction(Icon icon, const QString& text, QObject* parent);
+QAction* addIconAction(QWidget* widget, Icon icon, const QString& text);
+void setButtonIcon(QToolButton* button, Icon icon);
+void refreshIcons(QWidget* root);
 
 } // namespace cvat

@@ -74,6 +74,7 @@ public:
     // whole visible area, as in CVAT's web client. On by default.
     void setCrosshairEnabled(bool enabled);
     [[nodiscard]] bool crosshairEnabled() const { return crosshairEnabled_; }
+    void setGuideColor(const QColor& color);
 
 signals:
     void statusMessage(const QString& message);

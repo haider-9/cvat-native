@@ -4,7 +4,9 @@
 
 class QCheckBox;
 class QComboBox;
+class QFontComboBox;
 class QLineEdit;
+class QPushButton;
 class QSpinBox;
 
 namespace cvat {
@@ -22,6 +24,7 @@ signals:
 private:
     void load();
     void save();
+    void updateGuideButton();
 
     ApiClient* client_;
     QLineEdit* serverEdit_ = nullptr;
@@ -35,6 +38,11 @@ private:
     QSpinBox* autosaveSpin_ = nullptr;
     QCheckBox* remoteAutosaveBox_ = nullptr;
     QCheckBox* showDeletedBox_ = nullptr;
+    QComboBox* themeCombo_ = nullptr;
+    QPushButton* guideButton_ = nullptr;
+    QString guideHex_;
+    QFontComboBox* fontCombo_ = nullptr;
+    QSpinBox* fontSizeSpin_ = nullptr;
 };
 
 } // namespace cvat

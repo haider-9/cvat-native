@@ -1,5 +1,6 @@
 #include "cvatnative/core/Logging.h"
 #include "cvatnative/core/Settings.h"
+#include "cvatnative/ui/Appearance.h"
 #include "cvatnative/ui/MainWindow.h"
 
 #include <QApplication>
@@ -47,6 +48,7 @@ int main(int argc, char** argv)
         }
     }
 
+    cvat::applyAppearance();
     cvat::MainWindow window;
     window.show();
     return app.exec();

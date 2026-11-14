@@ -436,7 +436,7 @@ void JobWorkspace::setupUi()
     toolbar_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     layout->addWidget(toolbar_);
 
-    auto* back = toolbar_->addAction(makeIcon(Icon::Back), QStringLiteral("Back"));
+    auto* back = addIconAction(toolbar_, Icon::Back, QStringLiteral("Back"));
     back->setShortcut(QKeySequence(QStringLiteral("Alt+Left")));
     back->setShortcutContext(Qt::WindowShortcut);
     this->addAction(back);
@@ -447,7 +447,7 @@ void JobWorkspace::setupUi()
     toolbar_->addWidget(titleLabel_);
 
     toolbar_->addSeparator();
-    saveAction_ = new QAction(makeIcon(Icon::Save), QStringLiteral("Save"), this);
+    saveAction_ = makeAction(Icon::Save, QStringLiteral("Save"), this);
     saveAction_->setShortcuts({QKeySequence(QStringLiteral("S")), QKeySequence::Save});
     saveAction_->setShortcutContext(Qt::WindowShortcut);
     saveAction_->setToolTip(QStringLiteral("Save to server (S or Ctrl+S)"));
@@ -458,7 +458,7 @@ void JobWorkspace::setupUi()
         saveRemote();
     });
 
-    auto* changeClassAction = new QAction(makeIcon(Icon::Tag), QStringLiteral("Change class"), this);
+    auto* changeClassAction = makeAction(Icon::Tag, QStringLiteral("Change class"), this);
     changeClassAction->setShortcut(QKeySequence(QStringLiteral("L")));
     changeClassAction->setShortcutContext(Qt::WindowShortcut);
     changeClassAction->setToolTip(QStringLiteral("Choose the class to draw (L)"));
@@ -470,7 +470,7 @@ void JobWorkspace::setupUi()
         showNewLabelDialog();
     });
 
-    auto* newLabelAction = new QAction(makeIcon(Icon::Box), QStringLiteral("Draw rectangle"), this);
+    auto* newLabelAction = makeAction(Icon::Box, QStringLiteral("Draw rectangle"), this);
     newLabelAction->setShortcut(QKeySequence(QStringLiteral("N")));
     newLabelAction->setShortcutContext(Qt::WindowShortcut);
     newLabelAction->setToolTip(QStringLiteral("Draw a rectangle with the active class (N)"));
@@ -494,7 +494,7 @@ void JobWorkspace::setupUi()
         setStatus(QStringLiteral("Ready to draw '%1' (N)").arg(activeLabel->name));
     });
 
-    auto* copyLabelAction = new QAction(makeIcon(Icon::Copy), QStringLiteral("Copy label"), this);
+    auto* copyLabelAction = makeAction(Icon::Copy, QStringLiteral("Copy label"), this);
     copyLabelAction->setShortcut(QKeySequence(QStringLiteral("C")));
     copyLabelAction->setShortcutContext(Qt::WindowShortcut);
     copyLabelAction->setToolTip(QStringLiteral("Copy label (C) - class and dimensions"));
@@ -506,7 +506,7 @@ void JobWorkspace::setupUi()
         copyLabel();
     });
 
-    auto* pasteLabelAction = new QAction(makeIcon(Icon::Paste), QStringLiteral("Place label"), this);
+    auto* pasteLabelAction = makeAction(Icon::Paste, QStringLiteral("Place label"), this);
     pasteLabelAction->setShortcut(QKeySequence(QStringLiteral("V")));
     pasteLabelAction->setShortcutContext(Qt::WindowShortcut);
     pasteLabelAction->setToolTip(QStringLiteral("Place copied label (V)"));
@@ -520,26 +520,25 @@ void JobWorkspace::setupUi()
 
     auto* bridgeButton = new QToolButton(this);
     bridgeButton->setText(QStringLiteral("Bridge tools"));
-    bridgeButton->setIcon(makeIcon(Icon::Layers));
+    setButtonIcon(bridgeButton, Icon::Layers);
     bridgeButton->setPopupMode(QToolButton::InstantPopup);
     bridgeButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     auto* bridgeMenu = new QMenu(bridgeButton);
     // Ctrl+C / Ctrl+V copy and paste the selected annotations on the current
     // frame, as in CVAT. The single-key C and V actions copy a label's class.
-    auto* copyAnnotationsAction = bridgeMenu->addAction(makeIcon(Icon::Copy),
-        QStringLiteral("Copy annotations"), this, &JobWorkspace::copyAnnotations);
+    auto* copyAnnotationsAction = addIconAction(bridgeMenu, Icon::Copy, QStringLiteral("Copy annotations"));
+    connect(copyAnnotationsAction, &QAction::triggered, this, &JobWorkspace::copyAnnotations);
     copyAnnotationsAction->setShortcut(QKeySequence::Copy);
     copyAnnotationsAction->setShortcutContext(Qt::WindowShortcut);
     this->addAction(copyAnnotationsAction);
 
-    auto* pasteAnnotationsAction = bridgeMenu->addAction(makeIcon(Icon::Paste),
-        QStringLiteral("Paste annotations"), this, &JobWorkspace::pasteAnnotations);
+    auto* pasteAnnotationsAction = addIconAction(bridgeMenu, Icon::Paste, QStringLiteral("Paste annotations"));
+    connect(pasteAnnotationsAction, &QAction::triggered, this, &JobWorkspace::pasteAnnotations);
     pasteAnnotationsAction->setShortcut(QKeySequence::Paste);
     pasteAnnotationsAction->setShortcutContext(Qt::WindowShortcut);
     this->addAction(pasteAnnotationsAction);
     bridgeMenu->addSeparator();
-    bridgeMenu->addAction(makeIcon(Icon::Trash), QStringLiteral("Delete annotations"), this,
-                          &JobWorkspace::showDeleteDialog);
+    connect(addIconAction(bridgeMenu, Icon::Trash, QStringLiteral("Delete annotations")), &QAction::triggered, this, &JobWorkspace::showDeleteDialog);
     bridgeMenu->addAction(QStringLiteral("Grow / shrink rectangles"), this,
                           &JobWorkspace::showGrowDialog);
     bridgeMenu->addAction(QStringLiteral("Move annotations"), this,
@@ -549,21 +548,21 @@ void JobWorkspace::setupUi()
     bridgeButton->setMenu(bridgeMenu);
     toolbar_->addWidget(bridgeButton);
 
-    undoAction_ = new QAction(makeIcon(Icon::Undo), QStringLiteral("Undo"), this);
+    undoAction_ = makeAction(Icon::Undo, QStringLiteral("Undo"), this);
     undoAction_->setShortcut(QKeySequence::Undo);
     undoAction_->setShortcutContext(Qt::WindowShortcut);
     this->addAction(undoAction_);
     toolbar_->addAction(undoAction_);
     connect(undoAction_, &QAction::triggered, this, [this]() { model_->undo(); });
 
-    redoAction_ = new QAction(makeIcon(Icon::Redo), QStringLiteral("Redo"), this);
+    redoAction_ = makeAction(Icon::Redo, QStringLiteral("Redo"), this);
     redoAction_->setShortcut(QKeySequence::Redo);
     redoAction_->setShortcutContext(Qt::WindowShortcut);
     this->addAction(redoAction_);
     toolbar_->addAction(redoAction_);
     connect(redoAction_, &QAction::triggered, this, [this]() { model_->redo(); });
 
-    deleteAction_ = new QAction(makeIcon(Icon::Trash), QStringLiteral("Delete"), this);
+    deleteAction_ = makeAction(Icon::Trash, QStringLiteral("Delete"), this);
     deleteAction_->setShortcut(QKeySequence::Delete);
     deleteAction_->setShortcutContext(Qt::WindowShortcut);
     this->addAction(deleteAction_);
@@ -571,7 +570,7 @@ void JobWorkspace::setupUi()
     connect(deleteAction_, &QAction::triggered, this, &JobWorkspace::deleteSelection);
 
     toolbar_->addSeparator();
-    auto* previous = new QAction(makeIcon(Icon::Previous), QStringLiteral("Previous"), this);
+    auto* previous = makeAction(Icon::Previous, QStringLiteral("Previous"), this);
     previous->setShortcut(QKeySequence(QStringLiteral("D")));
     previous->setShortcutContext(Qt::WindowShortcut);
     previous->setToolTip(QStringLiteral("Previous frame (D)"));
@@ -581,7 +580,7 @@ void JobWorkspace::setupUi()
         if (shouldIgnoreSingleKey()) return;
         setFrame(model_->currentFrame() - 1);
     });
-    auto* next = new QAction(makeIcon(Icon::Next), QStringLiteral("Next"), this);
+    auto* next = makeAction(Icon::Next, QStringLiteral("Next"), this);
     next->setShortcut(QKeySequence(QStringLiteral("F")));
     next->setShortcutContext(Qt::WindowShortcut);
     next->setToolTip(QStringLiteral("Next frame (F)"));
@@ -622,8 +621,8 @@ void JobWorkspace::setupUi()
     toolbar_->addSeparator();
     toolGroup_ = new QActionGroup(this);
     toolGroup_->setExclusive(true);
-    auto addTool = [this, shouldIgnoreSingleKey](const QIcon& icon, const QString& text, CanvasTool tool, const QString& shortcut) {
-        auto* action = new QAction(icon, text, this);
+    auto addTool = [this, shouldIgnoreSingleKey](Icon icon, const QString& text, CanvasTool tool, const QString& shortcut) {
+        auto* action = makeAction(icon, text, this);
         action->setCheckable(true);
         action->setData(static_cast<int>(tool));
         action->setShortcut(QKeySequence(shortcut));
@@ -633,21 +632,21 @@ void JobWorkspace::setupUi()
         toolbar_->addAction(action);
         return action;
     };
-    addTool(makeIcon(Icon::Pointer), QStringLiteral("Select"), CanvasTool::Select, QStringLiteral("Q"))->setChecked(true);
-    addTool(makeIcon(Icon::Box), QStringLiteral("Box"), CanvasTool::Rectangle, QStringLiteral("R"));
+    addTool(Icon::Pointer, QStringLiteral("Select"), CanvasTool::Select, QStringLiteral("Q"))->setChecked(true);
+    addTool(Icon::Box, QStringLiteral("Box"), CanvasTool::Rectangle, QStringLiteral("R"));
     connect(toolGroup_, &QActionGroup::triggered, this, [this, shouldIgnoreSingleKey](QAction* action) {
         if (shouldIgnoreSingleKey()) return;
         setTool(action->data().toInt());
     });
 
     toolbar_->addSeparator();
-    auto* zoomIn = toolbar_->addAction(makeIcon(Icon::ZoomIn), QStringLiteral("Zoom in"));
+    auto* zoomIn = addIconAction(toolbar_, Icon::ZoomIn, QStringLiteral("Zoom in"));
     connect(zoomIn, &QAction::triggered, this, [this]() { canvas_->zoomIn(); });
-    auto* zoomOut = toolbar_->addAction(makeIcon(Icon::ZoomOut), QStringLiteral("Zoom out"));
+    auto* zoomOut = addIconAction(toolbar_, Icon::ZoomOut, QStringLiteral("Zoom out"));
     connect(zoomOut, &QAction::triggered, this, [this]() { canvas_->zoomOut(); });
-    auto* fit = toolbar_->addAction(makeIcon(Icon::FitView), QStringLiteral("Fit"));
+    auto* fit = addIconAction(toolbar_, Icon::FitView, QStringLiteral("Fit"));
     toolbar_->addSeparator();
-    auto* guides = toolbar_->addAction(makeIcon(Icon::Crosshair), QStringLiteral("Guides"));
+    auto* guides = addIconAction(toolbar_, Icon::Crosshair, QStringLiteral("Guides"));
     guides->setCheckable(true);
     guides->setChecked(true);
     guides->setToolTip(QStringLiteral("Show crosshair guides that follow the pointer"));
@@ -656,6 +655,7 @@ void JobWorkspace::setupUi()
 
     auto* splitter = new QSplitter(Qt::Horizontal, this);
     canvas_ = new AnnotationCanvas(splitter);
+    canvas_->setGuideColor(QColor(Settings::instance().guideColor()));
     canvas_->setModel(model_);
     splitter->addWidget(canvas_);
 
@@ -2209,6 +2209,9 @@ void JobWorkspace::changeOccluded(bool occluded)
 
 void JobWorkspace::applySettings()
 {
+    if (canvas_) {
+        canvas_->setGuideColor(QColor(Settings::instance().guideColor()));
+    }
     if (autosaveTimer_) {
         autosaveTimer_->setInterval(std::max(5, Settings::instance().autosaveSeconds()) * 1000);
     }

@@ -106,6 +106,7 @@ add_library(cvat_ui STATIC
 
     src/ui/MainWindow.cpp
     src/ui/Icons.cpp
+    src/ui/Appearance.cpp
     src/ui/LoginDialog.cpp
     src/ui/DashboardPage.cpp
     src/ui/JobWorkspace.cpp

@@ -5,14 +5,21 @@
 #include "cvatnative/core/Settings.h"
 
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
+#include <QFontComboBox>
+#include <QPushButton>
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QSpinBox>
+#include <QApplication>
+#include <QFont>
 #include <QUrl>
 #include <QVBoxLayout>
+
+#include <algorithm>
 
 namespace cvat {
 
@@ -75,6 +82,33 @@ SettingsDialog::SettingsDialog(ApiClient* client, QWidget* parent)
     showDeletedBox_ = new QCheckBox(QStringLiteral("Show deleted frames"), this);
     form->addRow(QString(), showDeletedBox_);
 
+    themeCombo_ = new QComboBox(this);
+    themeCombo_->addItem(QStringLiteral("System"), QStringLiteral("system"));
+    themeCombo_->addItem(QStringLiteral("Light"), QStringLiteral("light"));
+    themeCombo_->addItem(QStringLiteral("Dark"), QStringLiteral("dark"));
+    form->addRow(QStringLiteral("Theme"), themeCombo_);
+
+    guideButton_ = new QPushButton(this);
+    guideButton_->setToolTip(QStringLiteral("Colour of the crosshair guides shown while drawing"));
+    connect(guideButton_, &QPushButton::clicked, this, [this]() {
+        const QColor picked = QColorDialog::getColor(QColor(guideHex_), this,
+                                                     QStringLiteral("Guide colour"));
+        if (picked.isValid()) {
+            guideHex_ = picked.name();
+            updateGuideButton();
+        }
+    });
+    form->addRow(QStringLiteral("Guide colour"), guideButton_);
+
+    fontCombo_ = new QFontComboBox(this);
+    form->addRow(QStringLiteral("Interface font"), fontCombo_);
+
+    fontSizeSpin_ = new QSpinBox(this);
+    fontSizeSpin_->setRange(0, 24);
+    fontSizeSpin_->setSpecialValueText(QStringLiteral("System default"));
+    fontSizeSpin_->setSuffix(QStringLiteral(" pt"));
+    form->addRow(QStringLiteral("Interface font size"), fontSizeSpin_);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel,
                                          this);
     layout->addWidget(buttons);
@@ -101,6 +135,24 @@ void SettingsDialog::load()
     autosaveSpin_->setValue(settings.autosaveSeconds());
     remoteAutosaveBox_->setChecked(settings.remoteAutosave());
     showDeletedBox_->setChecked(settings.showDeletedFrames());
+
+    themeCombo_->setCurrentIndex(std::max(0, themeCombo_->findData(settings.themeMode())));
+    guideHex_ = settings.guideColor();
+    updateGuideButton();
+    fontCombo_->setCurrentFont(QFont(settings.fontFamily().isEmpty()
+                                         ? QApplication::font().family()
+                                         : settings.fontFamily()));
+    fontSizeSpin_->setValue(settings.fontPointSize());
+}
+
+void SettingsDialog::updateGuideButton()
+{
+    const QColor colour(guideHex_);
+    guideButton_->setText(guideHex_);
+    guideButton_->setStyleSheet(QStringLiteral("background-color: %1; color: %2;")
+                                    .arg(guideHex_, colour.lightness() > 128
+                                                        ? QStringLiteral("#000")
+                                                        : QStringLiteral("#fff")));
 }
 
 void SettingsDialog::save()
@@ -131,6 +183,10 @@ void SettingsDialog::save()
     settings.setAutosaveSeconds(autosaveSpin_->value());
     settings.setRemoteAutosave(remoteAutosaveBox_->isChecked());
     settings.setShowDeletedFrames(showDeletedBox_->isChecked());
+    settings.setThemeMode(themeCombo_->currentData().toString());
+    settings.setGuideColor(guideHex_);
+    settings.setFontFamily(fontCombo_->currentFont().family());
+    settings.setFontPointSize(fontSizeSpin_->value());
     settings.sync();
 
     if (client_) {

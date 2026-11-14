@@ -955,6 +955,15 @@ void AnnotationCanvas::setCrosshairEnabled(bool enabled)
     updateCrosshair();
 }
 
+void AnnotationCanvas::setGuideColor(const QColor& color)
+{
+    QPen pen(color);
+    pen.setWidth(1);
+    pen.setCosmetic(true);
+    crosshairH_->setPen(pen);
+    crosshairV_->setPen(pen);
+}
+
 void AnnotationCanvas::enterEvent(QEnterEvent* event)
 {
     cursorInside_ = true;
