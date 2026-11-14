@@ -700,6 +700,22 @@ void JobWorkspace::setupUi()
     statusLabel_->setStyleSheet(QStringLiteral("color: #888;"));
     dirtyLabel_ = new QLabel(this);
     dirtyLabel_->setStyleSheet(QStringLiteral("color: #d59b00; font-weight: 600;"));
+    // Page navigator: type a page (frame) number and press Enter to jump there.
+    footer->addWidget(new QLabel(QStringLiteral("Page"), this));
+    pageSpin_ = new QSpinBox(this);
+    pageSpin_->setRange(0, 0);
+    pageSpin_->setMinimumWidth(90);
+    pageSpin_->setKeyboardTracking(false);
+    pageSpin_->setToolTip(QStringLiteral("Enter a page number and press Enter to go there"));
+    footer->addWidget(pageSpin_);
+    pageTotalLabel_ = new QLabel(this);
+    footer->addWidget(pageTotalLabel_);
+    connect(pageSpin_, &QSpinBox::valueChanged, this, [this](int value) {
+        if (value != model_->currentFrame()) {
+            setFrame(value);
+        }
+    });
+    footer->addSpacing(12);
     footer->addWidget(statusLabel_, 1);
     footer->addWidget(dirtyLabel_);
     layout->addLayout(footer);
@@ -763,6 +779,7 @@ void JobWorkspace::connectModel()
         QSignalBlocker sliderBlocker(frameSlider_);
         frameSpin_->setValue(frame);
         frameSlider_->setValue(frame);
+        pageSpin_->setValue(frame);
     });
 }
 
@@ -832,6 +849,9 @@ void JobWorkspace::loadMeta()
             QSignalBlocker sliderBlocker(frameSlider_);
             frameSpin_->setRange(start, stop);
             frameSlider_->setRange(start, stop);
+            QSignalBlocker pageBlocker(pageSpin_);
+            pageSpin_->setRange(start, stop);
+            pageTotalLabel_->setText(QStringLiteral("of %1").arg(stop));
             frameSpin_->setValue(model_->currentFrame());
             frameSlider_->setValue(model_->currentFrame());
         }
@@ -921,6 +941,7 @@ void JobWorkspace::setFrame(int frame)
         QSignalBlocker sliderBlocker(frameSlider_);
         frameSpin_->setValue(clamped);
         frameSlider_->setValue(clamped);
+        pageSpin_->setValue(clamped);
     }
     frameDebounce_->start();
     refreshObjects();

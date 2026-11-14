@@ -114,6 +114,8 @@ private:
     QLabel* titleLabel_ = nullptr;
     QLabel* statusLabel_ = nullptr;
     QLabel* dirtyLabel_ = nullptr;
+    QSpinBox* pageSpin_ = nullptr;
+    QLabel* pageTotalLabel_ = nullptr;
     ToastWidget* toast_ = nullptr;
     QSpinBox* frameSpin_ = nullptr;
     QSlider* frameSlider_ = nullptr;
