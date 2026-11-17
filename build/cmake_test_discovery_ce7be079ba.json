@@ -1,5 +1,5 @@
 {
-  "tests": 33,
+  "tests": 34,
   "name": "AllTests",
   "testsuites": [
     {
@@ -71,33 +71,44 @@
       ]
     },
     {
+      "name": "Label",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "FlattenHierarchy",
+          "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
+          "line": 50
+        }
+      ]
+    },
+    {
       "name": "Annotation",
       "tests": 5,
       "testsuite": [
         {
           "name": "ParsesLabeledData",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 49
+          "line": 72
         },
         {
           "name": "SerializationRoundTrip",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 63
+          "line": 86
         },
         {
           "name": "TrackInterpolates",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 77
+          "line": 100
         },
         {
           "name": "ShapeTypes",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 98
+          "line": 121
         },
         {
           "name": "CopiedTemplateDimensionAndPlacement",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 178
+          "line": 201
         }
       ]
     },
@@ -108,12 +119,12 @@
         {
           "name": "AddingAndUpdatingShapesIncrementsRevisionAndDirty",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 106
+          "line": 129
         },
         {
           "name": "BatchUpdatingShapesAndUndo",
           "file": "\/home\/haider\/Projects\/cvat-native\/tests\/test_annotation.cpp",
-          "line": 135
+          "line": 158
         }
       ]
     },

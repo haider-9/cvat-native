@@ -5,4 +5,5 @@
 #include "S2WYZ3NXKS/moc_LabelPanel.cpp"
 #include "S2WYZ3NXKS/moc_LoginDialog.cpp"
 #include "S2WYZ3NXKS/moc_MainWindow.cpp"
+#include "S2WYZ3NXKS/moc_MiniMap.cpp"
 #include "S2WYZ3NXKS/moc_SettingsDialog.cpp"

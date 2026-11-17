@@ -1172,8 +1172,9 @@ void JobWorkspace::pasteLabel()
         return;
     }
 
-    labelPanel_->setActiveLabel(copiedTemplate_.labelId);
-    canvas_->setActiveLabel(copiedTemplate_.labelId);
+    // Pasting must not change the active class, otherwise the next shape drawn
+    // with N would inherit the pasted label's class instead of the one the user
+    // had selected before copying. The template keeps its own label id.
     canvas_->startTemplatePlacement(copiedTemplate_);
 
     const QString msg = QStringLiteral("Placing %1 [%2 × %3 px] — click to place onto image (Esc to cancel)")
@@ -1339,8 +1340,8 @@ void JobWorkspace::pasteAnnotations()
         group.push_back(t);
     }
 
-    labelPanel_->setActiveLabel(group.first().labelId);
-    canvas_->setActiveLabel(group.first().labelId);
+    // Keep the previously active class selected; the pasted group keeps its own
+    // per-shape label ids, so the next shape drawn with N stays on that class.
     canvas_->startGroupPlacement(group);
     setStatus(QStringLiteral("Placing %1 annotation(s)%2 — click to place (Esc to cancel)")
                   .arg(group.size())

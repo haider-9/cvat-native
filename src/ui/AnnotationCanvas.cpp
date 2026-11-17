@@ -170,7 +170,8 @@ void AnnotationCanvas::startGroupPlacement(const QVector<CopiedTemplate>& items)
     if (templates_.isEmpty()) {
         return;
     }
-    activeLabel_ = templates_.first().labelId;
+    // Placement uses each template's own label id. Do not touch activeLabel_:
+    // the class chosen for the next drawn shape must survive a paste.
     interaction_ = Interaction::PlaceTemplate;
     setCursor(Qt::CrossCursor);
 

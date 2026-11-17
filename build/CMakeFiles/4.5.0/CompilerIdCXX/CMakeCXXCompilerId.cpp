@@ -99,6 +99,20 @@
 # define SIMULATE_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
 #endif
 
+#elif defined(__clang__) && defined(__DPCPP__) && defined(__dpcpp_major__) && __dpcpp_major__ >= 7 && defined(__dpcpp_minor__) && defined(__dpcpp_patchlevel__) && !defined(__INTEL_CLANG_COMPILER) && !defined(__INTEL_LLVM_COMPILER)
+# define COMPILER_ID "DPClang"
+#if defined(_MSC_VER)
+# define SIMULATE_ID "MSVC"
+#endif
+# define COMPILER_VERSION_MAJOR DEC(__dpcpp_major__)
+# define COMPILER_VERSION_MINOR DEC(__dpcpp_minor__)
+# define COMPILER_VERSION_PATCH DEC(__dpcpp_patchlevel__)
+# define COMPILER_VERSION_INTERNAL_STR __clang_version__
+#if defined(_MSC_VER)
+# define SIMULATE_VERSION_MAJOR DEC(_MSC_VER / 100)
+# define SIMULATE_VERSION_MINOR DEC(_MSC_VER % 100)
+#endif
+
 #elif defined(__PATHCC__)
 # define COMPILER_ID "PathScale"
 # define COMPILER_VERSION_MAJOR DEC(__PATHCC__)
