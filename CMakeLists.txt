@@ -131,8 +131,12 @@ target_link_libraries(cvat-native PRIVATE cvat_ui)
 if(WIN32)
     install(TARGETS cvat-native RUNTIME DESTINATION .)
 else()
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packaging)
+    configure_file(packaging/cvat-native.desktop.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/packaging/cvat-native.desktop @ONLY)
     install(TARGETS cvat-native RUNTIME DESTINATION bin)
-    install(FILES packaging/cvat-native.desktop DESTINATION share/applications)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/packaging/cvat-native.desktop
+            DESTINATION share/applications)
     install(FILES packaging/cvat-native.svg DESTINATION share/icons/hicolor/scalable/apps)
 endif()
 
