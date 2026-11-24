@@ -57,6 +57,9 @@ public:
     bool showMiniMap() const;
     void setShowMiniMap(bool enabled);
 
+    bool multiLabelCopy() const; // area-select + copy/paste several labels at once
+    void setMultiLabelCopy(bool enabled);
+
     void sync();
 
 private:

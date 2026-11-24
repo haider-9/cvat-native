@@ -130,7 +130,7 @@ void AnnotationCanvas::setTool(CanvasTool tool)
     tool_ = tool;
     switch (tool_) {
     case CanvasTool::Select:
-        setCursor(Qt::ArrowCursor);
+        setCursor(areaSelectionEnabled_ ? Qt::CrossCursor : Qt::ArrowCursor);
         break;
     case CanvasTool::Rectangle:
         setCursor(Qt::CrossCursor);
@@ -146,6 +146,65 @@ void AnnotationCanvas::setTool(CanvasTool tool)
 void AnnotationCanvas::setActiveLabel(int labelId)
 {
     activeLabel_ = labelId;
+}
+
+void AnnotationCanvas::setAreaSelectionEnabled(bool enabled)
+{
+    if (areaSelectionEnabled_ == enabled) {
+        return;
+    }
+    areaSelectionEnabled_ = enabled;
+    if (!enabled && interaction_ == Interaction::SelectArea) {
+        clearPendingCreation();
+        interaction_ = Interaction::None;
+    }
+    setCursor(enabled ? Qt::CrossCursor
+                      : (tool_ == CanvasTool::Select ? Qt::ArrowCursor : Qt::CrossCursor));
+    emit statusMessage(enabled
+        ? QStringLiteral("Area selection on — drag a rectangle to select labels (Ctrl to add)")
+        : QStringLiteral("Area selection off"));
+}
+
+QSet<QString> AnnotationCanvas::shapesInsideRect(const QRectF& rect) const
+{
+    QSet<QString> keys;
+    if (!model_ || rect.isEmpty()) {
+        return keys;
+    }
+    // Match CVAT's region selector: a shape is selected when the selection
+    // rectangle fully contains its bounding box. Tags have no geometry here.
+    for (const auto& visible : model_->visibleShapes()) {
+        if (rect.contains(Geometry::bounds(visible.shape.points))) {
+            keys.insert(visible.key);
+        }
+    }
+    return keys;
+}
+
+void AnnotationCanvas::selectShapesInRect(const QRectF& rect, bool additive)
+{
+    if (!model_) {
+        return;
+    }
+    QSet<QString> keys = shapesInsideRect(rect);
+    if (additive) {
+        keys.unite(model_->selection());
+    }
+    model_->setSelection(keys);
+    emit statusMessage(QStringLiteral("Selected %1 label(s) inside the area").arg(keys.size()));
+}
+
+void AnnotationCanvas::finishAreaSelection(const QPointF& end)
+{
+    const QRectF rect = QRectF(creationStart_, end).normalized();
+    clearPendingCreation();
+    interaction_ = Interaction::None;
+    setCursor(areaSelectionEnabled_ ? Qt::CrossCursor : Qt::ArrowCursor);
+    if (rect.width() < 3.0 || rect.height() < 3.0) {
+        emit statusMessage(QStringLiteral("Selection area is too small"));
+        return;
+    }
+    selectShapesInRect(rect, areaSelectionAdditive_);
 }
 
 bool AnnotationCanvas::isPlacingTemplate() const
@@ -462,11 +521,12 @@ cvat::Shape AnnotationCanvas::shapeAtScenePoint(const QPointF& point) const
     return {};
 }
 
-void AnnotationCanvas::updateRectanglePreview(const QPointF& start, const QPointF& end)
+void AnnotationCanvas::updateRectanglePreview(const QPointF& start, const QPointF& end,
+                                              bool forSelection)
 {
     const QRectF rect = QRectF(start, end).normalized();
-    QColor color(255, 196, 0);
-    if (model_) {
+    QColor color(forSelection ? QColor(64, 220, 255) : QColor(255, 196, 0));
+    if (!forSelection && model_) {
         if (const Label* lbl = model_->label(activeLabel_)) {
             color = QColor(lbl->color);
         }
@@ -512,7 +572,13 @@ void AnnotationCanvas::updateRectanglePreview(const QPointF& start, const QPoint
     rectangleBadgeBg_->setRect(badgeX, badgeY, badgeW, badgeH);
     rectangleBadgeText_->setPos(badgeX + 5, badgeY + 2);
 
-    emit statusMessage(QStringLiteral("Rectangle: %1 — click opposite corner to finish (Esc to cancel)").arg(dimText));
+    if (forSelection) {
+        emit statusMessage(QStringLiteral("Area select: %1 — %2 label(s) inside")
+                               .arg(dimText)
+                               .arg(shapesInsideRect(rect).size()));
+    } else {
+        emit statusMessage(QStringLiteral("Rectangle: %1 — click opposite corner to finish (Esc to cancel)").arg(dimText));
+    }
 }
 
 void AnnotationCanvas::createRectangle(const QPointF& start, const QPointF& end)
@@ -707,6 +773,13 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
             cancelTemplatePlacement();
             return;
         }
+        if (interaction_ == Interaction::SelectArea) {
+            clearPendingCreation();
+            interaction_ = Interaction::None;
+            setCursor(areaSelectionEnabled_ ? Qt::CrossCursor : Qt::ArrowCursor);
+            emit statusMessage(QStringLiteral("Area selection cancelled"));
+            return;
+        }
         if (interaction_ == Interaction::CreateRectangle) {
             clearPendingCreation();
             interaction_ = Interaction::None;
@@ -740,6 +813,21 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
 
     if (interaction_ == Interaction::PlaceTemplate) {
         placeTemplateAt(scenePosition);
+        return;
+    }
+
+    if (areaSelectionEnabled_) {
+        if (interaction_ == Interaction::SelectArea) {
+            // A plain click (no drag) completes the area on the second click.
+            finishAreaSelection(scenePosition);
+            return;
+        }
+        interaction_ = Interaction::SelectArea;
+        creationStart_ = scenePosition;
+        areaDrag_ = false;
+        areaSelectionAdditive_ = event->modifiers() & Qt::ControlModifier;
+        updateRectanglePreview(scenePosition, scenePosition, true);
+        emit statusMessage(QStringLiteral("Drag to select labels (Ctrl to add, Esc to cancel)"));
         return;
     }
 
@@ -845,6 +933,13 @@ void AnnotationCanvas::mouseMoveEvent(QMouseEvent* event)
     case Interaction::CreateRectangle:
         updateRectanglePreview(creationStart_, scenePosition);
         return;
+    case Interaction::SelectArea:
+        if ((scenePosition - creationStart_).manhattanLength() >
+            3.0 / std::max(0.05, zoom())) {
+            areaDrag_ = true;
+        }
+        updateRectanglePreview(creationStart_, scenePosition, true);
+        return;
     case Interaction::PlaceTemplate:
         updateTemplatePreview(scenePosition);
         return;
@@ -884,7 +979,8 @@ void AnnotationCanvas::mouseReleaseEvent(QMouseEvent* event)
             // Restore the interaction that was active before panning started
             interaction_ = interactionBeforePan_;
             interactionBeforePan_ = Interaction::None;
-            if (interaction_ == Interaction::PlaceTemplate || interaction_ == Interaction::CreateRectangle) {
+            if (interaction_ == Interaction::PlaceTemplate || interaction_ == Interaction::CreateRectangle ||
+                interaction_ == Interaction::SelectArea) {
                 setCursor(Qt::CrossCursor);
             } else {
                 setCursor(spacePanning_ ? Qt::OpenHandCursor
@@ -892,6 +988,15 @@ void AnnotationCanvas::mouseReleaseEvent(QMouseEvent* event)
             }
             return;
         }
+    }
+
+    if (interaction_ == Interaction::SelectArea) {
+        // Drag selection finishes on release. A click without dragging keeps the
+        // pending corner so a second click can complete the area.
+        if (areaDrag_ && event->button() == Qt::LeftButton) {
+            finishAreaSelection(mapToScene(event->position().toPoint()));
+        }
+        return;
     }
 
     if (interaction_ == Interaction::CreateRectangle) {
@@ -1064,7 +1169,8 @@ void AnnotationCanvas::keyReleaseEvent(QKeyEvent* event)
             interaction_ = interactionBeforePan_;
             interactionBeforePan_ = Interaction::None;
         }
-        if (interaction_ == Interaction::PlaceTemplate || interaction_ == Interaction::CreateRectangle) {
+        if (interaction_ == Interaction::PlaceTemplate || interaction_ == Interaction::CreateRectangle ||
+            interaction_ == Interaction::SelectArea) {
             setCursor(Qt::CrossCursor);
         } else {
             setCursor(tool_ == CanvasTool::Select ? Qt::ArrowCursor : Qt::CrossCursor);

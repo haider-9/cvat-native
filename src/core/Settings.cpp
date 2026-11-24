@@ -156,6 +156,16 @@ void Settings::setShowMiniMap(bool enabled)
     d->settings.setValue(QStringLiteral("view/showMiniMap"), enabled);
 }
 
+bool Settings::multiLabelCopy() const
+{
+    return d->settings.value(QStringLiteral("editing/multiLabelCopy"), false).toBool();
+}
+
+void Settings::setMultiLabelCopy(bool enabled)
+{
+    d->settings.setValue(QStringLiteral("editing/multiLabelCopy"), enabled);
+}
+
 QString Settings::cacheDirectory() const
 {
     const QString root = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);

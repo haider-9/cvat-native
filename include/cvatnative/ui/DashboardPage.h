@@ -2,7 +2,9 @@
 
 #include "cvatnative/api/Models.h"
 
+#include <QDateTime>
 #include <QJsonArray>
+#include <QJsonObject>
 #include <QWidget>
 
 class QLabel;
@@ -30,10 +32,31 @@ public:
 
     void refresh();
 
+    // Called when the user drills into a project/task or opens a job, so the
+    // landing page can show what they were working on most recently.
+    void recordProject(const Project& project);
+    void recordTask(const Task& task);
+    void recordJob(const Job& job);
+
 signals:
     void jobActivated(const Job& job);
 
 private:
+    struct HistoryEntry {
+        QString type; // "project", "task" or "job"
+        int id = 0;
+        QString name;
+        QString context;
+        QDateTime viewedAt;
+        QJsonObject payload;
+    };
+
+    void recordHistory(const HistoryEntry& entry);
+    [[nodiscard]] QVector<HistoryEntry> loadHistory() const;
+    void saveHistory(const QVector<HistoryEntry>& entries) const;
+    void refreshHistory();
+    void activateHistoryRow(int row);
+
     void refreshCurrent();
     void refreshProjects(int page);
     void refreshTasks(int page);
@@ -56,6 +79,9 @@ private:
     LocalStore* store_;
 
     QTabWidget* tabs_ = nullptr;
+    QWidget* homePage_ = nullptr;
+    QTableWidget* historyTable_ = nullptr;
+    QPushButton* clearHistoryButton_ = nullptr;
     QTableWidget* projectTable_ = nullptr;
     QTableWidget* taskTable_ = nullptr;
     QTableWidget* jobTable_ = nullptr;
@@ -67,6 +93,7 @@ private:
     QLabel* statusLabel_ = nullptr;
     QTimer* searchTimer_ = nullptr;
 
+    QVector<HistoryEntry> history_;
     QVector<Project> projects_;
     QVector<Task> tasks_;
     QVector<Job> jobs_;

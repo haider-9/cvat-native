@@ -322,6 +322,9 @@ void MainWindow::openDashboard()
 void MainWindow::openJob(const Job& job)
 {
     closeWorkspace();
+    if (dashboard_) {
+        dashboard_->recordJob(job);
+    }
 
     workspace_ = new JobWorkspace(job, annotationsApi_.get(), jobsApi_.get(),
                                   labelsApi_.get(), media_, recovery_.get(), store_.get(), this);

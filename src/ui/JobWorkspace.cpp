@@ -366,6 +366,39 @@ QString shapeTypeName(const QString& type)
     if (type == QStringLiteral("skeleton")) return QStringLiteral("skeleton");
     return type;
 }
+
+// One copyable label from a shape. Offsets are measured from the centre of the
+// whole copied group, so several labels keep their layout when pasted together.
+CopiedTemplate templateFromShape(const Shape& shape, const Label* label,
+                                 const QRectF& box, const QPointF& anchor)
+{
+    CopiedTemplate tmpl;
+    tmpl.valid = true;
+    tmpl.labelId = shape.labelId;
+    tmpl.labelName = label ? label->name : QStringLiteral("label %1").arg(shape.labelId);
+    tmpl.color = label ? QColor(label->color) : QColor(76, 154, 255);
+    tmpl.shapeType = shape.type;
+    tmpl.attributes = shape.attributes;
+    tmpl.occluded = shape.occluded;
+    tmpl.rotation = shape.rotation;
+    tmpl.zOrder = shape.zOrder;
+
+    const QPointF centre = box.center();
+    tmpl.offset = centre - anchor;
+    tmpl.width = std::max(2.0, box.width());
+    tmpl.height = std::max(2.0, box.height());
+    if (tmpl.shapeType == QStringLiteral("rectangle") ||
+        tmpl.shapeType == QStringLiteral("ellipse")) {
+        tmpl.relativePoints = {-tmpl.width / 2.0, -tmpl.height / 2.0,
+                                tmpl.width / 2.0,  tmpl.height / 2.0};
+    } else {
+        for (int i = 0; i + 1 < shape.points.size(); i += 2) {
+            tmpl.relativePoints.push_back(shape.points[i] - centre.x());
+            tmpl.relativePoints.push_back(shape.points[i + 1] - centre.y());
+        }
+    }
+    return tmpl;
+}
 } // namespace
 
 JobWorkspace::JobWorkspace(const Job& job, AnnotationsApi* annotations, JobsApi* jobs,
@@ -514,8 +547,8 @@ void JobWorkspace::setupUi()
     auto* copyLabelAction = makeAction(Icon::Copy, QStringLiteral("Copy label"), this);
     copyLabelAction->setShortcut(QKeySequence(QStringLiteral("C")));
     copyLabelAction->setShortcutContext(Qt::WindowShortcut);
-    copyLabelAction->setToolTip(QStringLiteral("Copy label (C) - class and dimensions"));
-    copyLabelAction->setStatusTip(QStringLiteral("Copy the selected object's class and dimensions (C)"));
+    copyLabelAction->setToolTip(QStringLiteral("Copy label (C) - class and dimensions, or all selected labels in Multi-label mode"));
+    copyLabelAction->setStatusTip(QStringLiteral("Copy the selected object's class and dimensions (C), or every selected label when Multi-label is on"));
     this->addAction(copyLabelAction);
     toolbar_->addAction(copyLabelAction);
     connect(copyLabelAction, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
@@ -526,7 +559,7 @@ void JobWorkspace::setupUi()
     auto* pasteLabelAction = makeAction(Icon::Paste, QStringLiteral("Place label"), this);
     pasteLabelAction->setShortcut(QKeySequence(QStringLiteral("V")));
     pasteLabelAction->setShortcutContext(Qt::WindowShortcut);
-    pasteLabelAction->setToolTip(QStringLiteral("Place copied label (V)"));
+    pasteLabelAction->setToolTip(QStringLiteral("Place copied label (V) - pastes the whole copied group in Multi-label mode"));
     pasteLabelAction->setStatusTip(QStringLiteral("Place the copied class and dimensions onto the image (V)"));
     this->addAction(pasteLabelAction);
     toolbar_->addAction(pasteLabelAction);
@@ -726,6 +759,22 @@ void JobWorkspace::setupUi()
         Settings::instance().sync();
     });
     footer->addWidget(miniMapToggle);
+    footer->addSpacing(12);
+
+    auto* multiLabelToggle = new QCheckBox(QStringLiteral("Multi-label"), this);
+    multiLabelToggle->setToolTip(QStringLiteral(
+        "On: drag a rectangle to select labels, then C copies all of them and V pastes them together"));
+    multiLabelToggle->setChecked(Settings::instance().multiLabelCopy());
+    canvas_->setAreaSelectionEnabled(multiLabelToggle->isChecked());
+    connect(multiLabelToggle, &QCheckBox::toggled, this, [this](bool on) {
+        canvas_->setAreaSelectionEnabled(on);
+        Settings::instance().setMultiLabelCopy(on);
+        Settings::instance().sync();
+        setStatus(on
+            ? QStringLiteral("Multi-label on — drag a rectangle to select labels, then C / V to copy and paste them")
+            : QStringLiteral("Multi-label off — C / V copies one label"));
+    });
+    footer->addWidget(multiLabelToggle);
     footer->addSpacing(12);
     footer->addWidget(statusLabel_, 1);
     footer->addWidget(dirtyLabel_);
@@ -1105,6 +1154,55 @@ void JobWorkspace::copyLabel()
     if (!model_) {
         return;
     }
+
+    const auto selection = model_->selection();
+    if (selection.isEmpty()) {
+        setStatus(QStringLiteral("Select a label first to copy its class and dimensions"), true);
+        showToast(QStringLiteral("✕ Select a label first to copy"), true);
+        return;
+    }
+
+    // Multi-label mode (or simply more than one selected label) copies every
+    // selected shape as a group that keeps the original layout on paste.
+    if (selection.size() > 1 || Settings::instance().multiLabelCopy()) {
+        struct Entry {
+            CopiedTemplate tmpl;
+            QRectF box;
+        };
+        QVector<Entry> entries;
+        for (const QString& key : selection) {
+            const auto visible = model_->visibleShape(key);
+            if (!visible) {
+                continue; // tags have no copyable geometry
+            }
+            const Shape& shape = visible->shape;
+            const QRectF box = Geometry::bounds(shape.points);
+            entries.push_back({templateFromShape(shape, model_->label(shape.labelId), box, QPointF()), box});
+        }
+        if (entries.isEmpty()) {
+            setStatus(QStringLiteral("Select visible labels to copy"), true);
+            showToast(QStringLiteral("✕ Select visible labels to copy"), true);
+            return;
+        }
+        QRectF all = entries.first().box;
+        for (const auto& entry : entries) {
+            all = all.united(entry.box);
+        }
+        const QPointF anchor = all.center();
+        copiedTemplates_.clear();
+        for (auto& entry : entries) {
+            entry.tmpl.offset = entry.box.center() - anchor;
+            copiedTemplates_.push_back(entry.tmpl);
+        }
+        copiedTemplate_ = copiedTemplates_.first();
+        copiedLabelId_ = copiedTemplate_.labelId;
+        const QString msg = QStringLiteral("Copied %1 labels — press V to place them together")
+                                .arg(copiedTemplates_.size());
+        setStatus(msg);
+        showToast(msg);
+        return;
+    }
+
     const QString key = selectedKey();
     if (key.isEmpty()) {
         setStatus(QStringLiteral("Select a label first to copy its class and dimensions"), true);
@@ -1157,6 +1255,8 @@ void JobWorkspace::copyLabel()
         }
     }
 
+    copiedTemplates_ = {copiedTemplate_};
+
     const QString msg = QStringLiteral("Copied %1 [%2 × %3 px] — press V to place")
         .arg(copiedTemplate_.labelName)
         .arg(static_cast<int>(std::round(copiedTemplate_.width)))
@@ -1166,7 +1266,7 @@ void JobWorkspace::copyLabel()
 
 void JobWorkspace::pasteLabel()
 {
-    if (!model_ || !copiedTemplate_.valid) {
+    if (!model_ || (!copiedTemplate_.valid && copiedTemplates_.isEmpty())) {
         setStatus(QStringLiteral("No copied label. Select a label and press C first"), true);
         showToast(QStringLiteral("✕ No copied label. Press C on a label first"), true);
         return;
@@ -1174,13 +1274,22 @@ void JobWorkspace::pasteLabel()
 
     // Pasting must not change the active class, otherwise the next shape drawn
     // with N would inherit the pasted label's class instead of the one the user
-    // had selected before copying. The template keeps its own label id.
-    canvas_->startTemplatePlacement(copiedTemplate_);
+    // had selected before copying. Templates keep their own label ids.
+    if (copiedTemplates_.size() > 1) {
+        canvas_->startGroupPlacement(copiedTemplates_);
+        const QString msg = QStringLiteral("Placing %1 labels — click to place onto image (Esc to cancel)")
+                                .arg(copiedTemplates_.size());
+        setStatus(msg);
+        showToast(msg);
+        return;
+    }
 
+    const CopiedTemplate tmpl = copiedTemplates_.isEmpty() ? copiedTemplate_ : copiedTemplates_.first();
+    canvas_->startTemplatePlacement(tmpl);
     const QString msg = QStringLiteral("Placing %1 [%2 × %3 px] — click to place onto image (Esc to cancel)")
-        .arg(copiedTemplate_.labelName)
-        .arg(static_cast<int>(std::round(copiedTemplate_.width)))
-        .arg(static_cast<int>(std::round(copiedTemplate_.height)));
+        .arg(tmpl.labelName)
+        .arg(static_cast<int>(std::round(tmpl.width)))
+        .arg(static_cast<int>(std::round(tmpl.height)));
     setStatus(msg);
     showToast(msg);
 }

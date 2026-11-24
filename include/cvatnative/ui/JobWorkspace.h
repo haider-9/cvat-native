@@ -133,6 +133,7 @@ private:
 
     QVector<Label> labels_;
     CopiedTemplate copiedTemplate_;
+    QVector<CopiedTemplate> copiedTemplates_;
     int copiedLabelId_ = 0;
     bool annotationsLoaded_ = false;
     bool saving_ = false;

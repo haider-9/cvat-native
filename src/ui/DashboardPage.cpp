@@ -51,6 +51,27 @@ QString dateText(const QDateTime& date)
     return date.toLocalTime().toString(QStringLiteral("yyyy-MM-dd HH:mm"));
 }
 
+QString timeAgo(const QDateTime& when)
+{
+    if (!when.isValid()) {
+        return {};
+    }
+    const qint64 seconds = when.secsTo(QDateTime::currentDateTime());
+    if (seconds < 60) {
+        return QStringLiteral("just now");
+    }
+    if (seconds < 3600) {
+        return QStringLiteral("%1 min ago").arg(seconds / 60);
+    }
+    if (seconds < 86400) {
+        return QStringLiteral("%1 h ago").arg(seconds / 3600);
+    }
+    if (seconds < 7 * 86400) {
+        return QStringLiteral("%1 d ago").arg(seconds / 86400);
+    }
+    return dateText(when);
+}
+
 QTableWidgetItem* item(const QString& text, const QVariant& id = {})
 {
     auto* result = new QTableWidgetItem(text);
@@ -92,6 +113,40 @@ DashboardPage::DashboardPage(ProjectsApi* projects, TasksApi* tasks, JobsApi* jo
     layout->addLayout(toolbar);
 
     tabs_ = new QTabWidget(this);
+
+    // Landing page: a local history of everything the user has opened. It is
+    // first in the tab bar and is the page shown when the dashboard opens.
+    homePage_ = new QWidget(tabs_);
+    auto* homeLayout = new QVBoxLayout(homePage_);
+    homeLayout->setContentsMargins(12, 12, 12, 12);
+    homeLayout->setSpacing(8);
+    auto* welcome = new QLabel(QStringLiteral(
+        "<h2>Welcome back</h2>"
+        "<span style='color:#888;'>Pick up where you left off — your recently opened projects, tasks and jobs are below.</span>"),
+        homePage_);
+    welcome->setWordWrap(true);
+    homeLayout->addWidget(welcome);
+
+    auto* historyHeader = new QHBoxLayout;
+    historyHeader->addWidget(new QLabel(QStringLiteral("<b>Recent activity</b>"), homePage_), 1);
+    clearHistoryButton_ = new QPushButton(QStringLiteral("Clear history"), homePage_);
+    clearHistoryButton_->setToolTip(QStringLiteral("Forget all locally recorded recent activity"));
+    historyHeader->addWidget(clearHistoryButton_);
+    homeLayout->addLayout(historyHeader);
+
+    historyTable_ = makeTable({QStringLiteral("Type"), QStringLiteral("Name"),
+                               QStringLiteral("Context"), QStringLiteral("Last opened")}, homePage_);
+    historyTable_->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    historyTable_->horizontalHeader()->setMinimumSectionSize(60);
+    historyTable_->setColumnWidth(0, 100);
+    historyTable_->setColumnWidth(1, 420);
+    historyTable_->setColumnWidth(2, 300);
+    historyTable_->setColumnWidth(3, 140);
+    homeLayout->addWidget(historyTable_, 1);
+    homeLayout->addWidget(new QLabel(QStringLiteral(
+        "Double-click a row to jump back to it. Job history also records its task and project."), homePage_));
+    tabs_->addTab(homePage_, QStringLiteral("Home"));
+
     projectTable_ = makeTable({QStringLiteral("Name"), QStringLiteral("Status"),
                                QStringLiteral("Dimension"), QStringLiteral("Tasks"),
                                QStringLiteral("Updated")}, tabs_);
@@ -128,7 +183,7 @@ DashboardPage::DashboardPage(ProjectsApi* projects, TasksApi* tasks, JobsApi* jo
     tabs_->addTab(projectTable_, QStringLiteral("Projects"));
     tabs_->addTab(taskTable_, QStringLiteral("Tasks"));
     tabs_->addTab(jobTable_, QStringLiteral("Jobs"));
-    tabs_->setCurrentIndex(2);
+    tabs_->setCurrentIndex(0);
     layout->addWidget(tabs_, 1);
 
     auto* footer = new QHBoxLayout;
@@ -169,27 +224,34 @@ DashboardPage::DashboardPage(ProjectsApi* projects, TasksApi* tasks, JobsApi* jo
         refreshCurrent();
     });
     connect(tabs_, &QTabWidget::currentChanged, this, &DashboardPage::switchTab);
+    connect(clearHistoryButton_, &QPushButton::clicked, this, [this]() {
+        saveHistory({});
+        refreshHistory();
+        statusLabel_->setText(QStringLiteral("Recent activity cleared"));
+    });
+    connect(historyTable_, &QTableWidget::cellDoubleClicked, this,
+            &DashboardPage::activateHistoryRow);
     connect(projectTable_, &QTableWidget::cellDoubleClicked, this, [this](int row, int) {
-        const auto* cell = projectTable_->item(row, 0);
-        if (!cell) {
+        if (row < 0 || row >= projects_.size()) {
             return;
         }
-        taskFilterProject_ = cell->data(Qt::UserRole).toInt();
+        recordProject(projects_[row]);
+        taskFilterProject_ = projects_[row].id;
         jobFilterTask_ = 0;
         jobFilterProject_ = taskFilterProject_;
-        tabs_->setCurrentIndex(1);
+        tabs_->setCurrentIndex(2);
         taskPage_ = 1;
         jobPage_ = 1;
         refreshTasks(1);
     });
     connect(taskTable_, &QTableWidget::cellDoubleClicked, this, [this](int row, int) {
-        const auto* cell = taskTable_->item(row, 0);
-        if (!cell) {
+        if (row < 0 || row >= tasks_.size()) {
             return;
         }
-        jobFilterTask_ = cell->data(Qt::UserRole).toInt();
+        recordTask(tasks_[row]);
+        jobFilterTask_ = tasks_[row].id;
         jobFilterProject_ = 0;
-        tabs_->setCurrentIndex(2);
+        tabs_->setCurrentIndex(3);
         jobPage_ = 1;
         refreshJobs(1);
     });
@@ -224,12 +286,11 @@ void DashboardPage::refresh()
 
 void DashboardPage::switchTab(int index)
 {
-    if (index == 0) {
-        searchEdit_->setPlaceholderText(QStringLiteral("Search projects…"));
-    } else if (index == 1) {
-        searchEdit_->setPlaceholderText(QStringLiteral("Search tasks…"));
-    } else {
-        searchEdit_->setPlaceholderText(QStringLiteral("Search jobs…"));
+    switch (index) {
+    case 0: searchEdit_->setPlaceholderText(QStringLiteral("Filter recent activity…")); break;
+    case 1: searchEdit_->setPlaceholderText(QStringLiteral("Search projects…")); break;
+    case 2: searchEdit_->setPlaceholderText(QStringLiteral("Search tasks…")); break;
+    default: searchEdit_->setPlaceholderText(QStringLiteral("Search jobs…")); break;
     }
     refreshCurrent();
 }
@@ -237,27 +298,30 @@ void DashboardPage::switchTab(int index)
 QTableWidget* DashboardPage::currentTable() const
 {
     switch (tabs_->currentIndex()) {
-    case 1: return taskTable_;
-    case 2: return jobTable_;
-    default: return projectTable_;
+    case 0: return historyTable_;
+    case 1: return projectTable_;
+    case 2: return taskTable_;
+    default: return jobTable_;
     }
 }
 
 int DashboardPage::currentPage() const
 {
     switch (tabs_->currentIndex()) {
-    case 1: return taskPage_;
-    case 2: return jobPage_;
-    default: return projectPage_;
+    case 1: return projectPage_;
+    case 2: return taskPage_;
+    case 3: return jobPage_;
+    default: return 1;
     }
 }
 
 void DashboardPage::setCurrentPage(int page)
 {
     switch (tabs_->currentIndex()) {
-    case 1: taskPage_ = page; break;
-    case 2: jobPage_ = page; break;
-    default: projectPage_ = page; break;
+    case 1: projectPage_ = page; break;
+    case 2: taskPage_ = page; break;
+    case 3: jobPage_ = page; break;
+    default: break;
     }
 }
 
@@ -267,9 +331,11 @@ void DashboardPage::refreshCurrent()
         return;
     }
     switch (tabs_->currentIndex()) {
-    case 1: refreshTasks(taskPage_); break;
-    case 2: refreshJobs(jobPage_); break;
-    default: refreshProjects(projectPage_); break;
+    case 0: refreshHistory(); break;
+    case 1: refreshProjects(projectPage_); break;
+    case 2: refreshTasks(taskPage_); break;
+    case 3: refreshJobs(jobPage_); break;
+    default: break;
     }
 }
 
@@ -477,10 +543,20 @@ void DashboardPage::refreshJobs(int page)
 
 void DashboardPage::updatePager()
 {
+    if (tabs_->currentIndex() == 0) {
+        prevButton_->hide();
+        nextButton_->hide();
+        pageLabel_->setText(QStringLiteral("%1 recent item(s)").arg(history_.size()));
+        pageLabel_->show();
+        return;
+    }
+    prevButton_->show();
+    nextButton_->show();
+
     PageMeta meta;
     switch (tabs_->currentIndex()) {
-    case 1: meta = taskMeta_; break;
-    case 2: meta = jobMeta_; break;
+    case 2: meta = taskMeta_; break;
+    case 3: meta = jobMeta_; break;
     default: meta = projectMeta_; break;
     }
     const int pages = std::max(1, (meta.count + kPageSize - 1) / kPageSize);
@@ -488,6 +564,195 @@ void DashboardPage::updatePager()
     pageLabel_->setText(QStringLiteral("Page %1 of %2").arg(page).arg(pages));
     prevButton_->setEnabled(page > 1);
     nextButton_->setEnabled(page < pages);
+}
+
+QVector<DashboardPage::HistoryEntry> DashboardPage::loadHistory() const
+{
+    QVector<HistoryEntry> result;
+    if (!store_) {
+        return result;
+    }
+    const auto object = store_->loadJson(QStringLiteral("history/recent"));
+    if (!object) {
+        return result;
+    }
+    for (const auto& value : object->value(QStringLiteral("entries")).toArray()) {
+        const QJsonObject source = value.toObject();
+        HistoryEntry entry;
+        entry.type = source.value(QStringLiteral("type")).toString();
+        entry.id = source.value(QStringLiteral("id")).toInt();
+        entry.name = source.value(QStringLiteral("name")).toString();
+        entry.context = source.value(QStringLiteral("context")).toString();
+        entry.viewedAt = QDateTime::fromString(
+            source.value(QStringLiteral("viewed_at")).toString(), Qt::ISODateWithMs);
+        entry.payload = source.value(QStringLiteral("payload")).toObject();
+        if (!entry.type.isEmpty() && entry.id > 0) {
+            result.push_back(entry);
+        }
+    }
+    return result;
+}
+
+void DashboardPage::saveHistory(const QVector<HistoryEntry>& entries) const
+{
+    if (!store_) {
+        return;
+    }
+    QJsonArray array;
+    for (const auto& entry : entries) {
+        QJsonObject source;
+        source.insert(QStringLiteral("type"), entry.type);
+        source.insert(QStringLiteral("id"), entry.id);
+        source.insert(QStringLiteral("name"), entry.name);
+        source.insert(QStringLiteral("context"), entry.context);
+        source.insert(QStringLiteral("viewed_at"),
+                      entry.viewedAt.isValid()
+                          ? entry.viewedAt.toString(Qt::ISODateWithMs)
+                          : QDateTime::currentDateTime().toString(Qt::ISODateWithMs));
+        source.insert(QStringLiteral("payload"), entry.payload);
+        array.push_back(source);
+    }
+    QJsonObject root;
+    root.insert(QStringLiteral("entries"), array);
+    store_->saveJson(QStringLiteral("history/recent"), root);
+}
+
+void DashboardPage::recordHistory(const HistoryEntry& entry)
+{
+    HistoryEntry fresh = entry;
+    fresh.viewedAt = QDateTime::currentDateTime();
+
+    QVector<HistoryEntry> entries = loadHistory();
+    for (int i = 0; i < entries.size(); ++i) {
+        if (entries[i].type == fresh.type && entries[i].id == fresh.id) {
+            entries.removeAt(i);
+            break;
+        }
+    }
+    entries.prepend(fresh);
+    constexpr int kMaxHistory = 40;
+    while (entries.size() > kMaxHistory) {
+        entries.removeAt(entries.size() - 1);
+    }
+    saveHistory(entries);
+    if (tabs_ && tabs_->currentIndex() == 0) {
+        refreshHistory();
+    }
+}
+
+void DashboardPage::recordProject(const Project& project)
+{
+    if (project.id <= 0) {
+        return;
+    }
+    HistoryEntry entry;
+    entry.type = QStringLiteral("project");
+    entry.id = project.id;
+    entry.name = project.name.isEmpty() ? QStringLiteral("Project %1").arg(project.id) : project.name;
+    entry.context = QStringLiteral("Project");
+    entry.viewedAt = QDateTime::currentDateTime();
+    entry.payload = project.raw;
+    recordHistory(entry);
+}
+
+void DashboardPage::recordTask(const Task& task)
+{
+    if (task.id <= 0) {
+        return;
+    }
+    HistoryEntry entry;
+    entry.type = QStringLiteral("task");
+    entry.id = task.id;
+    entry.name = task.name.isEmpty() ? QStringLiteral("Task %1").arg(task.id) : task.name;
+    entry.context = task.projectName.isEmpty() ? QStringLiteral("Task") : task.projectName;
+    entry.viewedAt = QDateTime::currentDateTime();
+    entry.payload = task.raw;
+    recordHistory(entry);
+}
+
+void DashboardPage::recordJob(const Job& job)
+{
+    if (job.id <= 0) {
+        return;
+    }
+    HistoryEntry entry;
+    entry.type = QStringLiteral("job");
+    entry.id = job.id;
+    const QString task = job.taskName.isEmpty() ? QStringLiteral("Job") : job.taskName;
+    entry.name = QStringLiteral("%1 · #%2").arg(task).arg(job.id);
+    entry.context = job.projectName.isEmpty()
+        ? QStringLiteral("Job %1").arg(job.id)
+        : job.projectName;
+    entry.viewedAt = QDateTime::currentDateTime();
+    entry.payload = job.raw;
+    recordHistory(entry);
+}
+
+void DashboardPage::refreshHistory()
+{
+    history_ = loadHistory();
+    const QString filter = searchEdit_->text().trimmed();
+    historyTable_->setRowCount(0);
+    for (int i = 0; i < history_.size(); ++i) {
+        const HistoryEntry& entry = history_[i];
+        if (!filter.isEmpty() &&
+            !entry.name.contains(filter, Qt::CaseInsensitive) &&
+            !entry.context.contains(filter, Qt::CaseInsensitive) &&
+            !entry.type.contains(filter, Qt::CaseInsensitive)) {
+            continue;
+        }
+        const QString kind = entry.type == QStringLiteral("job")   ? QStringLiteral("Job")
+                           : entry.type == QStringLiteral("task")  ? QStringLiteral("Task")
+                                                                   : QStringLiteral("Project");
+        const int row = historyTable_->rowCount();
+        historyTable_->insertRow(row);
+        historyTable_->setItem(row, 0, item(kind, i));
+        historyTable_->setItem(row, 1, item(entry.name));
+        historyTable_->setItem(row, 2, item(entry.context));
+        historyTable_->setItem(row, 3, item(timeAgo(entry.viewedAt)));
+    }
+    statusLabel_->setStyleSheet(QStringLiteral("color: #888;"));
+    statusLabel_->setText(QStringLiteral("%1 recent item(s)").arg(history_.size()));
+    updatePager();
+}
+
+void DashboardPage::activateHistoryRow(int row)
+{
+    const auto* cell = historyTable_->item(row, 0);
+    if (!cell) {
+        return;
+    }
+    const int index = cell->data(Qt::UserRole).toInt();
+    if (index < 0 || index >= history_.size()) {
+        return;
+    }
+    const HistoryEntry entry = history_[index];
+
+    if (entry.type == QStringLiteral("job")) {
+        Job job = Job::fromJson(entry.payload);
+        if (job.id <= 0) {
+            job.id = entry.id;
+        }
+        emit jobActivated(job); // MainWindow records the job when it opens it.
+        return;
+    }
+
+    recordHistory(entry); // bump it to the top
+    if (entry.type == QStringLiteral("task")) {
+        jobFilterTask_ = entry.id;
+        jobFilterProject_ = 0;
+        jobPage_ = 1;
+        tabs_->setCurrentIndex(3);
+        refreshJobs(1);
+    } else {
+        taskFilterProject_ = entry.id;
+        jobFilterProject_ = entry.id;
+        jobFilterTask_ = 0;
+        taskPage_ = 1;
+        jobPage_ = 1;
+        tabs_->setCurrentIndex(2);
+        refreshTasks(1);
+    }
 }
 
 } // namespace cvat

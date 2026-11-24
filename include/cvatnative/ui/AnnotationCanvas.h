@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QList>
 #include <QPointF>
+#include <QSet>
 #include <QString>
 #include <QVector>
 
@@ -81,6 +82,12 @@ public:
     void setMiniMapEnabled(bool enabled);
     [[nodiscard]] bool miniMapEnabled() const { return miniMapEnabled_; }
 
+    // When area selection is on, dragging on the canvas draws a selection
+    // rectangle instead of creating an annotation. Labels whose bounding boxes
+    // are fully inside it get selected, like CVAT's region selection.
+    void setAreaSelectionEnabled(bool enabled);
+    [[nodiscard]] bool areaSelectionEnabled() const { return areaSelectionEnabled_; }
+
 signals:
     void statusMessage(const QString& message);
     void zoomChanged(double factor);
@@ -103,7 +110,7 @@ protected:
     void resizeEvent(QResizeEvent* event) override;
 
 private:
-    enum class Interaction { None, Move, Resize, CreateRectangle, Pan, PlaceTemplate };
+    enum class Interaction { None, Move, Resize, CreateRectangle, Pan, PlaceTemplate, SelectArea };
 
     void updateSelectionVisuals();
     void updateCrosshair();
@@ -118,7 +125,10 @@ private:
     void finishPolygon();
     void updatePolygonPreview(const QPointF& cursor);
     void createRectangle(const QPointF& start, const QPointF& end);
-    void updateRectanglePreview(const QPointF& start, const QPointF& end);
+    void updateRectanglePreview(const QPointF& start, const QPointF& end, bool forSelection = false);
+    void selectShapesInRect(const QRectF& rect, bool additive);
+    [[nodiscard]] QSet<QString> shapesInsideRect(const QRectF& rect) const;
+    void finishAreaSelection(const QPointF& end);
     void updateTemplatePreview(const QPointF& center);
     void clearTemplatePreview();
     void clearTemplatePlacement();
@@ -148,6 +158,9 @@ private:
     MiniMap* miniMap_ = nullptr;
     bool miniMapEnabled_ = true;
     bool crosshairEnabled_ = true;
+    bool areaSelectionEnabled_ = false;
+    bool areaSelectionAdditive_ = false;
+    bool areaDrag_ = false;
     bool cursorInside_ = false;
     QVector<CopiedTemplate> templates_;
     QList<QGraphicsItem*> templatePreviewItems_;
