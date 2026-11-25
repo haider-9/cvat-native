@@ -60,6 +60,17 @@ public:
     bool multiLabelCopy() const; // area-select + copy/paste several labels at once
     void setMultiLabelCopy(bool enabled);
 
+    bool checkUpdatesOnStartup() const;
+    void setCheckUpdatesOnStartup(bool enabled);
+
+    QString ignoredUpdateVersion() const;
+    void setIgnoredUpdateVersion(const QString& version);
+
+    // Empty = derive it from the running executable (bin/ parent on Linux,
+    // application directory on Windows).
+    QString updateInstallDirectory() const;
+    void setUpdateInstallDirectory(const QString& directory);
+
     void sync();
 
 private:

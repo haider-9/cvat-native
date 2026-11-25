@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cvatnative/api/Models.h"
+#include "cvatnative/core/UpdateChecker.h"
 
 #include <QMainWindow>
 #include <QString>
@@ -11,6 +12,7 @@
 class QAction;
 class QCloseEvent;
 class QLabel;
+class QProgressDialog;
 class QStackedWidget;
 
 namespace cvat {
@@ -63,6 +65,19 @@ private:
 
     [[nodiscard]] QString displayUser() const;
 
+private slots:
+    void checkForUpdates(bool interactive);
+    void onUpdateAvailable(const UpdateRelease& release);
+    void onUpToDate(const QString& version);
+    void onUpdateCheckFailed(const QString& message);
+    void onDownloadProgress(qint64 received, qint64 total);
+    void onDownloadFinished(const QString& path);
+    void onDownloadFailed(const QString& message);
+    void onDownloadCancelled();
+
+    void finishUpdateProgress();
+
+private:
     ApiClient* client_ = nullptr;
     std::unique_ptr<AuthApi> auth_;
     std::unique_ptr<UsersApi> usersApi_;
@@ -86,6 +101,12 @@ private:
 
     QAction* logoutAction_ = nullptr;
     QAction* dashboardAction_ = nullptr;
+    QAction* updateAction_ = nullptr;
+
+    UpdateChecker* updater_ = nullptr;
+    QProgressDialog* updateProgress_ = nullptr;
+    UpdateRelease availableUpdate_;
+    bool updatePrompt_ = false;
 
     QString username_;
     bool authenticated_ = false;

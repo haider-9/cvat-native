@@ -32,6 +32,8 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QProgressDialog>
+#include <QPushButton>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QTimer>
@@ -70,6 +72,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
     applySettings();
 
     QTimer::singleShot(0, this, &MainWindow::startSession);
+    if (Settings::instance().checkUpdatesOnStartup()) {
+        // Silent on startup: a banner in the status bar points to the manual
+        // check instead of interrupting the user with a modal dialog.
+        QTimer::singleShot(2000, this, [this]() { checkForUpdates(false); });
+    }
 }
 
 MainWindow::~MainWindow()
@@ -119,6 +126,15 @@ void MainWindow::setupServices()
     cache_->pruneDisk();
 
     media_ = new MediaService(client_, cache_.get(), this);
+
+    updater_ = new UpdateChecker(this);
+    connect(updater_, &UpdateChecker::updateAvailable, this, &MainWindow::onUpdateAvailable);
+    connect(updater_, &UpdateChecker::upToDate, this, &MainWindow::onUpToDate);
+    connect(updater_, &UpdateChecker::checkFailed, this, &MainWindow::onUpdateCheckFailed);
+    connect(updater_, &UpdateChecker::downloadProgress, this, &MainWindow::onDownloadProgress);
+    connect(updater_, &UpdateChecker::downloadFinished, this, &MainWindow::onDownloadFinished);
+    connect(updater_, &UpdateChecker::downloadFailed, this, &MainWindow::onDownloadFailed);
+    connect(updater_, &UpdateChecker::downloadCancelled, this, &MainWindow::onDownloadCancelled);
 }
 
 void MainWindow::setupUi()
@@ -159,6 +175,13 @@ void MainWindow::setupUi()
     viewMenu->addAction(dashboardAction_);
 
     auto* helpMenu = menuBar()->addMenu(QStringLiteral("&Help"));
+    updateAction_ = makeAction(Icon::Update, QStringLiteral("Check for &Updates…"), this);
+    updateAction_->setToolTip(QStringLiteral("Check GitHub Releases for a newer version"));
+    connect(updateAction_, &QAction::triggered, this,
+            [this]() { checkForUpdates(true); });
+    helpMenu->addAction(updateAction_);
+
+    helpMenu->addSeparator();
     auto* aboutAction = makeAction(Icon::About, QStringLiteral("&About CVAT Native"), this);
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAbout);
     helpMenu->addAction(aboutAction);
@@ -381,6 +404,156 @@ void MainWindow::showAbout()
                        "Annotations, labels, jobs and media are read through the CVAT "
                        "REST API. No browser engine is involved.")
             .arg(QString::fromLatin1(CVATNATIVE_VERSION)));
+}
+
+void MainWindow::checkForUpdates(bool interactive)
+{
+    if (!updater_) {
+        return;
+    }
+    if (updater_->isChecking() || updater_->isDownloading()) {
+        if (interactive) {
+            statusBar()->showMessage(QStringLiteral("An update check is already running"), 4000);
+        }
+        return;
+    }
+    updatePrompt_ = interactive;
+    if (interactive) {
+        statusBar()->showMessage(QStringLiteral("Checking GitHub Releases for updates…"));
+    }
+    updater_->checkForUpdates();
+}
+
+void MainWindow::onUpdateAvailable(const UpdateRelease& release)
+{
+    availableUpdate_ = release;
+    statusBar()->showMessage(
+        QStringLiteral("Update %1 available — install it from Help → Check for Updates")
+            .arg(release.version), 10000);
+    if (!updatePrompt_) {
+        return;
+    }
+    updatePrompt_ = false;
+
+    QString details = release.notes.simplified();
+    if (details.length() > 320) {
+        details.truncate(320);
+        details.append(QStringLiteral("…"));
+    }
+    QMessageBox prompt(this);
+    prompt.setIcon(QMessageBox::Question);
+    prompt.setWindowTitle(QStringLiteral("Update available"));
+    prompt.setText(QStringLiteral("CVAT Native %1 is available. You are running %2.")
+                       .arg(release.version, QString::fromLatin1(CVATNATIVE_VERSION)));
+    prompt.setInformativeText(
+        details.isEmpty()
+            ? QStringLiteral("Download and install this update now?")
+            : details + QStringLiteral("\n\nDownload and install this update now?"));
+    QPushButton* now = prompt.addButton(QStringLiteral("Update Now"),
+                                        QMessageBox::AcceptRole);
+    QPushButton* skip = prompt.addButton(QStringLiteral("Skip this version"),
+                                         QMessageBox::ActionRole);
+    prompt.addButton(QStringLiteral("Later"), QMessageBox::RejectRole);
+    prompt.setDefaultButton(now);
+    prompt.exec();
+
+    if (prompt.clickedButton() == skip) {
+        Settings::instance().setIgnoredUpdateVersion(release.version);
+        Settings::instance().sync();
+        statusBar()->showMessage(
+            QStringLiteral("Skipping %1; it will not be offered again").arg(release.version),
+            6000);
+        return;
+    }
+    if (prompt.clickedButton() != now) {
+        return;
+    }
+
+    bool dirty = false;
+    const auto openWorkspaces = findChildren<JobWorkspace*>();
+    for (JobWorkspace* workspace : openWorkspaces) {
+        dirty = dirty || workspace->isDirty();
+    }
+    if (dirty) {
+        const int answer = QMessageBox::question(
+            this, QStringLiteral("Unsaved changes"),
+            QStringLiteral("Open jobs have unsaved changes. A local recovery snapshot will "
+                           "be kept, but the app will close while the update is installed. "
+                           "Continue?"),
+            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+        if (answer != QMessageBox::Yes) {
+            return;
+        }
+    }
+    updater_->downloadUpdate(release);
+}
+
+void MainWindow::onUpToDate(const QString& version)
+{
+    updatePrompt_ = false;
+    if (isVisible()) {
+        statusBar()->showMessage(QStringLiteral("CVAT Native is up to date (latest %1)")
+                                     .arg(version), 6000);
+    }
+}
+
+void MainWindow::onUpdateCheckFailed(const QString& message)
+{
+    updatePrompt_ = false;
+    if (isVisible()) {
+        statusBar()->showMessage(QStringLiteral("Update check failed: %1").arg(message), 8000);
+    }
+}
+
+void MainWindow::onDownloadProgress(qint64 received, qint64 total)
+{
+    if (!updateProgress_) {
+        updateProgress_ = new QProgressDialog(
+            QStringLiteral("Downloading CVAT Native update…"), QStringLiteral("Cancel"),
+            0, 100, this);
+        updateProgress_->setWindowModality(Qt::WindowModal);
+        updateProgress_->setMinimumDuration(0);
+        connect(updateProgress_, &QProgressDialog::canceled, updater_,
+                &UpdateChecker::cancelDownload);
+    }
+    if (total > 0) {
+        updateProgress_->setRange(0, 100);
+        updateProgress_->setValue(static_cast<int>(received * 100 / total));
+    } else {
+        updateProgress_->setRange(0, 0);
+        updateProgress_->setValue(0);
+    }
+}
+
+void MainWindow::finishUpdateProgress()
+{
+    if (updateProgress_) {
+        updateProgress_->close();
+        updateProgress_->deleteLater();
+        updateProgress_ = nullptr;
+    }
+}
+
+void MainWindow::onDownloadFinished(const QString& path)
+{
+    Q_UNUSED(path);
+    finishUpdateProgress();
+    statusBar()->showMessage(QStringLiteral("Update downloaded — closing to install it"), 8000);
+    // The detached helper needs this process gone before it can replace files.
+    QTimer::singleShot(250, qApp, &QCoreApplication::quit);
+}
+
+void MainWindow::onDownloadFailed(const QString& message)
+{
+    finishUpdateProgress();
+    QMessageBox::warning(this, QStringLiteral("Update failed"),
+                         QStringLiteral("The update could not be installed.\n\n%1").arg(message));
+}
+
+void MainWindow::onDownloadCancelled()
+{
+    finishUpdateProgress();
+    statusBar()->showMessage(QStringLiteral("Update download cancelled"), 6000);
 }
 
 void MainWindow::updateSessionUi()

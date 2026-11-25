@@ -38,10 +38,10 @@ authentication, users, projects, tasks, jobs, annotations, labels, media and
 server information, plus the native annotation canvas, settings UI and the
 recent-activity landing page.
 
-The current test suite contains 34 CTest-discovered cases covering result
-handling, API request behavior, annotation serialization, geometry, local
-storage and frame caching. Network-facing tests require the local test server
-to finish before their result can be assessed; see `BUILD.md`.
+The CTest suite covers result handling, API request behavior, annotation
+serialization, geometry, local storage, frame caching and update version/asset
+parsing. Network-facing tests require the local test server to finish before
+their result can be assessed; see `BUILD.md`.
 
 ## Installation
 
@@ -161,6 +161,37 @@ Use a distinct `build-windows` directory; CMake build directories are tied to
 their compiler and platform and cannot be shared with Linux builds. The
 sanitizer option is not supported by MSVC and is left disabled in the
 documented MinGW-w64 build.
+
+## Automatic updates
+
+Pushing a version tag (for example `git tag v0.2.0 && git push origin v0.2.0`)
+runs `.github/workflows/release.yml`. It builds and tests on Linux and Windows,
+bundles the Qt runtime with `windeployqt` (Windows) or by copying Qt libraries
+and plugins (Linux), and attaches `cvat-native-<tag>-linux-x86_64.zip` and
+`cvat-native-<tag>-windows-x86_64.zip` to the GitHub Release.
+
+The application uses `QNetworkAccessManager` to check
+`https://api.github.com/repos/haider-9/cvat-native/releases/latest` on startup
+and when you choose **Help → Check for Updates…**. A startup check only writes a
+status-bar notice; the manual check offers **Update Now**, **Skip this version**
+and **Later**. The selected platform ZIP is downloaded to the system temp
+folder, then a detached helper takes over:
+
+- Linux: `bin/cvat-native-updater.sh`
+- Windows: `updater.ps1` beside `cvat-native.exe`
+
+The helper waits for the application to exit, extracts the new archive over the
+existing installation and restarts it. Unsaved job changes are kept as recovery
+snapshots. The update target is the parent of `bin/` on Linux (so `~/.local`
+and extracted release archives update in place) or the executable's folder on
+Windows; set `updates/installDirectory` in the settings INI to override it.
+Updating a system-wide prefix requires administrator rights, so a per-user
+install is recommended.
+
+For a Linux release ZIP, extract it over `~/.local` with
+`unzip cvat-native-*-linux-x86_64.zip -d ~/.local`, keep `~/.local/bin` on
+`PATH`, and refresh the desktop database as described above. On Windows, extract
+the ZIP into a folder you can write to and run `cvat-native.exe` from there.
 
 ## Documents
 

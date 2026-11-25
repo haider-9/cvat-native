@@ -82,6 +82,14 @@ void drawIcon(QPainter& p, Icon icon)
         p.setBrush(Qt::NoBrush);
         break;
 
+    case Icon::Update:
+        // Down arrow into a tray: "download a newer version".
+        p.drawLine(QPointF(12, 4), QPointF(12, 15));
+        p.drawPolyline(QPolygonF{QPointF(7, 11), QPointF(12, 16), QPointF(17, 11)});
+        p.drawPolyline(QPolygonF{QPointF(4, 18), QPointF(4, 21), QPointF(20, 21),
+                                 QPointF(20, 18)});
+        break;
+
     case Icon::Back:
         p.drawLine(QPointF(20, 12), QPointF(4, 12));
         p.drawPolyline(QPolygonF{QPointF(10, 6), QPointF(4, 12), QPointF(10, 18)});

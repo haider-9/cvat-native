@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(cvat-native
-    VERSION 0.1.0
+    VERSION 0.2.0
     DESCRIPTION "Native Qt6 annotation client for a CVAT backend"
     LANGUAGES CXX
 )
@@ -44,10 +44,12 @@ add_library(cvat_core STATIC
     include/cvatnative/api/ApiClient.h
     include/cvatnative/media/MediaService.h
     include/cvatnative/annotation/AnnotationModel.h
+    include/cvatnative/core/UpdateChecker.h
 
     src/core/Logging.cpp
     src/core/Settings.cpp
     src/core/Credentials.cpp
+    src/core/UpdateChecker.cpp
 
     src/api/ApiClient.cpp
     src/api/Models.cpp
@@ -130,11 +132,15 @@ target_link_libraries(cvat-native PRIVATE cvat_ui)
 
 if(WIN32)
     install(TARGETS cvat-native RUNTIME DESTINATION .)
+    # The updater must live beside the executable: it is started detached after
+    # the app exits and replaces the files in this directory.
+    install(FILES packaging/updater.ps1 DESTINATION .)
 else()
     file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/packaging)
     configure_file(packaging/cvat-native.desktop.in
                    ${CMAKE_CURRENT_BINARY_DIR}/packaging/cvat-native.desktop @ONLY)
     install(TARGETS cvat-native RUNTIME DESTINATION bin)
+    install(PROGRAMS packaging/updater.sh DESTINATION bin RENAME cvat-native-updater.sh)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/packaging/cvat-native.desktop
             DESTINATION share/applications)
     install(FILES packaging/cvat-native.svg DESTINATION share/icons/hicolor/scalable/apps)
@@ -152,6 +158,7 @@ if(CVATNATIVE_BUILD_TESTS)
         tests/test_geometry.cpp
         tests/test_local_store.cpp
         tests/test_frame_cache.cpp
+        tests/test_update.cpp
     )
     target_link_libraries(cvat_core_tests PRIVATE cvat_core GTest::gtest Qt6::Network Qt6::Sql)
     if(MSVC)

@@ -166,6 +166,36 @@ void Settings::setMultiLabelCopy(bool enabled)
     d->settings.setValue(QStringLiteral("editing/multiLabelCopy"), enabled);
 }
 
+bool Settings::checkUpdatesOnStartup() const
+{
+    return d->settings.value(QStringLiteral("updates/checkOnStartup"), true).toBool();
+}
+
+void Settings::setCheckUpdatesOnStartup(bool enabled)
+{
+    d->settings.setValue(QStringLiteral("updates/checkOnStartup"), enabled);
+}
+
+QString Settings::ignoredUpdateVersion() const
+{
+    return d->settings.value(QStringLiteral("updates/ignoredVersion")).toString();
+}
+
+void Settings::setIgnoredUpdateVersion(const QString& version)
+{
+    d->settings.setValue(QStringLiteral("updates/ignoredVersion"), version);
+}
+
+QString Settings::updateInstallDirectory() const
+{
+    return d->settings.value(QStringLiteral("updates/installDirectory")).toString();
+}
+
+void Settings::setUpdateInstallDirectory(const QString& directory)
+{
+    d->settings.setValue(QStringLiteral("updates/installDirectory"), directory);
+}
+
 QString Settings::cacheDirectory() const
 {
     const QString root = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
