@@ -1205,6 +1205,40 @@ void AnnotationCanvas::fitToView()
     }
 }
 
+bool AnnotationCanvas::focusOnShape(const QString& key)
+{
+    if (!model_ || key.isEmpty()) {
+        return false;
+    }
+
+    QRectF rect;
+    if (AnnotationItem* item = itemForKey(key)) {
+        rect = Geometry::boundingRect(item->annotationShape().points).toRectF();
+    } else if (const auto visible = model_->visibleShape(key)) {
+        rect = Geometry::boundingRect(visible->shape.points).toRectF();
+    }
+    if (rect.isEmpty()) {
+        return false;
+    }
+
+    // Keep a little context around the object instead of pressing it against
+    // the viewport edges. Very small shapes get a minimum pixel margin.
+    const double margin = std::max(8.0, std::max(rect.width(), rect.height()) * 0.25);
+    rect.adjust(-margin, -margin, margin, margin);
+
+    fitInView(rect, Qt::KeepAspectRatio);
+    if (zoom() > 16.0) {
+        // Avoid absurd magnification for a one-pixel shape.
+        resetTransform();
+        scale(16.0, 16.0);
+        centerOn(rect.center());
+    }
+    emit zoomChanged(zoom());
+    updateCrosshair();
+    updateMiniMap();
+    return true;
+}
+
 void AnnotationCanvas::zoomIn()
 {
     zoomAt(viewport()->rect().center(), 1.2);

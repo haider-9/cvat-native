@@ -33,6 +33,9 @@ public:
 
 signals:
     void labelActivated(int labelId);
+    // Double-clicking a class also jumps to the first object of that class on
+    // the current frame, when one exists.
+    void labelDoubleClicked(int labelId);
     void attributesChanged(const QVector<AttributeValue>& attributes);
     void occludedChanged(bool occluded);
     void deleteRequested();

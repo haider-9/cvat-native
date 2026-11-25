@@ -68,6 +68,9 @@ public:
 
     void refreshItems();
     void fitToView();
+    // Centers and zooms so one annotation fills the viewport with a small
+    // margin. Returns false when the key has no drawable shape on this frame.
+    bool focusOnShape(const QString& key);
     void zoomIn();
     void zoomOut();
     void resetZoom();

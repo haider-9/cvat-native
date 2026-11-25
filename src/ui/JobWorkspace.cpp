@@ -593,8 +593,22 @@ void JobWorkspace::setupUi()
                           &JobWorkspace::showGrowDialog);
     bridgeMenu->addAction(QStringLiteral("Move annotations"), this,
                           &JobWorkspace::showMoveDialog);
-    bridgeMenu->addAction(QStringLiteral("Relabel annotations"), this,
-                          &JobWorkspace::showRelabelDialog);
+    relabelSelectionAction_ = addIconAction(
+        bridgeMenu, Icon::Tag, QStringLiteral("Change class of selected labels"));
+    relabelSelectionAction_->setShortcut(QKeySequence(QStringLiteral("Shift+L")));
+    relabelSelectionAction_->setShortcutContext(Qt::WindowShortcut);
+    relabelSelectionAction_->setToolTip(QStringLiteral(
+        "Change only the class of selected labels (Shift+L); geometry, attributes and occlusion stay as they are"));
+    relabelSelectionAction_->setStatusTip(QStringLiteral(
+        "Select labels with Ctrl+click or Multi-label area selection, then change their class"));
+    this->addAction(relabelSelectionAction_);
+    connect(relabelSelectionAction_, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
+        showRelabelDialog(true);
+    });
+
+    bridgeMenu->addAction(QStringLiteral("Relabel all classes on frame"), this,
+                          [this]() { showRelabelDialog(); });
     bridgeButton->setMenu(bridgeMenu);
     toolbar_->addWidget(bridgeButton);
 
@@ -763,7 +777,7 @@ void JobWorkspace::setupUi()
 
     auto* multiLabelToggle = new QCheckBox(QStringLiteral("Multi-label"), this);
     multiLabelToggle->setToolTip(QStringLiteral(
-        "On: drag a rectangle to select labels, then C copies all of them and V pastes them together"));
+        "On: drag a rectangle to select labels, then C/V copies and pastes them, or Shift+L changes their class only"));
     multiLabelToggle->setChecked(Settings::instance().multiLabelCopy());
     canvas_->setAreaSelectionEnabled(multiLabelToggle->isChecked());
     connect(multiLabelToggle, &QCheckBox::toggled, this, [this](bool on) {
@@ -771,8 +785,8 @@ void JobWorkspace::setupUi()
         Settings::instance().setMultiLabelCopy(on);
         Settings::instance().sync();
         setStatus(on
-            ? QStringLiteral("Multi-label on — drag a rectangle to select labels, then C / V to copy and paste them")
-            : QStringLiteral("Multi-label off — C / V copies one label"));
+            ? QStringLiteral("Multi-label on — drag to select labels, then C/V to copy and paste or Shift+L to change their class")
+            : QStringLiteral("Multi-label off — C/V copies one label"));
     });
     footer->addWidget(multiLabelToggle);
     footer->addSpacing(12);
@@ -811,6 +825,39 @@ void JobWorkspace::setupUi()
             return;
         }
         model_->selectOnly(current->data(Qt::UserRole).toString());
+    });
+    connect(objectList_, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
+        if (!item || !model_) {
+            return;
+        }
+        const QString key = item->data(Qt::UserRole).toString();
+        model_->selectOnly(key);
+        if (canvas_->focusOnShape(key)) {
+            setStatus(QStringLiteral("Zoomed to %1").arg(item->text()));
+        } else {
+            setStatus(QStringLiteral("This annotation has no position on the frame"));
+        }
+    });
+    connect(labelPanel_, &LabelPanel::labelDoubleClicked, this, [this](int labelId) {
+        if (!model_) {
+            return;
+        }
+        for (const auto& visible : model_->visibleShapes()) {
+            if (visible.shape.labelId != labelId) {
+                continue;
+            }
+            model_->selectOnly(visible.key);
+            if (canvas_->focusOnShape(visible.key)) {
+                const Label* label = model_->label(labelId);
+                const QString name = label ? label->name
+                                           : QStringLiteral("label %1").arg(labelId);
+                setStatus(QStringLiteral("Zoomed to first '%1' on this frame").arg(name));
+            }
+            return;
+        }
+        const Label* label = model_->label(labelId);
+        setStatus(QStringLiteral("No '%1' objects on this frame")
+                      .arg(label ? label->name : QStringLiteral("label %1").arg(labelId)));
     });
 
     updateTitle();
@@ -1055,7 +1102,7 @@ void JobWorkspace::refreshObjects()
                 auto* item = new QListWidgetItem(
                     QStringLiteral("%1  ·  %2").arg(name, shapeTypeName(visible.shape.type)),
                     objectList_);
-                item->setToolTip(QStringLiteral("%1 · %2 · %3 #%4")
+                item->setToolTip(QStringLiteral("%1 · %2 · %3 #%4\nDouble-click to zoom to this object")
                     .arg(name, shapeTypeName(visible.shape.type), kind)
                     .arg(visible.objectId));
                 item->setData(Qt::UserRole, visible.key);
@@ -1599,7 +1646,12 @@ void JobWorkspace::showLabelContextMenu(const QString& key, const QPoint& global
     const QString currentName = currentLabel ? currentLabel->name : QStringLiteral("id %1").arg(currentLabelId);
 
     QMenu menu(this);
-    auto* headerAction = menu.addAction(QStringLiteral("Change Class (Current: %1)").arg(currentName));
+    const int selectedCount = model_->selection().size();
+    const QString headerText = selectedCount > 1
+        ? QStringLiteral("Change Class of %1 selected (Current: %2)")
+              .arg(selectedCount).arg(currentName)
+        : QStringLiteral("Change Class (Current: %1)").arg(currentName);
+    auto* headerAction = menu.addAction(headerText);
     headerAction->setEnabled(false);
     QFont hFont = headerAction->font();
     hFont.setBold(true);
@@ -1614,15 +1666,8 @@ void JobWorkspace::showLabelContextMenu(const QString& key, const QPoint& global
         if (label.id == currentLabelId) {
             action->setChecked(true);
         }
-        connect(action, &QAction::triggered, this, [this, key, label]() {
-            if (model_->setObjectLabel(key, label.id)) {
-                canvas_->scene()->update();
-                canvas_->viewport()->update();
-                QCoreApplication::processEvents();
-                const QString msg = QStringLiteral("Changed label to '%1'; press S to save").arg(label.name);
-                setStatus(msg);
-                showToast(QStringLiteral("✓ ") + msg, false, 2500);
-            }
+        connect(action, &QAction::triggered, this, [this, label]() {
+            changeSelectionLabel(label.id);
         });
     }
 
@@ -1878,12 +1923,20 @@ void JobWorkspace::showMoveDialog()
     dialog.exec();
 }
 
-void JobWorkspace::showRelabelDialog()
+void JobWorkspace::showRelabelDialog(bool selectedOnly)
 {
     if (!model_) {
         return;
     }
     const int frame = model_->currentFrame();
+    const auto selection = model_->selection();
+    const bool hasSelection = !selection.isEmpty();
+
+    if (selectedOnly && !hasSelection) {
+        setStatus(QStringLiteral("Select labels first with Ctrl+click or Multi-label drag, then change their class"), true);
+        showToast(QStringLiteral("Select labels first"), true, 2500);
+        return;
+    }
 
     QHash<int, int> shapeCounts;
     for (const auto& visible : model_->visibleShapes()) {
@@ -1891,17 +1944,28 @@ void JobWorkspace::showRelabelDialog()
     }
 
     QDialog dialog(this);
-    dialog.setWindowTitle(QStringLiteral("Relabel annotations · Frame %1").arg(frame));
-    dialog.resize(440, 240);
+    dialog.setWindowTitle(selectedOnly
+        ? QStringLiteral("Change class of selected labels · Frame %1").arg(frame)
+        : QStringLiteral("Relabel annotations · Frame %1").arg(frame));
+    dialog.resize(480, 280);
 
     auto* layout = new QVBoxLayout(&dialog);
     layout->setSpacing(10);
 
-    auto* header = new QLabel(
-        QStringLiteral("<b>Frame %1</b>: Replace a class with another on this frame.").arg(frame), &dialog);
+    auto* header = new QLabel(&dialog);
+    header->setWordWrap(true);
     layout->addWidget(header);
 
+    QCheckBox* onlySelectionBox = nullptr;
+    if (hasSelection) {
+        onlySelectionBox = new QCheckBox(
+            QStringLiteral("Only change the currently selected annotation(s)"), &dialog);
+        onlySelectionBox->setChecked(selectedOnly || hasSelection);
+        layout->addWidget(onlySelectionBox);
+    }
+
     auto* form = new QFormLayout;
+    auto* fromLabel = new QLabel(QStringLiteral("Replace"), &dialog);
     auto* from = new QComboBox(&dialog);
     auto* to = new QComboBox(&dialog);
     for (const auto& label : labels_) {
@@ -1911,38 +1975,75 @@ void JobWorkspace::showRelabelDialog()
         }
         to->addItem(label.name, label.id);
     }
-    form->addRow(QStringLiteral("Replace"), from);
+    form->addRow(fromLabel, from);
     form->addRow(QStringLiteral("With"), to);
     layout->addLayout(form);
 
+    auto* hint = new QLabel(
+        QStringLiteral("Only the class changes — position, size, attributes, occlusion and rotation are preserved."),
+        &dialog);
+    hint->setStyleSheet(QStringLiteral("color: #888;"));
+    hint->setWordWrap(true);
+    layout->addWidget(hint);
+
     auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    if (from->count() == 0) {
-        if (auto* okBtn = buttons->button(QDialogButtonBox::Ok)) {
-            okBtn->setEnabled(false);
-        }
-        header->setText(QStringLiteral("<b>Frame %1</b>: <span style=\"color:#e53e3e;\">No annotations on this frame to relabel.</span>").arg(frame));
-    }
+    auto* okButton = buttons->button(QDialogButtonBox::Ok);
     layout->addWidget(buttons);
 
-    connect(buttons, &QDialogButtonBox::accepted, &dialog, [&]() {
-        if (from->count() == 0) {
-            dialog.reject();
-            return;
+    auto refreshUi = [&]() {
+        const bool only = onlySelectionBox && onlySelectionBox->isChecked();
+        fromLabel->setEnabled(!only);
+        from->setEnabled(!only);
+        const bool usable = only ? hasSelection : from->count() > 0;
+        if (okButton) {
+            okButton->setEnabled(usable);
         }
-        const int source = from->currentData().toInt();
+        if (only) {
+            header->setText(QStringLiteral("<b>Frame %1</b>: Change the class of <b>%2 selected annotation(s)</b>.")
+                                .arg(frame).arg(selection.size()));
+        } else if (!usable) {
+            header->setText(QStringLiteral("<b>Frame %1</b>: <span style=\"color:#e53e3e;\">No annotations on this frame to relabel.</span>")
+                                .arg(frame));
+        } else {
+            header->setText(QStringLiteral("<b>Frame %1</b>: Replace a class with another on this frame.").arg(frame));
+        }
+    };
+    if (onlySelectionBox) {
+        connect(onlySelectionBox, &QCheckBox::toggled, &dialog, refreshUi);
+    }
+    refreshUi();
+
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, [&]() {
+        const bool only = onlySelectionBox && onlySelectionBox->isChecked();
         const int target = to->currentData().toInt();
-        if (source == target) {
+        const Label* targetLabel = model_->label(target);
+        const QString targetName = targetLabel ? targetLabel->name
+                                               : QStringLiteral("id %1").arg(target);
+        int changed = 0;
+        if (only) {
+            changed = model_->setObjectLabels(selection, target);
+        } else {
+            const int source = from->currentData().toInt();
+            if (source == target) {
+                dialog.accept();
+                return;
+            }
+            for (const auto& visible : model_->visibleShapes()) {
+                if (visible.shape.labelId == source) {
+                    changed += model_->setObjectLabel(visible.key, target) ? 1 : 0;
+                }
+            }
+        }
+        if (changed == 0) {
+            setStatus(QStringLiteral("No classes were changed"));
             dialog.accept();
             return;
         }
-        int changed = 0;
-        for (const auto& visible : model_->visibleShapes()) {
-            if (visible.shape.labelId == source) {
-                changed += model_->setObjectLabel(visible.key, target) ? 1 : 0;
-            }
-        }
-        const QString msg = QStringLiteral("Relabeled %1 annotation(s) on frame %2; press S to save")
-                                .arg(changed).arg(frame);
+        const QString msg = only
+            ? QStringLiteral("Changed class of %1 selected annotation(s) to '%2'; press S to save")
+                  .arg(changed).arg(targetName)
+            : QStringLiteral("Relabeled %1 annotation(s) on frame %2; press S to save")
+                  .arg(changed).arg(frame);
         setStatus(msg);
         showToast(QStringLiteral("✓ ") + msg, false, 3000);
         dialog.accept();
@@ -2060,6 +2161,9 @@ void JobWorkspace::updateActions()
     undoAction_->setEnabled(!saving_ && model_->canUndo());
     redoAction_->setEnabled(!saving_ && model_->canRedo());
     deleteAction_->setEnabled(!saving_ && hasSelection);
+    if (relabelSelectionAction_) {
+        relabelSelectionAction_->setEnabled(!saving_ && annotationsLoaded_ && hasSelection);
+    }
 }
 
 void JobWorkspace::updateTitle()
@@ -2376,12 +2480,29 @@ void JobWorkspace::deleteSelection()
     model_->removeObjects(model_->selection());
 }
 
-void JobWorkspace::changeSelectionLabel(int labelId)
+int JobWorkspace::changeSelectionLabel(int labelId)
 {
-    const QString key = selectedKey();
-    if (!key.isEmpty()) {
-        model_->setObjectLabel(key, labelId);
+    if (!model_ || model_->selection().isEmpty()) {
+        return 0;
     }
+    const int changed = model_->setObjectLabels(model_->selection(), labelId);
+    if (changed == 0) {
+        return 0;
+    }
+
+    canvas_->scene()->update();
+    canvas_->viewport()->update();
+    QCoreApplication::processEvents();
+
+    const Label* label = model_->label(labelId);
+    const QString name = label ? label->name : QStringLiteral("id %1").arg(labelId);
+    const QString msg = changed == 1
+        ? QStringLiteral("Changed class to '%1'; press S to save").arg(name)
+        : QStringLiteral("Changed class of %1 selected annotations to '%2'; press S to save")
+              .arg(changed).arg(name);
+    setStatus(msg);
+    showToast(QStringLiteral("✓ ") + msg, false, 2500);
+    return changed;
 }
 
 void JobWorkspace::changeAttributes(const QVector<AttributeValue>& attributes)

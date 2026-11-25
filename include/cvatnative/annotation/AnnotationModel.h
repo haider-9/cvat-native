@@ -80,6 +80,9 @@ public:
     bool removeObjects(const QSet<QString>& keys);
 
     bool setObjectLabel(const QString& key, int labelId);
+    // Changes only the class of every selected object as one undoable step.
+    // Geometry, attributes, occlusion, rotation and z-order are left untouched.
+    int setObjectLabels(const QSet<QString>& keys, int labelId);
     bool setObjectAttributes(const QString& key, const QVector<AttributeValue>& attributes);
     bool setObjectOccluded(const QString& key, bool occluded);
 

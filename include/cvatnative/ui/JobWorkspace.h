@@ -88,10 +88,10 @@ private:
     void showLabelContextMenu(const QString& key, const QPoint& globalPos);
     void showGrowDialog();
     void showMoveDialog();
-    void showRelabelDialog();
+    void showRelabelDialog(bool selectedOnly = false);
     void showDeleteDialog();
     void deleteSelection();
-    void changeSelectionLabel(int labelId);
+    int changeSelectionLabel(int labelId);
     void changeAttributes(const QVector<AttributeValue>& attributes);
     void changeOccluded(bool occluded);
 
@@ -124,6 +124,7 @@ private:
     QAction* undoAction_ = nullptr;
     QAction* redoAction_ = nullptr;
     QAction* deleteAction_ = nullptr;
+    QAction* relabelSelectionAction_ = nullptr;
     QActionGroup* toolGroup_ = nullptr;
     QTimer* autosaveTimer_ = nullptr;
     QTimer* frameDebounce_ = nullptr;

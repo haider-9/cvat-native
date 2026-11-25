@@ -70,6 +70,15 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
         activeLabel_ = labels_[row].id;
         emit labelActivated(activeLabel_);
     });
+    connect(labelList_, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
+        if (updating_ || !item) {
+            return;
+        }
+        const int row = labelList_->row(item);
+        if (row >= 0 && row < labels_.size()) {
+            emit labelDoubleClicked(labels_[row].id);
+        }
+    });
     connect(occludedBox_, &QCheckBox::toggled, this, [this](bool checked) {
         if (!updating_ && !objectKey_.isEmpty()) {
             emit occludedChanged(checked);

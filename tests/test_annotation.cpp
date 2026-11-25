@@ -198,6 +198,53 @@ TEST(AnnotationModel, BatchUpdatingShapesAndUndo)
     EXPECT_DOUBLE_EQ(visibleReverted[1].shape.points[0], 100.0);
 }
 
+TEST(AnnotationModel, BatchRelabelChangesOnlyClassAndUndoesAsOneStep)
+{
+    AnnotationModel model;
+
+    Shape first;
+    first.labelId = 1;
+    first.type = QStringLiteral("rectangle");
+    first.points = {10, 10, 50, 50};
+    first.occluded = true;
+    first.rotation = 15.0;
+    first.attributes.push_back({7, QStringLiteral("yes")});
+
+    Shape second;
+    second.labelId = 2;
+    second.type = QStringLiteral("rectangle");
+    second.points = {100, 100, 200, 200};
+    second.attributes.push_back({9, QStringLiteral("no")});
+
+    model.addShapes({first, second});
+    const auto before = model.visibleShapes();
+    ASSERT_EQ(before.size(), 2);
+
+    QSet<QString> keys;
+    keys.insert(before[0].key);
+    keys.insert(before[1].key);
+
+    EXPECT_EQ(model.setObjectLabels(keys, 7), 2);
+
+    const auto after = model.visibleShapes();
+    ASSERT_EQ(after.size(), 2);
+    EXPECT_EQ(after[0].shape.labelId, 7);
+    EXPECT_EQ(after[1].shape.labelId, 7);
+    EXPECT_EQ(after[0].shape.points, before[0].shape.points);
+    EXPECT_EQ(after[1].shape.points, before[1].shape.points);
+    EXPECT_EQ(after[0].shape.attributes, before[0].shape.attributes);
+    EXPECT_EQ(after[1].shape.attributes, before[1].shape.attributes);
+    EXPECT_TRUE(after[0].shape.occluded);
+    EXPECT_DOUBLE_EQ(after[0].shape.rotation, 15.0);
+
+    ASSERT_TRUE(model.canUndo());
+    ASSERT_TRUE(model.undo());
+    const auto reverted = model.visibleShapes();
+    ASSERT_EQ(reverted.size(), 2);
+    EXPECT_EQ(reverted[0].shape.labelId, 1);
+    EXPECT_EQ(reverted[1].shape.labelId, 2);
+}
+
 TEST(Annotation, CopiedTemplateDimensionAndPlacement)
 {
     Shape shape;

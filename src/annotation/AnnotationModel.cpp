@@ -636,6 +636,41 @@ bool AnnotationModel::setObjectLabel(const QString& key, int labelId)
     return true;
 }
 
+int AnnotationModel::setObjectLabels(const QSet<QString>& keys, int labelId)
+{
+    if (keys.isEmpty()) {
+        return 0;
+    }
+
+    beginMutation();
+    int changed = 0;
+    for (const QString& key : keys) {
+        if (key.size() < 3) {
+            continue;
+        }
+        const QChar kind = key.at(0);
+        const int id = key.mid(2).toInt();
+        if (kind == QLatin1Char('s')) {
+            if (Shape* shape = shapeById(id); shape && shape->labelId != labelId) {
+                shape->labelId = labelId;
+                ++changed;
+            }
+        } else if (kind == QLatin1Char('t')) {
+            if (Track* track = trackById(id); track && track->labelId != labelId) {
+                track->labelId = labelId;
+                ++changed;
+            }
+        } else if (kind == QLatin1Char('g')) {
+            if (Tag* tag = tagById(id); tag && tag->labelId != labelId) {
+                tag->labelId = labelId;
+                ++changed;
+            }
+        }
+    }
+    endMutation();
+    return changed;
+}
+
 bool AnnotationModel::setObjectAttributes(const QString& key,
                                           const QVector<AttributeValue>& attributes)
 {
