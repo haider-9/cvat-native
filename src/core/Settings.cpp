@@ -196,22 +196,48 @@ void Settings::setUpdateInstallDirectory(const QString& directory)
     d->settings.setValue(QStringLiteral("updates/installDirectory"), directory);
 }
 
-int Settings::hotkeyLabel(int digit) const
+namespace {
+
+int boundLabel(const QSettings& settings, const QString& key, int digit, int labelId)
 {
     if (digit < 0 || digit > 9) {
         return -1;
     }
-    return d->settings
-        .value(QStringLiteral("hotkeys/label%1").arg(digit), -1)
-        .toInt();
+    const QVariant stored = settings.value(key);
+    if (stored.isValid()) {
+        return stored.toInt();
+    }
+    // Migrate the former shared Ctrl/Alt binding, if one was saved.
+    return settings.value(QStringLiteral("hotkeys/label%1").arg(digit), labelId).toInt();
 }
 
-void Settings::setHotkeyLabel(int digit, int labelId)
+void saveBinding(QSettings& settings, const QString& key, int digit, int labelId)
 {
-    if (digit < 0 || digit > 9) {
-        return;
+    if (digit >= 0 && digit <= 9) {
+        settings.setValue(key.arg(digit), labelId);
     }
-    d->settings.setValue(QStringLiteral("hotkeys/label%1").arg(digit), labelId);
+}
+
+} // namespace
+
+int Settings::ctrlHotkeyLabel(int digit) const
+{
+    return boundLabel(d->settings, QStringLiteral("hotkeys/ctrl%1"), digit, -1);
+}
+
+void Settings::setCtrlHotkeyLabel(int digit, int labelId)
+{
+    saveBinding(d->settings, QStringLiteral("hotkeys/ctrl%1"), digit, labelId);
+}
+
+int Settings::altHotkeyLabel(int digit) const
+{
+    return boundLabel(d->settings, QStringLiteral("hotkeys/alt%1"), digit, -1);
+}
+
+void Settings::setAltHotkeyLabel(int digit, int labelId)
+{
+    saveBinding(d->settings, QStringLiteral("hotkeys/alt%1"), digit, labelId);
 }
 
 QString Settings::cacheDirectory() const

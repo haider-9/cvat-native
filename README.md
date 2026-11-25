@@ -19,8 +19,8 @@ around that annotation. Number hotkeys follow CVAT: **Ctrl+1…9** (and
 **Ctrl+0** for the tenth class) relabels the selected object(s), or sets the
 active drawing class when nothing is selected; **Alt+1…9 / Alt+0** adds a tag
 of that class to the current frame. Use **Bind keys…** in the job footer to
-assign any job label to any number; bindings are shared by Ctrl and Alt and
-persist across jobs and restarts.
+assign any job label to any number; Ctrl and Alt have two independent sets of
+ten bindings that persist across jobs and restarts.
 
 The native UI is intentionally non-administrative: projects, tasks, and jobs
 are fetched and browsed read-only; users open existing jobs, select existing

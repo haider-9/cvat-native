@@ -17,6 +17,7 @@
 #include <QActionGroup>
 #include <QClipboard>
 #include <QCheckBox>
+#include <QColor>
 #include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -25,8 +26,10 @@
 #include <QGroupBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QImage>
 #include <QInputDialog>
+#include <QPixmap>
 #include <QJsonDocument>
 #include <QLabel>
 #include <QLineEdit>
@@ -1242,60 +1245,104 @@ void JobWorkspace::showHotkeyDialog()
     }
 
     QDialog dialog(this);
-    dialog.setWindowTitle(QStringLiteral("Bind number keys to classes"));
-    dialog.resize(440, 480);
+    dialog.setWindowTitle(QStringLiteral("Number-key bindings"));
+    dialog.resize(660, 520);
 
-    auto* layout = new QVBoxLayout(&dialog);
-    auto* intro = new QLabel(
-        QStringLiteral("Ctrl+number relabels the selection, or sets the active class when nothing "
-                       "is selected. Alt+number adds a tag of the same class. Bindings apply to "
-                       "every job in this installation."), &dialog);
-    intro->setWordWrap(true);
-    intro->setStyleSheet(QStringLiteral("color: #888;"));
-    layout->addWidget(intro);
+    auto* root = new QVBoxLayout(&dialog);
+    root->setContentsMargins(16, 14, 16, 14);
+    root->setSpacing(12);
+
+    auto* legend = new QLabel(
+        QStringLiteral("<span style=\"color:#4c9aff;font-weight:600;\">Ctrl</span> changes the "
+                       "class of the selection (or the active class) &nbsp;·&nbsp; "
+                       "<span style=\"color:#b46cf0;font-weight:600;\">Alt</span> adds a tag. "
+                       "Each modifier has its own ten bindings, shared across jobs."), &dialog);
+    legend->setWordWrap(true);
+    root->addWidget(legend);
 
     const QVector<int> digits{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-    QVector<QComboBox*> combos;
-    auto* form = new QFormLayout;
-    for (int digit : digits) {
-        auto* combo = new QComboBox(&dialog);
+    QVector<QComboBox*> ctrlCombos;
+    QVector<QComboBox*> altCombos;
+
+    auto colorIcon = [](const QString& color) {
+        QPixmap pixel(12, 12);
+        pixel.fill(QColor(color));
+        return QIcon(pixel);
+    };
+    const auto defaultId = [this](int digit) {
+        const int index = digit == 0 ? 9 : digit - 1;
+        return index < labels_.size() ? labels_[index].id : -1;
+    };
+    auto fillCombo = [this, &colorIcon](QComboBox* combo, int bound) {
         combo->addItem(QStringLiteral("Unassigned"), -1);
         for (const Label& label : labels_) {
-            combo->addItem(label.name, label.id);
-        }
-        int bound = Settings::instance().hotkeyLabel(digit);
-        if (bound < 0) {
-            const int index = digit == 0 ? 9 : digit - 1;
-            if (index < labels_.size()) {
-                bound = labels_[index].id;
-            }
+            combo->addItem(colorIcon(label.color), label.name, label.id);
         }
         combo->setCurrentIndex(std::max(0, combo->findData(bound)));
-        form->addRow(QStringLiteral("Ctrl / Alt + %1").arg(digit), combo);
-        combos.push_back(combo);
-    }
-    layout->addLayout(form);
+    };
+
+    auto makeColumn = [&](const QString& title, const QString& description,
+                          bool isAlt, QVector<QComboBox*>& combos) {
+        auto* group = new QGroupBox(title, &dialog);
+        auto* groupLayout = new QVBoxLayout(group);
+        groupLayout->setContentsMargins(12, 8, 12, 10);
+        groupLayout->setSpacing(8);
+
+        auto* desc = new QLabel(description, group);
+        desc->setWordWrap(true);
+        desc->setStyleSheet(QStringLiteral("color: #888;"));
+        groupLayout->addWidget(desc);
+
+        auto* form = new QFormLayout;
+        form->setLabelAlignment(Qt::AlignRight);
+        form->setHorizontalSpacing(10);
+        form->setVerticalSpacing(4);
+        for (int digit : digits) {
+            auto* combo = new QComboBox(group);
+            const int saved = isAlt ? Settings::instance().altHotkeyLabel(digit)
+                                    : Settings::instance().ctrlHotkeyLabel(digit);
+            fillCombo(combo, saved < 0 ? defaultId(digit) : saved);
+            form->addRow(QString::number(digit), combo);
+            combos.push_back(combo);
+        }
+        groupLayout->addLayout(form);
+        return group;
+    };
+
+    auto* columns = new QHBoxLayout;
+    columns->setSpacing(14);
+    columns->addWidget(makeColumn(
+        QStringLiteral("Ctrl + number"),
+        QStringLiteral("Relabel selected object(s), or pick the active class when nothing is selected."),
+        false, ctrlCombos));
+    columns->addWidget(makeColumn(
+        QStringLiteral("Alt + number"),
+        QStringLiteral("Add a tag of this class on the current frame."),
+        true, altCombos));
+    root->addLayout(columns, 1);
 
     auto* buttons = new QDialogButtonBox(&dialog);
     auto* reset = buttons->addButton(QDialogButtonBox::RestoreDefaults);
-    reset->setText(QStringLiteral("First ten classes"));
+    reset->setText(QStringLiteral("Reset both to first ten classes"));
     buttons->addButton(QDialogButtonBox::Cancel);
     buttons->addButton(QDialogButtonBox::Ok);
-    layout->addWidget(buttons);
+    root->addWidget(buttons);
 
-    connect(reset, &QPushButton::clicked, &dialog, [&dialog, &digits, &combos, this]() {
+    connect(reset, &QPushButton::clicked, &dialog, [&]() {
         for (int i = 0; i < digits.size(); ++i) {
-            const int index = digits[i] == 0 ? 9 : digits[i] - 1;
-            const int id = index < labels_.size() ? labels_[index].id : -1;
-            combos[i]->setCurrentIndex(std::max(0, combos[i]->findData(id)));
+            const int id = defaultId(digits[i]);
+            for (QComboBox* combo : {ctrlCombos[i], altCombos[i]}) {
+                combo->setCurrentIndex(std::max(0, combo->findData(id)));
+            }
         }
     });
-    connect(buttons, &QDialogButtonBox::accepted, &dialog, [&dialog, &digits, &combos, this]() {
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, [&]() {
         for (int i = 0; i < digits.size(); ++i) {
-            Settings::instance().setHotkeyLabel(digits[i], combos[i]->currentData().toInt());
+            Settings::instance().setCtrlHotkeyLabel(digits[i], ctrlCombos[i]->currentData().toInt());
+            Settings::instance().setAltHotkeyLabel(digits[i], altCombos[i]->currentData().toInt());
         }
         Settings::instance().sync();
-        setStatus(QStringLiteral("Number-key bindings saved"));
+        setStatus(QStringLiteral("Ctrl and Alt number bindings saved"));
         dialog.accept();
     });
     connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
@@ -1309,7 +1356,8 @@ void JobWorkspace::applyLabelShortcut(int digit, bool addTag)
     }
     const QString modifier = addTag ? QStringLiteral("Alt") : QStringLiteral("Ctrl");
 
-    int labelId = Settings::instance().hotkeyLabel(digit);
+    int labelId = addTag ? Settings::instance().altHotkeyLabel(digit)
+                         : Settings::instance().ctrlHotkeyLabel(digit);
     if (labelId < 0) {
         // Before any explicit binding, keep the original 1-9 / 0 ordering.
         const int index = digit == 0 ? 9 : digit - 1;
