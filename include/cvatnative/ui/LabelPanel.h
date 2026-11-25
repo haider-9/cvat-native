@@ -3,6 +3,7 @@
 #include "cvatnative/api/Models.h"
 #include "cvatnative/model/Annotation.h"
 
+#include <QSet>
 #include <QVector>
 #include <QWidget>
 
@@ -25,6 +26,7 @@ public:
     void setLabels(const QVector<Label>& labels);
     void setActiveLabel(int labelId);
     [[nodiscard]] int activeLabel() const { return activeLabel_; }
+    void setHiddenLabels(const QSet<int>& hidden);
 
     void showObject(const QString& key, int labelId,
                     const QVector<AttributeValue>& attributes, bool occluded,
@@ -36,6 +38,9 @@ signals:
     // Double-clicking a class also jumps to the first object of that class on
     // the current frame, when one exists.
     void labelDoubleClicked(int labelId);
+    void hideLabelsRequested(const QSet<int>& labelIds);
+    void showLabelsRequested(const QSet<int>& labelIds);
+    void showAllLabelsRequested();
     void attributesChanged(const QVector<AttributeValue>& attributes);
     void occludedChanged(bool occluded);
     void deleteRequested();
@@ -50,14 +55,21 @@ private:
     void rebuildAttributes(const QVector<AttributeValue>& attributes);
     void emitAttributes();
     [[nodiscard]] const Label* findLabel(int id) const;
+    void refreshLabelItems();
+    [[nodiscard]] QSet<int> selectedLabelIds() const;
+    void updateVisibilityButtons();
 
     QListWidget* labelList_ = nullptr;
+    QPushButton* hideButton_ = nullptr;
+    QPushButton* showButton_ = nullptr;
+    QPushButton* showAllButton_ = nullptr;
     QLabel* objectTitle_ = nullptr;
     QCheckBox* occludedBox_ = nullptr;
     QPushButton* deleteButton_ = nullptr;
     QWidget* attributeHost_ = nullptr;
     QFormLayout* attributeLayout_ = nullptr;
     QVector<Label> labels_;
+    QSet<int> hiddenLabels_;
     QVector<AttributeEditor> editors_;
     QString objectKey_;
     int activeLabel_ = 0;

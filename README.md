@@ -20,7 +20,10 @@ around that annotation. Number hotkeys follow CVAT: **Ctrl+1…9** (and
 active drawing class when nothing is selected; **Alt+1…9 / Alt+0** adds a tag
 of that class to the current frame. Use **Bind keys…** in the job footer to
 assign any job label to any number; Ctrl and Alt have two independent sets of
-ten bindings that persist across jobs and restarts.
+ten bindings that persist across jobs and restarts. In the sidebar's **Labels**
+list, Ctrl/Shift-click several classes and use **Hide**, **Show**, or **Show all**
+to bulk-hide or reveal their objects and tags on every frame; hidden classes are
+greyed out and are excluded from selection and the object list.
 
 The native UI is intentionally non-administrative: projects, tasks, and jobs
 are fetched and browsed read-only; users open existing jobs, select existing

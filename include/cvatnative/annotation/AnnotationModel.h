@@ -71,6 +71,14 @@ public:
     [[nodiscard]] QVector<Tag> visibleTags() const;
     [[nodiscard]] std::optional<VisibleShape> visibleShape(const QString& key) const;
 
+    // View-only hiding of whole classes. Hidden classes are skipped on every
+    // frame, are not hit-testable, and any selected objects of that class are
+    // deselected. Nothing is written to the annotation document.
+    void setLabelsHidden(const QSet<int>& labelIds, bool hidden);
+    void showAllLabels();
+    [[nodiscard]] bool isLabelHidden(int labelId) const;
+    [[nodiscard]] QSet<int> hiddenLabels() const { return hiddenLabels_; }
+
     void addShape(Shape shape);
     // Adds several shapes as one undoable step and selects them all.
     void addShapes(const QVector<Shape>& shapes);
@@ -113,6 +121,7 @@ public:
 signals:
     void changed();
     void selectionChanged();
+    void visibilityChanged();
     void frameChanged(int frame);
     void dirtyChanged(bool dirty);
     void undoStackChanged();
@@ -137,6 +146,7 @@ private:
     QUndoStack undoStack_;
     LabeledData mutationBefore_;
     QSet<QString> selection_;
+    QSet<int> hiddenLabels_;
     int currentFrame_ = 0;
     int nextLocalId_ = -1;
     quint64 revision_ = 0;

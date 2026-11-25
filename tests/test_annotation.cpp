@@ -155,6 +155,35 @@ TEST(AnnotationModel, AddingAndUpdatingShapesIncrementsRevisionAndDirty)
     EXPECT_GT(model.revision(), revAfterAdd);
 }
 
+TEST(AnnotationModel, HiddenLabelsAreExcludedFromVisibleDataAndSelection)
+{
+    AnnotationModel model;
+    model.load(LabeledData::fromJson(sampleData()), 0);
+    ASSERT_EQ(model.visibleShapes().size(), 2);
+    ASSERT_EQ(model.visibleTags().size(), 1);
+
+    const QString key = model.visibleShapes().first().key;
+    model.selectOnly(key);
+    ASSERT_TRUE(model.selection().contains(key));
+
+    model.setLabelsHidden({1, 2}, true);
+    EXPECT_TRUE(model.isLabelHidden(1));
+    EXPECT_TRUE(model.isLabelHidden(2));
+    EXPECT_TRUE(model.visibleShapes().isEmpty());
+    EXPECT_TRUE(model.visibleTags().isEmpty());
+    EXPECT_FALSE(model.visibleShape(key).has_value());
+    EXPECT_TRUE(model.selection().isEmpty());
+
+    model.setLabelsHidden({2}, false);
+    EXPECT_TRUE(model.visibleShapes().isEmpty());
+    EXPECT_EQ(model.visibleTags().size(), 1);
+
+    model.showAllLabels();
+    EXPECT_TRUE(model.hiddenLabels().isEmpty());
+    EXPECT_EQ(model.visibleShapes().size(), 2);
+    EXPECT_EQ(model.visibleTags().size(), 1);
+}
+
 TEST(AnnotationModel, BatchUpdatingShapesAndUndo)
 {
     AnnotationModel model;

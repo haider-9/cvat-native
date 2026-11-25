@@ -1,10 +1,14 @@
 #include "cvatnative/ui/LabelPanel.h"
 
+#include <QAbstractItemView>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QFont>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QHBoxLayout>
 #include <QIcon>
+#include <QPalette>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -35,9 +39,27 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
     auto* labelLayout = new QVBoxLayout(labelGroup);
     labelList_ = new QListWidget(labelGroup);
     labelList_->setAlternatingRowColors(true);
+    labelList_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     labelList_->setMaximumHeight(180);
     labelLayout->addWidget(labelList_);
-    auto* shortcutHint = new QLabel(QStringLiteral("[ and ] switch label"), labelGroup);
+
+    auto* visibilityRow = new QHBoxLayout;
+    visibilityRow->setSpacing(6);
+    hideButton_ = new QPushButton(QStringLiteral("Hide"), labelGroup);
+    hideButton_->setToolTip(QStringLiteral("Hide the selected classes everywhere (objects and tags)"));
+    showButton_ = new QPushButton(QStringLiteral("Show"), labelGroup);
+    showButton_->setToolTip(QStringLiteral("Reveal the selected classes"));
+    showAllButton_ = new QPushButton(QStringLiteral("Show all"), labelGroup);
+    showAllButton_->setToolTip(QStringLiteral("Reveal every hidden class"));
+    for (auto* button : {hideButton_, showButton_, showAllButton_}) {
+        button->setFocusPolicy(Qt::NoFocus);
+        visibilityRow->addWidget(button);
+    }
+    labelLayout->addLayout(visibilityRow);
+
+    auto* shortcutHint = new QLabel(
+        QStringLiteral("[ and ] switch label · Ctrl+click selects several classes"), labelGroup);
+    shortcutHint->setWordWrap(true);
     shortcutHint->setStyleSheet(QStringLiteral("color: #888; font-size: 11px;"));
     labelLayout->addWidget(shortcutHint);
     layout->addWidget(labelGroup);
@@ -79,6 +101,18 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
             emit labelDoubleClicked(labels_[row].id);
         }
     });
+    connect(labelList_, &QListWidget::itemSelectionChanged, this,
+            &LabelPanel::updateVisibilityButtons);
+    connect(hideButton_, &QPushButton::clicked, this, [this]() {
+        emit hideLabelsRequested(selectedLabelIds());
+    });
+    connect(showButton_, &QPushButton::clicked, this, [this]() {
+        emit showLabelsRequested(selectedLabelIds());
+    });
+    connect(showAllButton_, &QPushButton::clicked, this,
+            &LabelPanel::showAllLabelsRequested);
+    updateVisibilityButtons();
+
     connect(occludedBox_, &QCheckBox::toggled, this, [this](bool checked) {
         if (!updating_ && !objectKey_.isEmpty()) {
             emit occludedChanged(checked);
@@ -97,9 +131,10 @@ void LabelPanel::setLabels(const QVector<Label>& labels)
     updating_ = true;
     labelList_->clear();
     for (const auto& label : labels_) {
-        auto* item = new QListWidgetItem(colorIcon(label.color), label.name, labelList_);
-        item->setToolTip(QStringLiteral("%1 (%2)").arg(label.name, label.type));
+        auto* item = new QListWidgetItem(label.name, labelList_);
+        item->setData(Qt::UserRole, label.id);
     }
+    refreshLabelItems();
     int activeRow = -1;
     for (int i = 0; i < labels_.size(); ++i) {
         if (labels_[i].id == activeLabel_) {
@@ -115,6 +150,7 @@ void LabelPanel::setLabels(const QVector<Label>& labels)
         labelList_->setCurrentRow(activeRow);
     }
     updating_ = false;
+    updateVisibilityButtons();
     if (activeLabel_ > 0) {
         emit labelActivated(activeLabel_);
     }
@@ -130,6 +166,55 @@ void LabelPanel::setActiveLabel(int labelId)
             break;
         }
     }
+}
+
+void LabelPanel::setHiddenLabels(const QSet<int>& hidden)
+{
+    hiddenLabels_ = hidden;
+    refreshLabelItems();
+    updateVisibilityButtons();
+}
+
+void LabelPanel::refreshLabelItems()
+{
+    for (int row = 0; row < labelList_->count(); ++row) {
+        QListWidgetItem* item = labelList_->item(row);
+        const Label* label = findLabel(item->data(Qt::UserRole).toInt());
+        if (!label) {
+            continue;
+        }
+        const bool hidden = hiddenLabels_.contains(label->id);
+        item->setIcon(colorIcon(label->color));
+        item->setText(hidden ? QStringLiteral("%1 (hidden)").arg(label->name) : label->name);
+        item->setForeground(hidden ? QColor(QStringLiteral("#888888"))
+                                   : labelList_->palette().color(QPalette::Text));
+        QFont font = item->font();
+        font.setItalic(hidden);
+        item->setFont(font);
+        item->setToolTip(hidden
+            ? QStringLiteral("%1 (%2) — hidden; select it and press Show").arg(label->name, label->type)
+            : QStringLiteral("%1 (%2)").arg(label->name, label->type));
+    }
+}
+
+QSet<int> LabelPanel::selectedLabelIds() const
+{
+    QSet<int> ids;
+    for (QListWidgetItem* item : labelList_->selectedItems()) {
+        const int id = item->data(Qt::UserRole).toInt();
+        if (id > 0) {
+            ids.insert(id);
+        }
+    }
+    return ids;
+}
+
+void LabelPanel::updateVisibilityButtons()
+{
+    const bool hasSelection = !selectedLabelIds().isEmpty();
+    hideButton_->setEnabled(hasSelection);
+    showButton_->setEnabled(hasSelection);
+    showAllButton_->setEnabled(!hiddenLabels_.isEmpty());
 }
 
 const Label* LabelPanel::findLabel(int id) const

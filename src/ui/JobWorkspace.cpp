@@ -853,6 +853,29 @@ void JobWorkspace::setupUi()
             &JobWorkspace::changeOccluded);
     connect(labelPanel_, &LabelPanel::deleteRequested, this,
             &JobWorkspace::deleteSelection);
+    connect(labelPanel_, &LabelPanel::hideLabelsRequested, this, [this](const QSet<int>& ids) {
+        if (!model_ || ids.isEmpty()) {
+            return;
+        }
+        model_->setLabelsHidden(ids, true);
+        setStatus(QStringLiteral("Hidden %1 class(es) — use Show or Show all in the sidebar")
+                      .arg(ids.size()));
+        ensureVisibleActiveLabel();
+    });
+    connect(labelPanel_, &LabelPanel::showLabelsRequested, this, [this](const QSet<int>& ids) {
+        if (!model_ || ids.isEmpty()) {
+            return;
+        }
+        model_->setLabelsHidden(ids, false);
+        setStatus(QStringLiteral("Showing %1 class(es)").arg(ids.size()));
+    });
+    connect(labelPanel_, &LabelPanel::showAllLabelsRequested, this, [this]() {
+        if (!model_) {
+            return;
+        }
+        model_->showAllLabels();
+        setStatus(QStringLiteral("All classes are visible"));
+    });
     // Arrow-key navigation in the object list changes the current item, so it
     // goes through the same focus path as a double-click. refreshObjects() and
     // updateSelectionUi() block these signals, so programmatic selection never
@@ -917,6 +940,11 @@ void JobWorkspace::connectModel()
         updateSelectionUi();
         updateActions();
     });
+    connect(model_, &AnnotationModel::visibilityChanged, this, [this]() {
+        canvas_->refreshItems();
+        refreshObjects();
+        labelPanel_->setHiddenLabels(model_->hiddenLabels());
+    });
     connect(model_, &AnnotationModel::dirtyChanged, this, [this](bool) {
         updateTitle();
         updateActions();
@@ -952,6 +980,7 @@ void JobWorkspace::loadLabels()
         labels_ = flattenLabelHierarchy(labels);
         model_->setLabels(labels_);
         labelPanel_->setLabels(labels_);
+        labelPanel_->setHiddenLabels(model_->hiddenLabels());
         if (!labels_.isEmpty()) {
             labelPanel_->setActiveLabel(labels_.first().id);
             canvas_->setActiveLabel(labels_.first().id);
@@ -2363,6 +2392,21 @@ void JobWorkspace::updateActions()
     deleteAction_->setEnabled(!saving_ && hasSelection);
     if (relabelSelectionAction_) {
         relabelSelectionAction_->setEnabled(!saving_ && annotationsLoaded_ && hasSelection);
+    }
+}
+
+void JobWorkspace::ensureVisibleActiveLabel()
+{
+    if (!model_ || !labelPanel_ || !canvas_ ||
+        !model_->isLabelHidden(canvas_->activeLabel())) {
+        return;
+    }
+    for (const Label& label : labels_) {
+        if (!model_->isLabelHidden(label.id)) {
+            labelPanel_->setActiveLabel(label.id);
+            canvas_->setActiveLabel(label.id);
+            return;
+        }
     }
 }
 

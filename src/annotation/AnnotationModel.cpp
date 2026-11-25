@@ -387,7 +387,7 @@ QVector<AnnotationModel::VisibleShape> AnnotationModel::visibleShapes() const
 {
     QVector<VisibleShape> visible;
     for (const auto& shape : data_.shapes) {
-        if (shape.frame != currentFrame_ || shape.outside) {
+        if (shape.frame != currentFrame_ || shape.outside || hiddenLabels_.contains(shape.labelId)) {
             continue;
         }
         VisibleShape item;
@@ -398,6 +398,9 @@ QVector<AnnotationModel::VisibleShape> AnnotationModel::visibleShapes() const
         visible.push_back(item);
     }
     for (const auto& track : data_.tracks) {
+        if (hiddenLabels_.contains(track.labelId)) {
+            continue;
+        }
         const auto interpolated = track.interpolatedAt(currentFrame_);
         if (!interpolated || interpolated->outside) {
             continue;
@@ -425,7 +428,7 @@ QVector<Tag> AnnotationModel::visibleTags() const
 {
     QVector<Tag> tags;
     for (const auto& tag : data_.tags) {
-        if (tag.frame == currentFrame_) {
+        if (tag.frame == currentFrame_ && !hiddenLabels_.contains(tag.labelId)) {
             tags.push_back(tag);
         }
     }
@@ -441,6 +444,59 @@ std::optional<AnnotationModel::VisibleShape> AnnotationModel::visibleShape(
         }
     }
     return std::nullopt;
+}
+
+void AnnotationModel::setLabelsHidden(const QSet<int>& labelIds, bool hidden)
+{
+    bool changed = false;
+    for (int id : labelIds) {
+        if (hidden && !hiddenLabels_.contains(id)) {
+            hiddenLabels_.insert(id);
+            changed = true;
+        } else if (!hidden && hiddenLabels_.remove(id)) {
+            changed = true;
+        }
+    }
+    if (!changed) {
+        return;
+    }
+
+    // Deselecting hidden objects keeps editing commands from touching classes
+    // the user cannot see, including on frames other than the current one.
+    const int before = selection_.size();
+    for (const auto& shape : data_.shapes) {
+        if (hiddenLabels_.contains(shape.labelId)) {
+            selection_.remove(keyForShape(shape));
+        }
+    }
+    for (const auto& track : data_.tracks) {
+        if (hiddenLabels_.contains(track.labelId)) {
+            selection_.remove(keyForTrack(track));
+        }
+    }
+    for (const auto& tag : data_.tags) {
+        if (hiddenLabels_.contains(tag.labelId)) {
+            selection_.remove(keyForTag(tag));
+        }
+    }
+    if (selection_.size() != before) {
+        emit selectionChanged();
+    }
+    emit visibilityChanged();
+}
+
+void AnnotationModel::showAllLabels()
+{
+    if (hiddenLabels_.isEmpty()) {
+        return;
+    }
+    hiddenLabels_.clear();
+    emit visibilityChanged();
+}
+
+bool AnnotationModel::isLabelHidden(int labelId) const
+{
+    return hiddenLabels_.contains(labelId);
 }
 
 int AnnotationModel::nextZOrder() const

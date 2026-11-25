@@ -72,6 +72,7 @@ private:
     void refreshObjects();
     void updateSelectionUi();
     void updateActions();
+    void ensureVisibleActiveLabel();
     void updateTitle();
     void setStatus(const QString& message, bool error = false);
     void showToast(const QString& message, bool isError = false, int durationMs = 3000);
