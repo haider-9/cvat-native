@@ -203,7 +203,7 @@ int boundLabel(const QSettings& settings, const QString& key, int digit, int lab
     if (digit < 0 || digit > 9) {
         return -1;
     }
-    const QVariant stored = settings.value(key);
+    const QVariant stored = settings.value(key.arg(digit));
     if (stored.isValid()) {
         return stored.toInt();
     }

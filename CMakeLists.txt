@@ -159,6 +159,7 @@ if(CVATNATIVE_BUILD_TESTS)
         tests/test_local_store.cpp
         tests/test_frame_cache.cpp
         tests/test_update.cpp
+        tests/test_settings.cpp
     )
     target_link_libraries(cvat_core_tests PRIVATE cvat_core GTest::gtest Qt6::Network Qt6::Sql)
     if(MSVC)
