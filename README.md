@@ -13,8 +13,9 @@ in the job footer, drag a rectangle fully around several labels, press **C**,
 then **V** to reproduce them with their original classes, attributes and
 relative positions. Ctrl+click or area-select several labels and use
 **Bridge tools → Change class of selected labels** (Shift+L) to change only
-their class. Double-click an object in the right sidebar, or a class in the
-Labels list, to zoom the canvas tightly around that annotation.
+their class. Double-click an object in the right sidebar (or navigate it with the arrow
+keys), or double-click a class in the Labels list, to zoom the canvas tightly
+around that annotation.
 
 The native UI is intentionally non-administrative: projects, tasks, and jobs
 are fetched and browsed read-only; users open existing jobs, select existing

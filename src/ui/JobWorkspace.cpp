@@ -818,15 +818,11 @@ void JobWorkspace::setupUi()
             &JobWorkspace::changeOccluded);
     connect(labelPanel_, &LabelPanel::deleteRequested, this,
             &JobWorkspace::deleteSelection);
-    connect(objectList_, &QListWidget::currentItemChanged, this,
-            [this](QListWidgetItem* current, QListWidgetItem*) {
-        if (!current) {
-            model_->clearSelection();
-            return;
-        }
-        model_->selectOnly(current->data(Qt::UserRole).toString());
-    });
-    connect(objectList_, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
+    // Arrow-key navigation in the object list changes the current item, so it
+    // goes through the same focus path as a double-click. refreshObjects() and
+    // updateSelectionUi() block these signals, so programmatic selection never
+    // moves the camera.
+    auto focusObjectItem = [this](QListWidgetItem* item) {
         if (!item || !model_) {
             return;
         }
@@ -837,7 +833,17 @@ void JobWorkspace::setupUi()
         } else {
             setStatus(QStringLiteral("This annotation has no position on the frame"));
         }
+    };
+    connect(objectList_, &QListWidget::currentItemChanged, this,
+            [this, focusObjectItem](QListWidgetItem* current, QListWidgetItem*) {
+        if (!current) {
+            model_->clearSelection();
+            return;
+        }
+        focusObjectItem(current);
     });
+    connect(objectList_, &QListWidget::itemDoubleClicked, this,
+            [focusObjectItem](QListWidgetItem* item) { focusObjectItem(item); });
     connect(labelPanel_, &LabelPanel::labelDoubleClicked, this, [this](int labelId) {
         if (!model_) {
             return;
@@ -1102,7 +1108,7 @@ void JobWorkspace::refreshObjects()
                 auto* item = new QListWidgetItem(
                     QStringLiteral("%1  ·  %2").arg(name, shapeTypeName(visible.shape.type)),
                     objectList_);
-                item->setToolTip(QStringLiteral("%1 · %2 · %3 #%4\nDouble-click to zoom to this object")
+                item->setToolTip(QStringLiteral("%1 · %2 · %3 #%4\nDouble-click or use arrow keys to zoom to this object")
                     .arg(name, shapeTypeName(visible.shape.type), kind)
                     .arg(visible.objectId));
                 item->setData(Qt::UserRole, visible.key);
