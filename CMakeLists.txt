@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(cvat-native
-    VERSION 0.2.1
+    VERSION 0.2.2
     DESCRIPTION "Native Qt6 annotation client for a CVAT backend"
     LANGUAGES CXX
 )
