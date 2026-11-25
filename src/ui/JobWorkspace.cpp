@@ -547,26 +547,25 @@ void JobWorkspace::setupUi()
     // CVAT-style number hotkeys: Ctrl+N relabels the selection or picks the
     // active class for new objects; Alt+N adds a tag of that class.
     auto addLabelHotkey = [this, shouldIgnoreSingleKey](const QString& sequence,
-                                                       int index, bool tag) {
+                                                       int digit, bool tag) {
         auto* action = new QAction(this);
         action->setShortcut(QKeySequence(sequence));
         action->setShortcutContext(Qt::WindowShortcut);
         action->setToolTip(tag
-            ? QStringLiteral("%1 — add a tag of class %2").arg(sequence).arg(index + 1)
-            : QStringLiteral("%1 — relabel selection / set active class %2").arg(sequence).arg(index + 1));
+            ? QStringLiteral("%1 — add a tag of the bound class").arg(sequence)
+            : QStringLiteral("%1 — relabel selection / set the bound class").arg(sequence));
         this->addAction(action);
-        connect(action, &QAction::triggered, this, [this, shouldIgnoreSingleKey, index, tag]() {
+        connect(action, &QAction::triggered, this, [this, shouldIgnoreSingleKey, digit, tag]() {
             if (shouldIgnoreSingleKey()) return;
-            applyLabelShortcut(index, tag);
+            applyLabelShortcut(digit, tag);
         });
     };
     for (int digit = 1; digit <= 9; ++digit) {
-        addLabelHotkey(QStringLiteral("Ctrl+%1").arg(digit), digit - 1, false);
-        addLabelHotkey(QStringLiteral("Alt+%1").arg(digit), digit - 1, true);
+        addLabelHotkey(QStringLiteral("Ctrl+%1").arg(digit), digit, false);
+        addLabelHotkey(QStringLiteral("Alt+%1").arg(digit), digit, true);
     }
-    // 0 maps to the tenth class, following CVAT's 0-9 hotkey row.
-    addLabelHotkey(QStringLiteral("Ctrl+0"), 9, false);
-    addLabelHotkey(QStringLiteral("Alt+0"), 9, true);
+    addLabelHotkey(QStringLiteral("Ctrl+0"), 0, false);
+    addLabelHotkey(QStringLiteral("Alt+0"), 0, true);
 
     auto* copyLabelAction = makeAction(Icon::Copy, QStringLiteral("Copy label"), this);
     copyLabelAction->setShortcut(QKeySequence(QStringLiteral("C")));
@@ -813,6 +812,15 @@ void JobWorkspace::setupUi()
             : QStringLiteral("Multi-label off — C/V copies one label"));
     });
     footer->addWidget(multiLabelToggle);
+    footer->addSpacing(12);
+
+    auto* bindKeys = new QPushButton(makeIcon(Icon::Settings),
+                                     QStringLiteral("Bind keys…"), this);
+    bindKeys->setFocusPolicy(Qt::NoFocus);
+    bindKeys->setToolTip(QStringLiteral(
+        "Choose which label Ctrl+number relabels or sets active, and which label Alt+number tags"));
+    connect(bindKeys, &QPushButton::clicked, this, &JobWorkspace::showHotkeyDialog);
+    footer->addWidget(bindKeys);
     footer->addSpacing(12);
     footer->addWidget(statusLabel_, 1);
     footer->addWidget(dirtyLabel_);
@@ -1226,20 +1234,97 @@ void JobWorkspace::stepActiveLabel(int step)
     setStatus(QStringLiteral("Active label: %1").arg(next.name));
 }
 
-void JobWorkspace::applyLabelShortcut(int index, bool addTag)
+void JobWorkspace::showHotkeyDialog()
+{
+    if (labels_.isEmpty()) {
+        setStatus(QStringLiteral("Open a job with labels before binding number keys"), true);
+        return;
+    }
+
+    QDialog dialog(this);
+    dialog.setWindowTitle(QStringLiteral("Bind number keys to classes"));
+    dialog.resize(440, 480);
+
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* intro = new QLabel(
+        QStringLiteral("Ctrl+number relabels the selection, or sets the active class when nothing "
+                       "is selected. Alt+number adds a tag of the same class. Bindings apply to "
+                       "every job in this installation."), &dialog);
+    intro->setWordWrap(true);
+    intro->setStyleSheet(QStringLiteral("color: #888;"));
+    layout->addWidget(intro);
+
+    const QVector<int> digits{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+    QVector<QComboBox*> combos;
+    auto* form = new QFormLayout;
+    for (int digit : digits) {
+        auto* combo = new QComboBox(&dialog);
+        combo->addItem(QStringLiteral("Unassigned"), -1);
+        for (const Label& label : labels_) {
+            combo->addItem(label.name, label.id);
+        }
+        int bound = Settings::instance().hotkeyLabel(digit);
+        if (bound < 0) {
+            const int index = digit == 0 ? 9 : digit - 1;
+            if (index < labels_.size()) {
+                bound = labels_[index].id;
+            }
+        }
+        combo->setCurrentIndex(std::max(0, combo->findData(bound)));
+        form->addRow(QStringLiteral("Ctrl / Alt + %1").arg(digit), combo);
+        combos.push_back(combo);
+    }
+    layout->addLayout(form);
+
+    auto* buttons = new QDialogButtonBox(&dialog);
+    auto* reset = buttons->addButton(QDialogButtonBox::RestoreDefaults);
+    reset->setText(QStringLiteral("First ten classes"));
+    buttons->addButton(QDialogButtonBox::Cancel);
+    buttons->addButton(QDialogButtonBox::Ok);
+    layout->addWidget(buttons);
+
+    connect(reset, &QPushButton::clicked, &dialog, [&dialog, &digits, &combos, this]() {
+        for (int i = 0; i < digits.size(); ++i) {
+            const int index = digits[i] == 0 ? 9 : digits[i] - 1;
+            const int id = index < labels_.size() ? labels_[index].id : -1;
+            combos[i]->setCurrentIndex(std::max(0, combos[i]->findData(id)));
+        }
+    });
+    connect(buttons, &QDialogButtonBox::accepted, &dialog, [&dialog, &digits, &combos, this]() {
+        for (int i = 0; i < digits.size(); ++i) {
+            Settings::instance().setHotkeyLabel(digits[i], combos[i]->currentData().toInt());
+        }
+        Settings::instance().sync();
+        setStatus(QStringLiteral("Number-key bindings saved"));
+        dialog.accept();
+    });
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    dialog.exec();
+}
+
+void JobWorkspace::applyLabelShortcut(int digit, bool addTag)
 {
     if (!model_) {
         return;
     }
-    if (index < 0 || index >= labels_.size()) {
-        const int digit = index == 9 ? 0 : index + 1;
-        setStatus(QStringLiteral("No class is bound to %1+%2 in this job")
-                      .arg(addTag ? QStringLiteral("Alt") : QStringLiteral("Ctrl"))
-                      .arg(digit), true);
+    const QString modifier = addTag ? QStringLiteral("Alt") : QStringLiteral("Ctrl");
+
+    int labelId = Settings::instance().hotkeyLabel(digit);
+    if (labelId < 0) {
+        // Before any explicit binding, keep the original 1-9 / 0 ordering.
+        const int index = digit == 0 ? 9 : digit - 1;
+        if (index >= 0 && index < labels_.size()) {
+            labelId = labels_[index].id;
+        }
+    }
+    const auto found = std::find_if(labels_.cbegin(), labels_.cend(),
+                                    [labelId](const Label& item) { return item.id == labelId; });
+    if (found == labels_.cend()) {
+        setStatus(QStringLiteral("No class from this job is bound to %1+%2 — use Bind keys in the footer")
+                      .arg(modifier).arg(digit), true);
         return;
     }
-
-    const Label& label = labels_[index];
+    const Label& label = *found;
     if (addTag) {
         Tag tag;
         tag.labelId = label.id;

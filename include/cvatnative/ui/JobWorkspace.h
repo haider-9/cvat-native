@@ -84,7 +84,8 @@ private:
     void stepActiveLabel(int step);
     void copyAnnotations();
     void pasteAnnotations();
-    void applyLabelShortcut(int index, bool addTag);
+    void applyLabelShortcut(int digit, bool addTag);
+    void showHotkeyDialog();
     void showNewLabelDialog();
     void showLabelContextMenu(const QString& key, const QPoint& globalPos);
     void showGrowDialog();

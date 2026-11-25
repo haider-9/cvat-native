@@ -196,6 +196,24 @@ void Settings::setUpdateInstallDirectory(const QString& directory)
     d->settings.setValue(QStringLiteral("updates/installDirectory"), directory);
 }
 
+int Settings::hotkeyLabel(int digit) const
+{
+    if (digit < 0 || digit > 9) {
+        return -1;
+    }
+    return d->settings
+        .value(QStringLiteral("hotkeys/label%1").arg(digit), -1)
+        .toInt();
+}
+
+void Settings::setHotkeyLabel(int digit, int labelId)
+{
+    if (digit < 0 || digit > 9) {
+        return;
+    }
+    d->settings.setValue(QStringLiteral("hotkeys/label%1").arg(digit), labelId);
+}
+
 QString Settings::cacheDirectory() const
 {
     const QString root = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);

@@ -71,6 +71,10 @@ public:
     QString updateInstallDirectory() const;
     void setUpdateInstallDirectory(const QString& directory);
 
+    // Digit 0..9 -> label id for the Ctrl/Alt number shortcuts. -1 = unbound.
+    int hotkeyLabel(int digit) const;
+    void setHotkeyLabel(int digit, int labelId);
+
     void sync();
 
 private:
