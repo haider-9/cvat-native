@@ -481,6 +481,15 @@ void AnnotationModel::addShapes(const QVector<Shape>& shapes)
     emit selectionChanged();
 }
 
+void AnnotationModel::addTag(Tag tag)
+{
+    beginMutation();
+    tag.id = nextLocalId_--;
+    tag.frame = currentFrame_;
+    data_.tags.push_back(tag);
+    endMutation();
+}
+
 bool AnnotationModel::updateVisibleShape(const QString& key, const Shape& shape)
 {
     return updateVisibleShapes({{key, shape}}) > 0;

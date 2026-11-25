@@ -544,6 +544,30 @@ void JobWorkspace::setupUi()
         });
     }
 
+    // CVAT-style number hotkeys: Ctrl+N relabels the selection or picks the
+    // active class for new objects; Alt+N adds a tag of that class.
+    auto addLabelHotkey = [this, shouldIgnoreSingleKey](const QString& sequence,
+                                                       int index, bool tag) {
+        auto* action = new QAction(this);
+        action->setShortcut(QKeySequence(sequence));
+        action->setShortcutContext(Qt::WindowShortcut);
+        action->setToolTip(tag
+            ? QStringLiteral("%1 — add a tag of class %2").arg(sequence).arg(index + 1)
+            : QStringLiteral("%1 — relabel selection / set active class %2").arg(sequence).arg(index + 1));
+        this->addAction(action);
+        connect(action, &QAction::triggered, this, [this, shouldIgnoreSingleKey, index, tag]() {
+            if (shouldIgnoreSingleKey()) return;
+            applyLabelShortcut(index, tag);
+        });
+    };
+    for (int digit = 1; digit <= 9; ++digit) {
+        addLabelHotkey(QStringLiteral("Ctrl+%1").arg(digit), digit - 1, false);
+        addLabelHotkey(QStringLiteral("Alt+%1").arg(digit), digit - 1, true);
+    }
+    // 0 maps to the tenth class, following CVAT's 0-9 hotkey row.
+    addLabelHotkey(QStringLiteral("Ctrl+0"), 9, false);
+    addLabelHotkey(QStringLiteral("Alt+0"), 9, true);
+
     auto* copyLabelAction = makeAction(Icon::Copy, QStringLiteral("Copy label"), this);
     copyLabelAction->setShortcut(QKeySequence(QStringLiteral("C")));
     copyLabelAction->setShortcutContext(Qt::WindowShortcut);
@@ -1200,6 +1224,43 @@ void JobWorkspace::stepActiveLabel(int step)
     labelPanel_->setActiveLabel(next.id);
     canvas_->setActiveLabel(next.id);
     setStatus(QStringLiteral("Active label: %1").arg(next.name));
+}
+
+void JobWorkspace::applyLabelShortcut(int index, bool addTag)
+{
+    if (!model_) {
+        return;
+    }
+    if (index < 0 || index >= labels_.size()) {
+        const int digit = index == 9 ? 0 : index + 1;
+        setStatus(QStringLiteral("No class is bound to %1+%2 in this job")
+                      .arg(addTag ? QStringLiteral("Alt") : QStringLiteral("Ctrl"))
+                      .arg(digit), true);
+        return;
+    }
+
+    const Label& label = labels_[index];
+    if (addTag) {
+        Tag tag;
+        tag.labelId = label.id;
+        model_->addTag(tag);
+        const QString msg = QStringLiteral("Added tag '%1' on frame %2; press S to save")
+                                .arg(label.name).arg(model_->currentFrame());
+        setStatus(msg);
+        showToast(QStringLiteral("✓ ") + msg, false, 2500);
+        return;
+    }
+
+    if (!model_->selection().isEmpty()) {
+        if (changeSelectionLabel(label.id) == 0) {
+            setStatus(QStringLiteral("Selected object(s) already use '%1'").arg(label.name));
+        }
+        return;
+    }
+
+    labelPanel_->setActiveLabel(label.id);
+    canvas_->setActiveLabel(label.id);
+    setStatus(QStringLiteral("Active class: %1 — press N to add a new object").arg(label.name));
 }
 
 void JobWorkspace::copyLabel()

@@ -74,6 +74,8 @@ public:
     void addShape(Shape shape);
     // Adds several shapes as one undoable step and selects them all.
     void addShapes(const QVector<Shape>& shapes);
+    // Adds a frame tag as one undoable step.
+    void addTag(Tag tag);
     bool updateVisibleShape(const QString& key, const Shape& shape);
     int updateVisibleShapes(const QVector<QPair<QString, Shape>>& updates);
     bool removeObject(const QString& key);

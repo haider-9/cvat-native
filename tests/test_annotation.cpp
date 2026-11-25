@@ -245,6 +245,26 @@ TEST(AnnotationModel, BatchRelabelChangesOnlyClassAndUndoesAsOneStep)
     EXPECT_EQ(reverted[1].shape.labelId, 2);
 }
 
+TEST(AnnotationModel, AddTagCreatesFrameTagAndUndo)
+{
+    AnnotationModel model;
+    model.setCurrentFrame(4);
+
+    Tag tag;
+    tag.labelId = 3;
+    model.addTag(tag);
+
+    const auto tags = model.visibleTags();
+    ASSERT_EQ(tags.size(), 1);
+    EXPECT_EQ(tags[0].labelId, 3);
+    EXPECT_EQ(tags[0].frame, 4);
+    EXPECT_TRUE(tags[0].id.has_value());
+
+    ASSERT_TRUE(model.canUndo());
+    ASSERT_TRUE(model.undo());
+    EXPECT_TRUE(model.visibleTags().isEmpty());
+}
+
 TEST(Annotation, CopiedTemplateDimensionAndPlacement)
 {
     Shape shape;

@@ -15,7 +15,10 @@ relative positions. Ctrl+click or area-select several labels and use
 **Bridge tools → Change class of selected labels** (Shift+L) to change only
 their class. Double-click an object in the right sidebar (or navigate it with the arrow
 keys), or double-click a class in the Labels list, to zoom the canvas tightly
-around that annotation.
+around that annotation. Number hotkeys follow CVAT: **Ctrl+1…9** (and
+**Ctrl+0** for the tenth class) relabels the selected object(s), or sets the
+active drawing class when nothing is selected; **Alt+1…9 / Alt+0** adds a tag
+of that class to the current frame.
 
 The native UI is intentionally non-administrative: projects, tasks, and jobs
 are fetched and browsed read-only; users open existing jobs, select existing
