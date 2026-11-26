@@ -19,6 +19,7 @@
 #include <QCheckBox>
 #include <QColor>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
@@ -29,6 +30,7 @@
 #include <QIcon>
 #include <QImage>
 #include <QInputDialog>
+#include <QKeyEvent>
 #include <QPixmap>
 #include <QJsonDocument>
 #include <QLabel>
@@ -402,6 +404,14 @@ CopiedTemplate templateFromShape(const Shape& shape, const Label* label,
     }
     return tmpl;
 }
+
+// Single-key shortcuts are ignored while typing; automatic key dispatch uses
+// the same rule so it never redirects focus from a text field.
+bool isTextEditingFocused(QWidget* widget)
+{
+    QWidget* focused = widget ? widget->focusWidget() : nullptr;
+    return focused && (qobject_cast<QLineEdit*>(focused) || qobject_cast<QTextEdit*>(focused));
+}
 } // namespace
 
 JobWorkspace::JobWorkspace(const Job& job, AnnotationsApi* annotations, JobsApi* jobs,
@@ -424,6 +434,13 @@ JobWorkspace::JobWorkspace(const Job& job, AnnotationsApi* annotations, JobsApi*
     connect(frameDebounce_, &QTimer::timeout, this, [this]() {
         requestFrame(requestedFrame_);
     });
+
+    autoDrawTimer_ = new QTimer(this);
+    autoDrawTimer_->setSingleShot(true);
+    connect(autoDrawTimer_, &QTimer::timeout, this, [this]() { dispatchAutoKey(Qt::Key_N); });
+    autoPasteTimer_ = new QTimer(this);
+    autoPasteTimer_->setSingleShot(true);
+    connect(autoPasteTimer_, &QTimer::timeout, this, [this]() { dispatchAutoKey(Qt::Key_V); });
 
     setupUi();
     connectModel();
@@ -462,10 +479,7 @@ void JobWorkspace::setupUi()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    auto shouldIgnoreSingleKey = [this]() -> bool {
-        QWidget* focused = focusWidget();
-        return focused && (qobject_cast<QLineEdit*>(focused) || qobject_cast<QTextEdit*>(focused));
-    };
+    auto shouldIgnoreSingleKey = [this]() -> bool { return isTextEditingFocused(this); };
 
     toolbar_ = new QToolBar(this);
     toolbar_->setMovable(false);
@@ -507,6 +521,7 @@ void JobWorkspace::setupUi()
     });
 
     auto* newLabelAction = makeAction(Icon::Box, QStringLiteral("Draw rectangle"), this);
+    newLabelAction_ = newLabelAction;
     newLabelAction->setShortcut(QKeySequence(QStringLiteral("N")));
     newLabelAction->setShortcutContext(Qt::WindowShortcut);
     newLabelAction->setToolTip(QStringLiteral("Draw a rectangle with the active class (N)"));
@@ -583,6 +598,7 @@ void JobWorkspace::setupUi()
     });
 
     auto* pasteLabelAction = makeAction(Icon::Paste, QStringLiteral("Place label"), this);
+    pasteLabelAction_ = pasteLabelAction;
     pasteLabelAction->setShortcut(QKeySequence(QStringLiteral("V")));
     pasteLabelAction->setShortcutContext(Qt::WindowShortcut);
     pasteLabelAction->setToolTip(QStringLiteral("Place copied label (V) - pastes the whole copied group in Multi-label mode"));
@@ -755,6 +771,59 @@ void JobWorkspace::setupUi()
     labelPanel_ = new LabelPanel(side);
     sideLayout->addWidget(labelPanel_, 1);
 
+    // Auto actions live directly under the Labels card so the toggles are
+    // visible without opening a menu; the same values are also in Settings.
+    auto* autoGroup = new QGroupBox(QStringLiteral("Auto actions"), side);
+    autoGroup->setToolTip(QStringLiteral(
+        "After each new shape, optionally send N to draw again or V to place again"));
+    auto* autoForm = new QFormLayout(autoGroup);
+    autoForm->setContentsMargins(8, 6, 8, 6);
+
+    auto makeDelaySpin = [autoGroup]() {
+        auto* spin = new QSpinBox(autoGroup);
+        spin->setRange(0, 10000);
+        spin->setSingleStep(50);
+        spin->setSuffix(QStringLiteral(" ms"));
+        spin->setToolTip(QStringLiteral("Delay after a shape is created"));
+        return spin;
+    };
+    autoDrawBox_ = new QCheckBox(QStringLiteral("Auto draw (N)"), autoGroup);
+    autoDrawDelaySpin_ = makeDelaySpin();
+    autoForm->addRow(autoDrawBox_, autoDrawDelaySpin_);
+    autoPasteBox_ = new QCheckBox(QStringLiteral("Auto paste (V)"), autoGroup);
+    autoPasteDelaySpin_ = makeDelaySpin();
+    autoForm->addRow(autoPasteBox_, autoPasteDelaySpin_);
+
+    auto& settings = Settings::instance();
+    autoDrawBox_->setChecked(settings.autoDrawAfterCreate());
+    autoDrawDelaySpin_->setValue(settings.autoDrawDelayMs());
+    autoPasteBox_->setChecked(settings.autoPasteAfterCreate());
+    autoPasteDelaySpin_->setValue(settings.autoPasteDelayMs());
+    autoDrawDelaySpin_->setEnabled(autoDrawBox_->isChecked());
+    autoPasteDelaySpin_->setEnabled(autoPasteBox_->isChecked());
+
+    auto persistAuto = [this]() {
+        auto& store = Settings::instance();
+        store.setAutoDrawAfterCreate(autoDrawBox_->isChecked());
+        store.setAutoDrawDelayMs(autoDrawDelaySpin_->value());
+        store.setAutoPasteAfterCreate(autoPasteBox_->isChecked());
+        store.setAutoPasteDelayMs(autoPasteDelaySpin_->value());
+        store.sync();
+    };
+    connect(autoDrawBox_, &QCheckBox::toggled, this, [this, persistAuto](bool on) {
+        autoDrawDelaySpin_->setEnabled(on);
+        persistAuto();
+    });
+    connect(autoPasteBox_, &QCheckBox::toggled, this, [this, persistAuto](bool on) {
+        autoPasteDelaySpin_->setEnabled(on);
+        persistAuto();
+    });
+    connect(autoDrawDelaySpin_, &QSpinBox::valueChanged, this,
+            [persistAuto](int) { persistAuto(); });
+    connect(autoPasteDelaySpin_, &QSpinBox::valueChanged, this,
+            [persistAuto](int) { persistAuto(); });
+    sideLayout->addWidget(autoGroup);
+
     auto* objectGroup = new QGroupBox(QStringLiteral("Objects on this frame"), side);
     auto* objectLayout = new QVBoxLayout(objectGroup);
     objectList_ = new QListWidget(objectGroup);
@@ -831,6 +900,10 @@ void JobWorkspace::setupUi()
 
     connect(canvas_, &AnnotationCanvas::statusMessage, this, [this](const QString& message) {
         setStatus(message);
+    });
+    connect(canvas_, &AnnotationCanvas::shapeCreated, this, [this](const QString&) {
+        scheduleAutoKey(true);
+        scheduleAutoKey(false);
     });
     connect(canvas_, &AnnotationCanvas::zoomChanged, this, [this](double zoom) {
         setStatus(QStringLiteral("Zoom %1%").arg(static_cast<int>(zoom * 100)));
@@ -1264,6 +1337,33 @@ void JobWorkspace::stepActiveLabel(int step)
     labelPanel_->setActiveLabel(next.id);
     canvas_->setActiveLabel(next.id);
     setStatus(QStringLiteral("Active label: %1").arg(next.name));
+}
+
+void JobWorkspace::scheduleAutoKey(bool draw)
+{
+    QTimer* timer = draw ? autoDrawTimer_ : autoPasteTimer_;
+    const QCheckBox* box = draw ? autoDrawBox_ : autoPasteBox_;
+    const QSpinBox* spin = draw ? autoDrawDelaySpin_ : autoPasteDelaySpin_;
+    if (!timer || !box || !spin || !box->isChecked()) {
+        return;
+    }
+    // start() restarts a pending timer, so a burst of shapes produces one key
+    // press per shape instead of several overlapping ones.
+    timer->start(spin->value());
+}
+
+void JobWorkspace::dispatchAutoKey(Qt::Key key)
+{
+    QAction* action = key == Qt::Key_N ? newLabelAction_ : pasteLabelAction_;
+    if (!action || !action->isEnabled() || isTextEditingFocused(this)) {
+        return;
+    }
+    // Send real key events rather than calling the slots directly: the N/V
+    // QActions (and their focus guard) stay the single source of truth.
+    QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier);
+    QCoreApplication::sendEvent(this, &press);
+    QKeyEvent release(QEvent::KeyRelease, key, Qt::NoModifier);
+    QCoreApplication::sendEvent(this, &release);
 }
 
 void JobWorkspace::showHotkeyDialog()
@@ -2767,11 +2867,24 @@ void JobWorkspace::changeOccluded(bool occluded)
 
 void JobWorkspace::applySettings()
 {
+    const auto& settings = Settings::instance();
     if (canvas_) {
-        canvas_->setGuideColor(QColor(Settings::instance().guideColor()));
+        canvas_->setGuideColor(QColor(settings.guideColor()));
     }
     if (autosaveTimer_) {
-        autosaveTimer_->setInterval(std::max(5, Settings::instance().autosaveSeconds()) * 1000);
+        autosaveTimer_->setInterval(std::max(5, settings.autosaveSeconds()) * 1000);
+    }
+    if (autoDrawBox_ && autoDrawDelaySpin_ && autoPasteBox_ && autoPasteDelaySpin_) {
+        const QSignalBlocker drawBlock(autoDrawBox_);
+        const QSignalBlocker drawDelayBlock(autoDrawDelaySpin_);
+        const QSignalBlocker pasteBlock(autoPasteBox_);
+        const QSignalBlocker pasteDelayBlock(autoPasteDelaySpin_);
+        autoDrawBox_->setChecked(settings.autoDrawAfterCreate());
+        autoDrawDelaySpin_->setValue(settings.autoDrawDelayMs());
+        autoPasteBox_->setChecked(settings.autoPasteAfterCreate());
+        autoPasteDelaySpin_->setValue(settings.autoPasteDelayMs());
+        autoDrawDelaySpin_->setEnabled(autoDrawBox_->isChecked());
+        autoPasteDelaySpin_->setEnabled(autoPasteBox_->isChecked());
     }
 }
 

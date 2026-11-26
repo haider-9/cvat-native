@@ -11,6 +11,7 @@
 
 class QAction;
 class QActionGroup;
+class QCheckBox;
 class QDialog;
 class QLabel;
 class QListWidget;
@@ -86,6 +87,8 @@ private:
     void copyAnnotations();
     void pasteAnnotations();
     void applyLabelShortcut(int digit, bool addTag);
+    void scheduleAutoKey(bool draw);
+    void dispatchAutoKey(Qt::Key key);
     void showHotkeyDialog();
     void showNewLabelDialog();
     void showLabelContextMenu(const QString& key, const QPoint& globalPos);
@@ -129,8 +132,16 @@ private:
     QAction* deleteAction_ = nullptr;
     QAction* relabelSelectionAction_ = nullptr;
     QActionGroup* toolGroup_ = nullptr;
+    QAction* newLabelAction_ = nullptr;
+    QAction* pasteLabelAction_ = nullptr;
     QTimer* autosaveTimer_ = nullptr;
     QTimer* frameDebounce_ = nullptr;
+    QTimer* autoDrawTimer_ = nullptr;
+    QTimer* autoPasteTimer_ = nullptr;
+    QCheckBox* autoDrawBox_ = nullptr;
+    QSpinBox* autoDrawDelaySpin_ = nullptr;
+    QCheckBox* autoPasteBox_ = nullptr;
+    QSpinBox* autoPasteDelaySpin_ = nullptr;
     RequestHandle* frameRequest_ = nullptr;
     quint64 frameGeneration_ = 0;
     quint64 lastSavedRevision_ = 0;

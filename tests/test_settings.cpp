@@ -26,3 +26,22 @@ TEST(Settings, BindingsRejectOutOfRangeDigits)
     EXPECT_EQ(settings.ctrlHotkeyLabel(-1), -1);
     EXPECT_EQ(settings.altHotkeyLabel(10), -1);
 }
+
+TEST(Settings, AutoActionOptionsAreIndependentAndBounded)
+{
+    auto& settings = Settings::instance();
+    settings.setAutoDrawAfterCreate(true);
+    settings.setAutoDrawDelayMs(400);
+    settings.setAutoPasteAfterCreate(false);
+    settings.setAutoPasteDelayMs(75);
+
+    EXPECT_TRUE(settings.autoDrawAfterCreate());
+    EXPECT_EQ(settings.autoDrawDelayMs(), 400);
+    EXPECT_FALSE(settings.autoPasteAfterCreate());
+    EXPECT_EQ(settings.autoPasteDelayMs(), 75);
+
+    settings.setAutoDrawDelayMs(-10);
+    settings.setAutoPasteDelayMs(20000);
+    EXPECT_EQ(settings.autoDrawDelayMs(), 0);
+    EXPECT_EQ(settings.autoPasteDelayMs(), 10000);
+}

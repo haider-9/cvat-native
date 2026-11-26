@@ -27,7 +27,7 @@ SettingsDialog::SettingsDialog(ApiClient* client, QWidget* parent)
     : QDialog(parent), client_(client)
 {
     setWindowTitle(QStringLiteral("Settings"));
-    resize(520, 460);
+    resize(520, 580);
 
     auto* layout = new QVBoxLayout(this);
     auto* form = new QFormLayout;
@@ -82,6 +82,34 @@ SettingsDialog::SettingsDialog(ApiClient* client, QWidget* parent)
     showDeletedBox_ = new QCheckBox(QStringLiteral("Show deleted frames"), this);
     form->addRow(QString(), showDeletedBox_);
 
+    auto addAutoDelaySpin = [this]() {
+        auto* spin = new QSpinBox(this);
+        spin->setRange(0, 10000);
+        spin->setSingleStep(50);
+        spin->setSuffix(QStringLiteral(" ms"));
+        spin->setToolTip(QStringLiteral(
+            "Wait this long after a shape is created before sending the shortcut"));
+        return spin;
+    };
+
+    autoDrawBox_ = new QCheckBox(
+        QStringLiteral("Auto draw: send N after a shape is created"), this);
+    autoDrawBox_->setToolTip(QStringLiteral(
+        "Repeats draw mode automatically so you can draw several boxes in a row"));
+    form->addRow(QStringLiteral("Auto draw"), autoDrawBox_);
+    autoDrawDelaySpin_ = addAutoDelaySpin();
+    form->addRow(QStringLiteral("Auto draw delay"), autoDrawDelaySpin_);
+    connect(autoDrawBox_, &QCheckBox::toggled, autoDrawDelaySpin_, &QSpinBox::setEnabled);
+
+    autoPasteBox_ = new QCheckBox(
+        QStringLiteral("Auto paste: send V after a shape is created"), this);
+    autoPasteBox_->setToolTip(QStringLiteral(
+        "Repeats label placement automatically so you can paste several copies in a row"));
+    form->addRow(QStringLiteral("Auto paste"), autoPasteBox_);
+    autoPasteDelaySpin_ = addAutoDelaySpin();
+    form->addRow(QStringLiteral("Auto paste delay"), autoPasteDelaySpin_);
+    connect(autoPasteBox_, &QCheckBox::toggled, autoPasteDelaySpin_, &QSpinBox::setEnabled);
+
     themeCombo_ = new QComboBox(this);
     themeCombo_->addItem(QStringLiteral("System"), QStringLiteral("system"));
     themeCombo_->addItem(QStringLiteral("Light"), QStringLiteral("light"));
@@ -135,6 +163,10 @@ void SettingsDialog::load()
     autosaveSpin_->setValue(settings.autosaveSeconds());
     remoteAutosaveBox_->setChecked(settings.remoteAutosave());
     showDeletedBox_->setChecked(settings.showDeletedFrames());
+    autoDrawBox_->setChecked(settings.autoDrawAfterCreate());
+    autoDrawDelaySpin_->setValue(settings.autoDrawDelayMs());
+    autoPasteBox_->setChecked(settings.autoPasteAfterCreate());
+    autoPasteDelaySpin_->setValue(settings.autoPasteDelayMs());
 
     themeCombo_->setCurrentIndex(std::max(0, themeCombo_->findData(settings.themeMode())));
     guideHex_ = settings.guideColor();
@@ -197,6 +229,10 @@ void SettingsDialog::save()
     settings.setAutosaveSeconds(autosaveSpin_->value());
     settings.setRemoteAutosave(remoteAutosaveBox_->isChecked());
     settings.setShowDeletedFrames(showDeletedBox_->isChecked());
+    settings.setAutoDrawAfterCreate(autoDrawBox_->isChecked());
+    settings.setAutoDrawDelayMs(autoDrawDelaySpin_->value());
+    settings.setAutoPasteAfterCreate(autoPasteBox_->isChecked());
+    settings.setAutoPasteDelayMs(autoPasteDelaySpin_->value());
     settings.setThemeMode(themeCombo_->currentData().toString());
     settings.setGuideColor(guideHex_);
     settings.setFontFamily(fontCombo_->currentFont().family());

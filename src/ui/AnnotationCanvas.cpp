@@ -679,6 +679,7 @@ void AnnotationCanvas::finishPolygon()
     }
     clearPendingCreation();
     model_->addShape(shape);
+    emit shapeCreated(model_->selection().isEmpty() ? QString() : *model_->selection().begin());
 }
 
 void AnnotationCanvas::beginMoveOrResize(AnnotationItem* item, const QPointF& scenePosition,
@@ -898,6 +899,7 @@ void AnnotationCanvas::mousePressEvent(QMouseEvent* event)
         shape.frame = model_->currentFrame();
         shape.zOrder = model_->nextZOrder();
         model_->addShape(shape);
+        emit shapeCreated(model_->selection().isEmpty() ? QString() : *model_->selection().begin());
         return;
     }
 

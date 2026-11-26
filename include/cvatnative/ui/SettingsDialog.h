@@ -38,6 +38,10 @@ private:
     QSpinBox* autosaveSpin_ = nullptr;
     QCheckBox* remoteAutosaveBox_ = nullptr;
     QCheckBox* showDeletedBox_ = nullptr;
+    QCheckBox* autoDrawBox_ = nullptr;
+    QSpinBox* autoDrawDelaySpin_ = nullptr;
+    QCheckBox* autoPasteBox_ = nullptr;
+    QSpinBox* autoPasteDelaySpin_ = nullptr;
     QComboBox* themeCombo_ = nullptr;
     QPushButton* guideButton_ = nullptr;
     QString guideHex_;

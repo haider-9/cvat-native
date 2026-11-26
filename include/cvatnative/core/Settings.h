@@ -60,6 +60,17 @@ public:
     bool multiLabelCopy() const; // area-select + copy/paste several labels at once
     void setMultiLabelCopy(bool enabled);
 
+    // Re-dispatch N or V a short delay after a shape is created, so repeated
+    // drawing/pasting does not need a key press for every object.
+    bool autoDrawAfterCreate() const;
+    void setAutoDrawAfterCreate(bool enabled);
+    int autoDrawDelayMs() const;
+    void setAutoDrawDelayMs(int ms);
+    bool autoPasteAfterCreate() const;
+    void setAutoPasteAfterCreate(bool enabled);
+    int autoPasteDelayMs() const;
+    void setAutoPasteDelayMs(int ms);
+
     bool checkUpdatesOnStartup() const;
     void setCheckUpdatesOnStartup(bool enabled);
 

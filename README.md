@@ -25,6 +25,13 @@ list, Ctrl/Shift-click several classes and use **Hide**, **Show**, or **Show all
 to bulk-hide or reveal their objects and tags on every frame; hidden classes are
 greyed out and are excluded from selection and the object list.
 
+The sidebar's **Auto actions** card, directly under **Labels** (also in
+**Settings**), can repeat the last annotation step: after each shape is created
+it optionally dispatches **N** to return to rectangle drawing or **V** to start
+placing the copied label again.
+Each action has its own delay in milliseconds, so rapid drawing or pasting does
+not require pressing the same key for every object.
+
 The native UI is intentionally non-administrative: projects, tasks, and jobs
 are fetched and browsed read-only; users open existing jobs, select existing
 CVAT label classes, draw rectangle annotations, edit or delete selected

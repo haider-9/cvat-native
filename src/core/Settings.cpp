@@ -4,6 +4,8 @@
 #include <QSettings>
 #include <QStandardPaths>
 
+#include <algorithm>
+
 namespace cvat {
 
 class Settings::Private {
@@ -164,6 +166,48 @@ bool Settings::multiLabelCopy() const
 void Settings::setMultiLabelCopy(bool enabled)
 {
     d->settings.setValue(QStringLiteral("editing/multiLabelCopy"), enabled);
+}
+
+bool Settings::autoDrawAfterCreate() const
+{
+    return d->settings.value(QStringLiteral("editing/autoDrawAfterCreate"), false).toBool();
+}
+
+void Settings::setAutoDrawAfterCreate(bool enabled)
+{
+    d->settings.setValue(QStringLiteral("editing/autoDrawAfterCreate"), enabled);
+}
+
+int Settings::autoDrawDelayMs() const
+{
+    return std::clamp(d->settings.value(QStringLiteral("editing/autoDrawDelayMs"), 150).toInt(),
+                      0, 10000);
+}
+
+void Settings::setAutoDrawDelayMs(int ms)
+{
+    d->settings.setValue(QStringLiteral("editing/autoDrawDelayMs"), std::clamp(ms, 0, 10000));
+}
+
+bool Settings::autoPasteAfterCreate() const
+{
+    return d->settings.value(QStringLiteral("editing/autoPasteAfterCreate"), false).toBool();
+}
+
+void Settings::setAutoPasteAfterCreate(bool enabled)
+{
+    d->settings.setValue(QStringLiteral("editing/autoPasteAfterCreate"), enabled);
+}
+
+int Settings::autoPasteDelayMs() const
+{
+    return std::clamp(d->settings.value(QStringLiteral("editing/autoPasteDelayMs"), 150).toInt(),
+                      0, 10000);
+}
+
+void Settings::setAutoPasteDelayMs(int ms)
+{
+    d->settings.setValue(QStringLiteral("editing/autoPasteDelayMs"), std::clamp(ms, 0, 10000));
 }
 
 bool Settings::checkUpdatesOnStartup() const
