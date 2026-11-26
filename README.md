@@ -8,10 +8,11 @@ and an annotation-focused dashboard and workspace.
 
 The dashboard opens on a **Home** landing page with a local history of
 recently opened projects, tasks and jobs. The workspace supports rectangle
-annotation editing plus **multi-label area copy/paste**: enable *Multi-label*
-in the job footer, drag a rectangle fully around several labels, press **C**,
-then **V** to reproduce them with their original classes, attributes and
-relative positions. Ctrl+click or area-select several labels and use
+annotation editing plus **multi-label area copy/paste**: enable the toolbar's
+**Selection box** (**E**, mirrored by *Multi-label* in the job footer), drag a
+rectangle fully around several labels, press **C**, then **V** to reproduce
+them with their original classes, attributes and relative positions.
+Ctrl+click or area-select several labels and use
 **Bridge tools → Change class of selected labels** (Shift+L) to change only
 their class. Double-click an object in the right sidebar (or navigate it with the arrow
 keys), or double-click a class in the Labels list, to zoom the canvas tightly
@@ -23,7 +24,10 @@ assign any job label to any number; Ctrl and Alt have two independent sets of
 ten bindings that persist across jobs and restarts. In the sidebar's **Labels**
 list, Ctrl/Shift-click several classes and use **Hide**, **Show**, or **Show all**
 to bulk-hide or reveal their objects and tags on every frame; hidden classes are
-greyed out and are excluded from selection and the object list.
+shown in italics with `(hidden)` and are excluded from selection and the object
+list. The toolbar's **sidebar** button collapses the right panel, and the frame
+slider previews the target page while it is dragged and navigates only on
+release.
 
 The sidebar's **Auto actions** card, directly under **Labels** (also in
 **Settings**), can repeat the last annotation step: after each shape is created

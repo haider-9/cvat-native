@@ -4,6 +4,7 @@
 #include <QString>
 
 class QAction;
+class QColor;
 class QObject;
 class QToolButton;
 class QWidget;
@@ -33,6 +34,8 @@ enum class Icon {
     Previous,
     Next,
     Pointer,
+    SelectionBox,
+    Sidebar,
     ZoomIn,
     ZoomOut,
     FitView,
@@ -41,13 +44,22 @@ enum class Icon {
 };
 
 // Requires a QGuiApplication (the palette is read when the icon is made).
+// makeCheckedIcon() uses the highlighted-text colour so checked buttons stay
+// legible on the highlighted background.
 QIcon makeIcon(Icon icon);
+QIcon makeIcon(Icon icon, const QColor& color);
+QIcon makeCheckedIcon(Icon icon);
 
 // Actions and buttons made with these helpers remember their icon, so
-// refreshIcons() can redraw them after the palette changes.
+// refreshIcons() can redraw them after the palette changes. Checkable helpers
+// also swap to the high-contrast icon when checked.
 QAction* makeAction(Icon icon, const QString& text, QObject* parent);
+QAction* makeCheckableAction(Icon icon, const QString& text, QObject* parent);
 QAction* addIconAction(QWidget* widget, Icon icon, const QString& text);
 void setButtonIcon(QToolButton* button, Icon icon);
+void setCheckableButtonIcon(QToolButton* button, Icon icon);
+void refreshIcon(QAction* action);
+void refreshIcon(QToolButton* button);
 void refreshIcons(QWidget* root);
 
 } // namespace cvat

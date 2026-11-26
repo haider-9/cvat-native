@@ -1,6 +1,7 @@
 #include "cvatnative/ui/Icons.h"
 
 #include <QAction>
+#include <QColor>
 #include <QGuiApplication>
 #include <QPainter>
 #include <QPainterPath>
@@ -167,6 +168,27 @@ void drawIcon(QPainter& p, Icon icon)
                                  QPointF(15, 20), QPointF(12, 14), QPointF(17, 14), QPointF(6, 3)});
         break;
 
+    case Icon::SelectionBox: {
+        // Dashed marquee with corner handles: drag to select, not to annotate.
+        const QPen solid = p.pen();
+        QPen dashed = solid;
+        dashed.setStyle(Qt::DashLine);
+        p.setPen(dashed);
+        p.drawRect(QRectF(4, 4, 16, 16));
+        p.setPen(solid);
+        for (const QPointF& corner : {QPointF(4, 4), QPointF(20, 4), QPointF(4, 20), QPointF(20, 20)}) {
+            p.drawRect(QRectF(corner.x() - 1, corner.y() - 1, 2, 2));
+        }
+        break;
+    }
+
+    case Icon::Sidebar:
+        // Page outline with a fixed panel on the right.
+        p.drawRect(QRectF(3, 4, 18, 16));
+        p.drawLine(QPointF(16, 4), QPointF(16, 20));
+        p.drawLine(QPointF(19, 9), QPointF(19, 15));
+        break;
+
     case Icon::ZoomIn:
     case Icon::ZoomOut:
         p.drawEllipse(QPointF(10, 10), 7, 7);
@@ -197,10 +219,8 @@ void drawIcon(QPainter& p, Icon icon)
 
 } // namespace
 
-QIcon makeIcon(Icon icon)
+QIcon makeIcon(Icon icon, const QColor& color)
 {
-    const QColor color = QGuiApplication::palette().color(QPalette::WindowText);
-
     QIcon result;
     for (int size : kSizes) {
         QPixmap pixmap(size, size);
@@ -219,14 +239,57 @@ QIcon makeIcon(Icon icon)
     return result;
 }
 
+QIcon makeIcon(Icon icon)
+{
+    return makeIcon(icon, QGuiApplication::palette().color(QPalette::WindowText));
+}
+
+QIcon makeCheckedIcon(Icon icon)
+{
+    return makeIcon(icon, QGuiApplication::palette().color(QPalette::HighlightedText));
+}
+
 namespace {
 constexpr const char* kIconProperty = "cvatIcon";
+constexpr const char* kCheckedIconProperty = "cvatCheckedIcon";
+
+void applyIcon(QAction* action)
+{
+    const QVariant value = action->property(kIconProperty);
+    if (!value.isValid()) {
+        return;
+    }
+    const Icon icon = static_cast<Icon>(value.toInt());
+    const bool checked = action->isCheckable() &&
+        action->property(kCheckedIconProperty).toBool() && action->isChecked();
+    action->setIcon(checked ? makeCheckedIcon(icon) : makeIcon(icon));
+}
+
+void applyIcon(QToolButton* button)
+{
+    const QVariant value = button->property(kIconProperty);
+    if (!value.isValid()) {
+        return;
+    }
+    const Icon icon = static_cast<Icon>(value.toInt());
+    const bool checked = button->isCheckable() &&
+        button->property(kCheckedIconProperty).toBool() && button->isChecked();
+    button->setIcon(checked ? makeCheckedIcon(icon) : makeIcon(icon));
+}
 } // namespace
 
 QAction* makeAction(Icon icon, const QString& text, QObject* parent)
 {
     auto* action = new QAction(makeIcon(icon), text, parent);
     action->setProperty(kIconProperty, static_cast<int>(icon));
+    return action;
+}
+
+QAction* makeCheckableAction(Icon icon, const QString& text, QObject* parent)
+{
+    auto* action = makeAction(icon, text, parent);
+    action->setCheckable(true);
+    action->setProperty(kCheckedIconProperty, true);
     return action;
 }
 
@@ -243,22 +306,33 @@ void setButtonIcon(QToolButton* button, Icon icon)
     button->setProperty(kIconProperty, static_cast<int>(icon));
 }
 
+void setCheckableButtonIcon(QToolButton* button, Icon icon)
+{
+    button->setIcon(makeIcon(icon));
+    button->setProperty(kIconProperty, static_cast<int>(icon));
+    button->setProperty(kCheckedIconProperty, true);
+}
+
+void refreshIcon(QAction* action)
+{
+    applyIcon(action);
+}
+
+void refreshIcon(QToolButton* button)
+{
+    applyIcon(button);
+}
+
 void refreshIcons(QWidget* root)
 {
     if (!root) {
         return;
     }
     for (QAction* action : root->findChildren<QAction*>()) {
-        const QVariant value = action->property(kIconProperty);
-        if (value.isValid()) {
-            action->setIcon(makeIcon(static_cast<Icon>(value.toInt())));
-        }
+        refreshIcon(action);
     }
     for (QToolButton* button : root->findChildren<QToolButton*>()) {
-        const QVariant value = button->property(kIconProperty);
-        if (value.isValid()) {
-            button->setIcon(makeIcon(static_cast<Icon>(value.toInt())));
-        }
+        refreshIcon(button);
     }
 }
 

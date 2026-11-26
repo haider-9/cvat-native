@@ -8,6 +8,7 @@
 #include <QPointer>
 
 #include <functional>
+#include <QList>
 
 class QAction;
 class QActionGroup;
@@ -18,8 +19,10 @@ class QListWidget;
 class QResizeEvent;
 class QSlider;
 class QSpinBox;
+class QSplitter;
 class QTimer;
 class QToolBar;
+class QToolButton;
 
 namespace cvat {
 
@@ -78,6 +81,7 @@ private:
     void setStatus(const QString& message, bool error = false);
     void showToast(const QString& message, bool isError = false, int durationMs = 3000);
     void setTool(int tool);
+    void activateTool(CanvasTool tool);
 
     void saveRemote(std::function<void(bool)> done = {}, bool silent = false);
     void saveLocalSnapshot();
@@ -122,10 +126,15 @@ private:
     QLabel* dirtyLabel_ = nullptr;
     QSpinBox* pageSpin_ = nullptr;
     QLabel* pageTotalLabel_ = nullptr;
+    QLabel* framePreviewLabel_ = nullptr;
     ToastWidget* toast_ = nullptr;
-    QSpinBox* frameSpin_ = nullptr;
     QSlider* frameSlider_ = nullptr;
+    bool frameSliderDragging_ = false;
     QToolBar* toolbar_ = nullptr;
+    QSplitter* splitter_ = nullptr;
+    QWidget* sidePanel_ = nullptr;
+    QList<int> sidebarSizes_;
+    QToolButton* sidebarToggle_ = nullptr;
     QAction* saveAction_ = nullptr;
     QAction* undoAction_ = nullptr;
     QAction* redoAction_ = nullptr;
@@ -134,6 +143,8 @@ private:
     QActionGroup* toolGroup_ = nullptr;
     QAction* newLabelAction_ = nullptr;
     QAction* pasteLabelAction_ = nullptr;
+    QAction* boxSelectAction_ = nullptr;
+    QCheckBox* multiLabelBox_ = nullptr;
     QTimer* autosaveTimer_ = nullptr;
     QTimer* frameDebounce_ = nullptr;
     QTimer* autoDrawTimer_ = nullptr;

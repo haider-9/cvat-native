@@ -43,6 +43,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSet>
+#include <QSize>
 #include <QSignalBlocker>
 #include <QSlider>
 #include <QSpinBox>
@@ -51,6 +52,7 @@
 #include <QToolBar>
 #include <QToolButton>
 #include <QFormLayout>
+#include <QFontMetrics>
 #include <QFrame>
 #include <QResizeEvent>
 #include <QTextEdit>
@@ -483,9 +485,28 @@ void JobWorkspace::setupUi()
 
     toolbar_ = new QToolBar(this);
     toolbar_->setMovable(false);
-    toolbar_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    toolbar_->setIconSize(QSize(20, 20));
+    toolbar_->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    toolbar_->setStyleSheet(QStringLiteral(
+        "QToolBar { spacing: 4px; padding: 4px 6px; border-bottom: 1px solid palette(mid); }"
+        "QToolButton { padding: 4px; border-radius: 5px; }"
+        "QToolButton:hover { background-color: palette(button); }"
+        "QToolButton:checked { background-color: palette(highlight); "
+        "color: palette(highlighted-text); }"
+        "QToolButton:checked:hover { background-color: palette(highlight); }"));
     layout->addWidget(toolbar_);
 
+    // Only the two most common actions keep their labels; everything else is
+    // icon-only, with the name and shortcut carried by its tooltip.
+    auto addPrimaryButton = [this](QAction* action) {
+        auto* button = new QToolButton(toolbar_);
+        button->setDefaultAction(action);
+        button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        button->setFocusPolicy(Qt::NoFocus);
+        toolbar_->addWidget(button);
+    };
+
+    // Left: navigation and the current job.
     auto* back = addIconAction(toolbar_, Icon::Back, QStringLiteral("Back"));
     back->setShortcut(QKeySequence(QStringLiteral("Alt+Left")));
     back->setShortcutContext(Qt::WindowShortcut);
@@ -494,18 +515,100 @@ void JobWorkspace::setupUi()
 
     titleLabel_ = new QLabel(this);
     titleLabel_->setStyleSheet(QStringLiteral("font-weight: 600; padding: 0 12px;"));
+    titleLabel_->setMaximumWidth(280);
     toolbar_->addWidget(titleLabel_);
 
     toolbar_->addSeparator();
+
+    // Centre: annotation actions.
     saveAction_ = makeAction(Icon::Save, QStringLiteral("Save"), this);
     saveAction_->setShortcuts({QKeySequence(QStringLiteral("S")), QKeySequence::Save});
     saveAction_->setShortcutContext(Qt::WindowShortcut);
     saveAction_->setToolTip(QStringLiteral("Save to server (S or Ctrl+S)"));
     this->addAction(saveAction_);
-    toolbar_->addAction(saveAction_);
+    addPrimaryButton(saveAction_);
     connect(saveAction_, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
         if (shouldIgnoreSingleKey()) return;
         saveRemote();
+    });
+
+    toolGroup_ = new QActionGroup(this);
+    toolGroup_->setExclusive(true);
+    auto addTool = [this](Icon icon, const QString& text, CanvasTool tool) {
+        auto* action = makeCheckableAction(icon, text, this);
+        action->setData(static_cast<int>(tool));
+        this->addAction(action);
+        toolGroup_->addAction(action);
+        connect(action, &QAction::toggled, action, [action]() { refreshIcon(action); });
+        return action;
+    };
+    auto* selectTool = addTool(Icon::Pointer, QStringLiteral("Select"), CanvasTool::Select);
+    selectTool->setShortcut(QKeySequence(QStringLiteral("Q")));
+    selectTool->setShortcutContext(Qt::WindowShortcut);
+    selectTool->setToolTip(QStringLiteral("Select and edit annotations (Q)"));
+    selectTool->setChecked(true);
+    toolbar_->addAction(selectTool);
+
+    // A visible marquee tool makes area selection discoverable. The footer's
+    // Multi-label checkbox stays in sync with this button.
+    boxSelectAction_ = makeCheckableAction(Icon::SelectionBox, QStringLiteral("Selection box"), this);
+    boxSelectAction_->setShortcut(QKeySequence(QStringLiteral("E")));
+    boxSelectAction_->setShortcutContext(Qt::WindowShortcut);
+    boxSelectAction_->setToolTip(QStringLiteral(
+        "Drag a rectangle to select labels (E, Ctrl to add to the selection)"));
+    this->addAction(boxSelectAction_);
+    toolbar_->addAction(boxSelectAction_);
+    connect(boxSelectAction_, &QAction::toggled, this, [this](bool on) {
+        refreshIcon(boxSelectAction_);
+        if (on) {
+            activateTool(CanvasTool::Select);
+        }
+        canvas_->setAreaSelectionEnabled(on);
+        Settings::instance().setMultiLabelCopy(on);
+        Settings::instance().sync();
+        if (multiLabelBox_ && multiLabelBox_->isChecked() != on) {
+            const QSignalBlocker blocker(multiLabelBox_);
+            multiLabelBox_->setChecked(on);
+        }
+    });
+
+    // Rectangle needs a state action in the group, but the visible control is
+    // the Draw button below; both N and R trigger that one button.
+    addTool(Icon::Box, QStringLiteral("Rectangle"), CanvasTool::Rectangle);
+    connect(toolGroup_, &QActionGroup::triggered, this, [this, shouldIgnoreSingleKey](QAction* action) {
+        if (shouldIgnoreSingleKey()) return;
+        if (canvas_->areaSelectionEnabled()) {
+            canvas_->setAreaSelectionEnabled(false);
+            if (boxSelectAction_) {
+                const QSignalBlocker blocker(boxSelectAction_);
+                boxSelectAction_->setChecked(false);
+                refreshIcon(boxSelectAction_);
+            }
+            if (multiLabelBox_) {
+                const QSignalBlocker blocker(multiLabelBox_);
+                multiLabelBox_->setChecked(false);
+            }
+        }
+        setTool(action->data().toInt());
+    });
+
+    auto* newLabelAction = makeAction(Icon::Box, QStringLiteral("Draw"), this);
+    newLabelAction_ = newLabelAction;
+    newLabelAction->setShortcuts({QKeySequence(QStringLiteral("N")), QKeySequence(QStringLiteral("R"))});
+    newLabelAction->setShortcutContext(Qt::WindowShortcut);
+    newLabelAction->setToolTip(QStringLiteral("Draw a rectangle with the active class (N or R)"));
+    newLabelAction->setStatusTip(QStringLiteral("Start drawing a rectangle with the active class (N or R)"));
+    this->addAction(newLabelAction);
+    addPrimaryButton(newLabelAction);
+    connect(newLabelAction, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
+        if (shouldIgnoreSingleKey()) return;
+        const Label* activeLabel = model_->label(labelPanel_->activeLabel());
+        if (!activeLabel) {
+            setStatus(QStringLiteral("Choose a class first (L)"), true);
+            return;
+        }
+        activateTool(CanvasTool::Rectangle);
+        setStatus(QStringLiteral("Ready to draw '%1' (N/R)").arg(activeLabel->name));
     });
 
     auto* changeClassAction = makeAction(Icon::Tag, QStringLiteral("Change class"), this);
@@ -518,31 +621,6 @@ void JobWorkspace::setupUi()
     connect(changeClassAction, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
         if (shouldIgnoreSingleKey()) return;
         showNewLabelDialog();
-    });
-
-    auto* newLabelAction = makeAction(Icon::Box, QStringLiteral("Draw rectangle"), this);
-    newLabelAction_ = newLabelAction;
-    newLabelAction->setShortcut(QKeySequence(QStringLiteral("N")));
-    newLabelAction->setShortcutContext(Qt::WindowShortcut);
-    newLabelAction->setToolTip(QStringLiteral("Draw a rectangle with the active class (N)"));
-    newLabelAction->setStatusTip(QStringLiteral("Start drawing a rectangle with the active class (N)"));
-    this->addAction(newLabelAction);
-    toolbar_->addAction(newLabelAction);
-    connect(newLabelAction, &QAction::triggered, this, [this, shouldIgnoreSingleKey]() {
-        if (shouldIgnoreSingleKey()) return;
-        const Label* activeLabel = model_->label(labelPanel_->activeLabel());
-        if (!activeLabel) {
-            setStatus(QStringLiteral("Choose a class first (L)"), true);
-            return;
-        }
-        for (auto* action : toolGroup_->actions()) {
-            if (action->data().toInt() == static_cast<int>(CanvasTool::Rectangle)) {
-                action->setChecked(true);
-                break;
-            }
-        }
-        canvas_->setTool(CanvasTool::Rectangle);
-        setStatus(QStringLiteral("Ready to draw '%1' (N)").arg(activeLabel->name));
     });
 
     // [ and ] step the active class up and down the label list. They are not on
@@ -611,10 +689,11 @@ void JobWorkspace::setupUi()
     });
 
     auto* bridgeButton = new QToolButton(this);
-    bridgeButton->setText(QStringLiteral("Bridge tools"));
     setButtonIcon(bridgeButton, Icon::Layers);
     bridgeButton->setPopupMode(QToolButton::InstantPopup);
-    bridgeButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    bridgeButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    bridgeButton->setToolTip(QStringLiteral(
+        "Bridge tools — copy/paste annotations, grow, move and relabel"));
     auto* bridgeMenu = new QMenu(bridgeButton);
     // Ctrl+C / Ctrl+V copy and paste the selected annotations on the current
     // frame, as in CVAT. The single-key C and V actions copy a label's class.
@@ -697,21 +776,46 @@ void JobWorkspace::setupUi()
         setFrame(model_->currentFrame() + 1);
     });
 
-    frameSpin_ = new QSpinBox(this);
-    frameSpin_->setMinimumWidth(90);
-    frameSpin_->setRange(0, 0);
-    toolbar_->addWidget(frameSpin_);
-    connect(frameSpin_, &QSpinBox::valueChanged, this, [this](int value) {
-        if (value != model_->currentFrame()) {
-            setFrame(value);
-        }
-    });
-
+    // The footer owns the typed page number; this slider previews the target
+    // while dragging and only navigates when the handle is released.
     frameSlider_ = new QSlider(Qt::Horizontal, this);
     frameSlider_->setMinimumWidth(140);
     frameSlider_->setRange(0, 0);
     toolbar_->addWidget(frameSlider_);
-    connect(frameSlider_, &QSlider::valueChanged, this, [this](int value) {
+
+    framePreviewLabel_ = new QLabel(this);
+    framePreviewLabel_->setStyleSheet(QStringLiteral(
+        "color: palette(highlighted-text); background-color: palette(highlight); "
+        "border-radius: 4px; padding: 2px 7px; font-weight: 600;"));
+    framePreviewLabel_->setMinimumWidth(64);
+    framePreviewLabel_->hide();
+    toolbar_->addWidget(framePreviewLabel_);
+
+    auto showFramePreview = [this](int value) {
+        framePreviewLabel_->setText(QStringLiteral("Page %1").arg(value));
+        framePreviewLabel_->setToolTip(QStringLiteral("Release to go to page %1").arg(value));
+        framePreviewLabel_->show();
+    };
+    connect(frameSlider_, &QSlider::sliderPressed, this, [this, showFramePreview]() {
+        frameSliderDragging_ = true;
+        showFramePreview(frameSlider_->value());
+    });
+    connect(frameSlider_, &QSlider::sliderMoved, this,
+            [showFramePreview](int value) { showFramePreview(value); });
+    connect(frameSlider_, &QSlider::sliderReleased, this, [this]() {
+        frameSliderDragging_ = false;
+        if (framePreviewLabel_) {
+            framePreviewLabel_->hide();
+        }
+        if (frameSlider_->value() != model_->currentFrame()) {
+            setFrame(frameSlider_->value());
+        }
+    });
+    connect(frameSlider_, &QSlider::valueChanged, this, [this, showFramePreview](int value) {
+        if (frameSliderDragging_) {
+            showFramePreview(value);
+            return;
+        }
         if (value != model_->currentFrame()) {
             setFrame(value);
         }
@@ -724,48 +828,40 @@ void JobWorkspace::setupUi()
     this->addAction(goToFrame);
     connect(goToFrame, &QAction::triggered, this, &JobWorkspace::showGoToFrameDialog);
 
-    toolbar_->addSeparator();
-    toolGroup_ = new QActionGroup(this);
-    toolGroup_->setExclusive(true);
-    auto addTool = [this, shouldIgnoreSingleKey](Icon icon, const QString& text, CanvasTool tool, const QString& shortcut) {
-        auto* action = makeAction(icon, text, this);
-        action->setCheckable(true);
-        action->setData(static_cast<int>(tool));
-        action->setShortcut(QKeySequence(shortcut));
-        action->setShortcutContext(Qt::WindowShortcut);
-        this->addAction(action);
-        toolGroup_->addAction(action);
-        toolbar_->addAction(action);
-        return action;
-    };
-    addTool(Icon::Pointer, QStringLiteral("Select"), CanvasTool::Select, QStringLiteral("Q"))->setChecked(true);
-    addTool(Icon::Box, QStringLiteral("Box"), CanvasTool::Rectangle, QStringLiteral("R"));
-    connect(toolGroup_, &QActionGroup::triggered, this, [this, shouldIgnoreSingleKey](QAction* action) {
-        if (shouldIgnoreSingleKey()) return;
-        setTool(action->data().toInt());
-    });
-
-    toolbar_->addSeparator();
     auto* zoomIn = addIconAction(toolbar_, Icon::ZoomIn, QStringLiteral("Zoom in"));
     connect(zoomIn, &QAction::triggered, this, [this]() { canvas_->zoomIn(); });
     auto* zoomOut = addIconAction(toolbar_, Icon::ZoomOut, QStringLiteral("Zoom out"));
     connect(zoomOut, &QAction::triggered, this, [this]() { canvas_->zoomOut(); });
     auto* fit = addIconAction(toolbar_, Icon::FitView, QStringLiteral("Fit"));
-    toolbar_->addSeparator();
-    auto* guides = addIconAction(toolbar_, Icon::Crosshair, QStringLiteral("Guides"));
-    guides->setCheckable(true);
+    auto* guides = makeCheckableAction(Icon::Crosshair, QStringLiteral("Guides"), this);
+    this->addAction(guides);
+    toolbar_->addAction(guides);
     guides->setChecked(true);
+    refreshIcon(guides);
     guides->setToolTip(QStringLiteral("Show crosshair guides that follow the pointer"));
+    connect(guides, &QAction::toggled, guides, [guides]() { refreshIcon(guides); });
     connect(guides, &QAction::toggled, this, [this](bool on) { canvas_->setCrosshairEnabled(on); });
     connect(fit, &QAction::triggered, this, [this]() { canvas_->fitToView(); });
 
-    auto* splitter = new QSplitter(Qt::Horizontal, this);
-    canvas_ = new AnnotationCanvas(splitter);
+    // Right-side panel toggle sits at the end of the view-control group.
+    sidebarToggle_ = new QToolButton(toolbar_);
+    setCheckableButtonIcon(sidebarToggle_, Icon::Sidebar);
+    sidebarToggle_->setCheckable(true);
+    sidebarToggle_->setChecked(true);
+    refreshIcon(sidebarToggle_);
+    sidebarToggle_->setFocusPolicy(Qt::NoFocus);
+    sidebarToggle_->setToolTip(QStringLiteral("Show or hide the sidebar"));
+    toolbar_->addSeparator();
+    toolbar_->addWidget(sidebarToggle_);
+
+    splitter_ = new QSplitter(Qt::Horizontal, this);
+    canvas_ = new AnnotationCanvas(splitter_);
     canvas_->setGuideColor(QColor(Settings::instance().guideColor()));
     canvas_->setModel(model_);
-    splitter->addWidget(canvas_);
+    splitter_->addWidget(canvas_);
 
-    auto* side = new QWidget(splitter);
+    auto* side = new QWidget(splitter_);
+    sidePanel_ = side;
     auto* sideLayout = new QVBoxLayout(side);
     sideLayout->setContentsMargins(4, 4, 4, 4);
     labelPanel_ = new LabelPanel(side);
@@ -830,11 +926,29 @@ void JobWorkspace::setupUi()
     objectList_->setAlternatingRowColors(true);
     objectLayout->addWidget(objectList_);
     sideLayout->addWidget(objectGroup);
-    splitter->addWidget(side);
-    splitter->setStretchFactor(0, 1);
-    splitter->setStretchFactor(1, 0);
-    splitter->setSizes({1000, 420});
-    layout->addWidget(splitter, 1);
+    splitter_->addWidget(side);
+    splitter_->setCollapsible(1, true);
+    splitter_->setStretchFactor(0, 1);
+    splitter_->setStretchFactor(1, 0);
+    splitter_->setSizes({1000, 420});
+    sidebarSizes_ = splitter_->sizes();
+    layout->addWidget(splitter_, 1);
+
+    connect(sidebarToggle_, &QToolButton::toggled, this, [this](bool show) {
+        refreshIcon(sidebarToggle_);
+        if (!sidePanel_ || !splitter_) {
+            return;
+        }
+        if (show) {
+            sidePanel_->show();
+            if (!sidebarSizes_.isEmpty()) {
+                splitter_->setSizes(sidebarSizes_);
+            }
+        } else {
+            sidebarSizes_ = splitter_->sizes();
+            sidePanel_->hide();
+        }
+    });
 
     auto* footer = new QHBoxLayout;
     footer->setContentsMargins(8, 2, 8, 4);
@@ -870,20 +984,31 @@ void JobWorkspace::setupUi()
     footer->addWidget(miniMapToggle);
     footer->addSpacing(12);
 
-    auto* multiLabelToggle = new QCheckBox(QStringLiteral("Multi-label"), this);
-    multiLabelToggle->setToolTip(QStringLiteral(
-        "On: drag a rectangle to select labels, then C/V copies and pastes them, or Shift+L changes their class only"));
-    multiLabelToggle->setChecked(Settings::instance().multiLabelCopy());
-    canvas_->setAreaSelectionEnabled(multiLabelToggle->isChecked());
-    connect(multiLabelToggle, &QCheckBox::toggled, this, [this](bool on) {
+    multiLabelBox_ = new QCheckBox(QStringLiteral("Multi-label"), this);
+    multiLabelBox_->setToolTip(QStringLiteral(
+        "Same control as the toolbar's Selection box: drag a rectangle to select labels"));
+    const bool areaSelectionOn = Settings::instance().multiLabelCopy();
+    multiLabelBox_->setChecked(areaSelectionOn);
+    canvas_->setAreaSelectionEnabled(areaSelectionOn);
+    if (boxSelectAction_) {
+        const QSignalBlocker blocker(boxSelectAction_);
+        boxSelectAction_->setChecked(areaSelectionOn);
+        refreshIcon(boxSelectAction_);
+    }
+    connect(multiLabelBox_, &QCheckBox::toggled, this, [this](bool on) {
         canvas_->setAreaSelectionEnabled(on);
         Settings::instance().setMultiLabelCopy(on);
         Settings::instance().sync();
+        if (boxSelectAction_ && boxSelectAction_->isChecked() != on) {
+            const QSignalBlocker blocker(boxSelectAction_);
+            boxSelectAction_->setChecked(on);
+            refreshIcon(boxSelectAction_);
+        }
         setStatus(on
-            ? QStringLiteral("Multi-label on — drag to select labels, then C/V to copy and paste or Shift+L to change their class")
+            ? QStringLiteral("Multi-label on — drag a rectangle to select labels, then C/V to copy and paste or Shift+L to change their class")
             : QStringLiteral("Multi-label off — C/V copies one label"));
     });
-    footer->addWidget(multiLabelToggle);
+    footer->addWidget(multiLabelBox_);
     footer->addSpacing(12);
 
     auto* bindKeys = new QPushButton(makeIcon(Icon::Settings),
@@ -911,9 +1036,14 @@ void JobWorkspace::setupUi()
     connect(canvas_, &AnnotationCanvas::annotationContextMenuRequested,
             this, &JobWorkspace::showLabelContextMenu);
     connect(canvas_, &AnnotationCanvas::toolChanged, this, [this](CanvasTool tool) {
-        for (auto* action : toolGroup_->actions()) {
+        if (!toolGroup_) {
+            return;
+        }
+        for (QAction* action : toolGroup_->actions()) {
             if (action->data().toInt() == static_cast<int>(tool)) {
+                const QSignalBlocker blocker(action);
                 action->setChecked(true);
+                refreshIcon(action);
                 break;
             }
         }
@@ -1024,9 +1154,8 @@ void JobWorkspace::connectModel()
     });
     connect(model_, &AnnotationModel::undoStackChanged, this, [this]() { updateActions(); });
     connect(model_, &AnnotationModel::frameChanged, this, [this](int frame) {
-        QSignalBlocker spinBlocker(frameSpin_);
         QSignalBlocker sliderBlocker(frameSlider_);
-        frameSpin_->setValue(frame);
+        QSignalBlocker pageBlocker(pageSpin_);
         frameSlider_->setValue(frame);
         pageSpin_->setValue(frame);
     });
@@ -1095,14 +1224,11 @@ void JobWorkspace::loadMeta()
         const int start = firstFrame();
         const int stop = lastFrame();
         if (stop >= start) {
-            QSignalBlocker spinBlocker(frameSpin_);
             QSignalBlocker sliderBlocker(frameSlider_);
-            frameSpin_->setRange(start, stop);
             frameSlider_->setRange(start, stop);
             QSignalBlocker pageBlocker(pageSpin_);
             pageSpin_->setRange(start, stop);
             pageTotalLabel_->setText(QStringLiteral("of %1").arg(stop));
-            frameSpin_->setValue(model_->currentFrame());
             frameSlider_->setValue(model_->currentFrame());
         }
     });
@@ -1187,9 +1313,8 @@ void JobWorkspace::setFrame(int frame)
     requestedFrame_ = clamped;
     model_->setCurrentFrame(clamped);
     {
-        QSignalBlocker spinBlocker(frameSpin_);
         QSignalBlocker sliderBlocker(frameSlider_);
-        frameSpin_->setValue(clamped);
+        QSignalBlocker pageBlocker(pageSpin_);
         frameSlider_->setValue(clamped);
         pageSpin_->setValue(clamped);
     }
@@ -1595,42 +1720,12 @@ void JobWorkspace::copyLabel()
 
     const Shape& shape = visible->shape;
     const Label* label = model_->label(shape.labelId);
-
-    copiedTemplate_.valid = true;
-    copiedTemplate_.labelId = shape.labelId;
-    copiedTemplate_.labelName = label ? label->name : QStringLiteral("label %1").arg(shape.labelId);
-    copiedTemplate_.color = label ? QColor(label->color) : QColor(76, 154, 255);
-    copiedTemplate_.shapeType = shape.type;
-    copiedTemplate_.attributes = shape.attributes;
-    copiedTemplate_.occluded = shape.occluded;
-    copiedTemplate_.rotation = shape.rotation;
-    copiedTemplate_.zOrder = shape.zOrder;
+    // Use the shape's own centre as the anchor so a single label always starts
+    // centred on the crosshair. Building a fresh template also discards any
+    // group offset left by an earlier multi-label copy.
+    const QRectF box = Geometry::bounds(shape.points);
+    copiedTemplate_ = templateFromShape(shape, label, box, box.center());
     copiedLabelId_ = shape.labelId;
-
-    if (shape.points.size() >= 4 && (shape.type == QStringLiteral("rectangle") || shape.type == QStringLiteral("ellipse"))) {
-        const double x1 = std::min(shape.points[0], shape.points[2]);
-        const double x2 = std::max(shape.points[0], shape.points[2]);
-        const double y1 = std::min(shape.points[1], shape.points[3]);
-        const double y2 = std::max(shape.points[1], shape.points[3]);
-        copiedTemplate_.width = std::max(2.0, x2 - x1);
-        copiedTemplate_.height = std::max(2.0, y2 - y1);
-        copiedTemplate_.relativePoints = {
-            -copiedTemplate_.width / 2.0, -copiedTemplate_.height / 2.0,
-             copiedTemplate_.width / 2.0,  copiedTemplate_.height / 2.0
-        };
-    } else {
-        const RectD box = Geometry::boundingRect(shape.points);
-        copiedTemplate_.width = std::max(2.0, box.width);
-        copiedTemplate_.height = std::max(2.0, box.height);
-        const double cx = box.center().x();
-        const double cy = box.center().y();
-        copiedTemplate_.relativePoints.clear();
-        for (int i = 0; i + 1 < shape.points.size(); i += 2) {
-            copiedTemplate_.relativePoints.push_back(shape.points[i] - cx);
-            copiedTemplate_.relativePoints.push_back(shape.points[i + 1] - cy);
-        }
-    }
-
     copiedTemplates_ = {copiedTemplate_};
 
     const QString msg = QStringLiteral("Copied %1 [%2 × %3 px] — press V to place")
@@ -1943,14 +2038,7 @@ void JobWorkspace::showNewLabelDialog()
             const QString labelName = current->data(Qt::UserRole + 1).toString();
             labelPanel_->setActiveLabel(labelId);
             canvas_->setActiveLabel(labelId);
-
-            for (auto* action : toolGroup_->actions()) {
-                if (action->data().toInt() == static_cast<int>(CanvasTool::Rectangle)) {
-                    action->setChecked(true);
-                    break;
-                }
-            }
-            canvas_->setTool(CanvasTool::Rectangle);
+            activateTool(CanvasTool::Rectangle);
 
             const QString msg = QStringLiteral("Ready to draw '%1' — click opposite corners to create rectangle (Esc to cancel)")
                                     .arg(labelName);
@@ -2521,8 +2609,10 @@ void JobWorkspace::updateTitle()
     if (!job_.projectName.isEmpty()) {
         title += QStringLiteral(" · %1").arg(job_.projectName);
     }
-    titleLabel_->setText(title);
     titleLabel_->setToolTip(title);
+    const QFontMetrics metrics(titleLabel_->font());
+    titleLabel_->setText(metrics.elidedText(
+        title, Qt::ElideRight, std::max(40, titleLabel_->maximumWidth() - 24)));
     const bool dirty = model_ && model_->isDirty();
     if (dirty) {
         dirtyLabel_->setText(QStringLiteral("● Saved locally · press S to save to server"));
@@ -2565,7 +2655,25 @@ void JobWorkspace::resizeEvent(QResizeEvent* event)
 
 void JobWorkspace::setTool(int tool)
 {
-    canvas_->setTool(static_cast<CanvasTool>(tool));
+    activateTool(static_cast<CanvasTool>(tool));
+}
+
+void JobWorkspace::activateTool(CanvasTool tool)
+{
+    if (!canvas_) {
+        return;
+    }
+    if (toolGroup_) {
+        for (QAction* action : toolGroup_->actions()) {
+            if (action->data().toInt() == static_cast<int>(tool)) {
+                const QSignalBlocker blocker(action);
+                action->setChecked(true);
+                refreshIcon(action);
+                break;
+            }
+        }
+    }
+    canvas_->setTool(tool);
 }
 
 void JobWorkspace::saveRemote(std::function<void(bool)> done, bool silent)

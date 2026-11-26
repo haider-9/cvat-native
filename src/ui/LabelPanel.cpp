@@ -41,6 +41,13 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
     labelList_->setAlternatingRowColors(true);
     labelList_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     labelList_->setMaximumHeight(180);
+    // Keep text in palette colours: item foreground set by code overrode the
+    // selected-item colour and made labels unreadable in the dark theme.
+    labelList_->setStyleSheet(QStringLiteral(
+        "QListWidget { background-color: palette(base); color: palette(text); }"
+        "QListWidget::item { color: palette(text); padding: 2px 3px; }"
+        "QListWidget::item:selected { background-color: palette(highlight); "
+        "color: palette(highlighted-text); }"));
     labelLayout->addWidget(labelList_);
 
     auto* visibilityRow = new QHBoxLayout;
@@ -60,7 +67,8 @@ LabelPanel::LabelPanel(QWidget* parent) : QWidget(parent)
     auto* shortcutHint = new QLabel(
         QStringLiteral("[ and ] switch label · Ctrl+click selects several classes"), labelGroup);
     shortcutHint->setWordWrap(true);
-    shortcutHint->setStyleSheet(QStringLiteral("color: #888; font-size: 11px;"));
+    shortcutHint->setStyleSheet(
+        QStringLiteral("color: palette(window-text); font-size: 11px;"));
     labelLayout->addWidget(shortcutHint);
     layout->addWidget(labelGroup);
 
@@ -186,8 +194,6 @@ void LabelPanel::refreshLabelItems()
         const bool hidden = hiddenLabels_.contains(label->id);
         item->setIcon(colorIcon(label->color));
         item->setText(hidden ? QStringLiteral("%1 (hidden)").arg(label->name) : label->name);
-        item->setForeground(hidden ? QColor(QStringLiteral("#888888"))
-                                   : labelList_->palette().color(QPalette::Text));
         QFont font = item->font();
         font.setItalic(hidden);
         item->setFont(font);
